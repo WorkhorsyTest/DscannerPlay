@@ -24,6 +24,11 @@ import analysis.objectconst;
 import analysis.range;
 import analysis.ifelsesame;
 import analysis.constructors;
+import analysis.check_compare;
+import analysis.check_name_clash;
+import analysis.check_size_t;
+import analysis.check_string_format;
+import analysis.check_unused;
 
 enum AnalyzerCheck : int {
 	style_check = 0x1, 
@@ -136,6 +141,13 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	if (analyzers & AnalyzerCheck.backwards_range_check) checks ~= new BackwardsRangeCheck(fileName);
 	if (analyzers & AnalyzerCheck.if_else_same_check) checks ~= new IfElseSameCheck(fileName);
 	if (analyzers & AnalyzerCheck.constructor_check) checks ~= new ConstructorCheck(fileName);
+/*
+	if (analyzers & AnalyzerCheck.compare_check) checks ~= new CompareCheck(fileName);
+	if (analyzers & AnalyzerCheck.size_t_check) checks ~= new NameClashCheck(fileName);
+	if (analyzers & AnalyzerCheck.unused_check) checks ~= new SizeTCheck(fileName);
+	if (analyzers & AnalyzerCheck.name_clash_check) checks ~= new CheckStringFormat(fileName);
+	if (analyzers & AnalyzerCheck.check_string_format) checks ~= new UnusedCheck(fileName);
+*/
 
 	foreach (check; checks)
 	{
