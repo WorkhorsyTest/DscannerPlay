@@ -399,7 +399,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmAndExp parseAsmAndExp()
     {
-//        auto node = allocate!AsmAndExp;
+        auto node = allocate!AsmAndExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -413,7 +413,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmBrExp parseAsmBrExp()
     {
-//        auto node = allocate!AsmBrExp;
+        auto node = allocate!AsmBrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -426,7 +426,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmEqualExp parseAsmEqualExp()
     {
-//        auto node = allocate!AsmEqualExp;
+        auto node = allocate!AsmEqualExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -439,7 +439,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmExp parseAsmExp()
     {
-//        auto node = allocate!AsmExp;
+        auto node = allocate!AsmExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -457,7 +457,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmInstruction parseAsmInstruction()
     {
-//        auto node = allocate!AsmInstruction;
+        auto node = allocate!AsmInstruction;
         assert (false, "asm"); // TODO asm
     }
 
@@ -470,7 +470,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmLogAndExp parseAsmLogAndExp()
     {
-//        auto node = allocate!AsmLogAndExp;
+        auto node = allocate!AsmLogAndExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -483,7 +483,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmLogOrExp parseAsmLogOrExp()
     {
-//        auto node = allocate!AsmLogOrExp;
+        auto node = allocate!AsmLogOrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -496,7 +496,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmMulExp parseAsmMulExp()
     {
-//        auto node = allocate!AsmMulExp;
+        auto node = allocate!AsmMulExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -509,7 +509,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmOrExp parseAsmOrExp()
     {
-//        auto node = allocate!AsmOrExp;
+        auto node = allocate!AsmOrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -526,7 +526,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmPrimaryExp parseAsmPrimaryExp()
     {
-//        auto node = allocate!AsmPrimaryExp;
+        auto node = allocate!AsmPrimaryExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -539,7 +539,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmRelExp parseAsmRelExp()
     {
-//        auto node = allocate!AsmRelExp;
+        auto node = allocate!AsmRelExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -552,7 +552,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmShiftExp parseAsmShiftExp()
     {
-//        auto node = allocate!AsmShiftExp;
+        auto node = allocate!AsmShiftExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -588,7 +588,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmTypePrefix parseAsmTypePrefix()
     {
-//        auto node = allocate!AsmTypePrefix;
+        auto node = allocate!AsmTypePrefix;
         assert (false, "asm"); // TODO asm
     }
 
@@ -607,7 +607,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmUnaExp parseAsmUnaExp()
     {
-//        auto node = allocate!AsmUnaExp;
+        auto node = allocate!AsmUnaExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -620,7 +620,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmXorExp parseAsmXorExp()
     {
-//        auto node = allocate!AsmXorExp;
+        auto node = allocate!AsmXorExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -1205,10 +1205,7 @@ incorrect;
      * Parses a ClassDeclaration
      *
      * $(GRAMMAR $(RULEDEF classDeclaration):
-     *       $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ':') $(RULE baseClassList))? $(LITERAL ';')
-     *     | $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody)
-     *     | $(LITERAL 'class') $(LITERAL Identifier) $(RULE templateParameters) $(RULE constraint)? ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody)
-     *     | $(LITERAL 'class') $(LITERAL Identifier) $(RULE templateParameters) ($(LITERAL ':') $(RULE baseClassList))? $(RULE constraint)? $(RULE structBody)
+     *     $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ';') | ($(RULE templateParameters) $(RULE constraint)?)? ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody))
      *     ;)
      */
     ClassDeclaration parseClassDeclaration()
@@ -1226,27 +1223,19 @@ incorrect;
             advance();
             return node;
         }
-        templateStuff: if (currentIs(tok!"("))
+        if (currentIs(tok!"("))
         {
             node.templateParameters = parseTemplateParameters();
-            constraint: if (currentIs(tok!"if"))
-                node.constraint = parseConstraint();
-            if (node.baseClassList !is null)
-                goto structBody;
-            if (currentIs(tok!":"))
-            {
-                advance();
-                node.baseClassList = parseBaseClassList();
-            }
             if (currentIs(tok!"if"))
-                goto constraint;
+            {
+                node.constraint = parseConstraint();
+            }
         }
         if (currentIs(tok!":"))
         {
             advance();
             node.baseClassList = parseBaseClassList();
         }
-    structBody:
         node.structBody = parseStructBody();
         return node;
     }
@@ -1254,12 +1243,10 @@ incorrect;
     unittest
     {
         string sourceCode =
-q{class ClassZero;
-class ClassOne {}
+q{class ClassOne {}
 class ClassTwo : Super {}
 class ClassThree(A, B) : Super {}
-class ClassFour(A, B) if (someTest()) : Super {}
-class ClassFive(A, B) : Super if (someTest()) {}}c;
+class ClassFour(A, B) if (someTest()) : Super {}}c;
 
         Parser p = getParserForUnittest(sourceCode, "parseClassDeclaration");
 
@@ -2500,18 +2487,13 @@ body {} // six
         case tok!"pure":
         case tok!"nothrow":
             node.type = parseType();
-            node.arguments = parseArguments();
             break;
         default:
-            if (unary !is null)
-                node.unaryExpression = unary;
-            else
-                node.unaryExpression = parseUnaryExpression();
+            node.unaryExpression = unary is null ? parseUnaryExpression() : unary;
             if (currentIs(tok!"!"))
                 node.templateArguments = parseTemplateArguments();
-            if (unary !is null)
-                node.arguments = parseArguments();
-        }
+    }
+        node.arguments = parseArguments();
         return node.arguments is null ? null : node;
     }
 
@@ -3579,17 +3561,15 @@ invariant() foo();
         mixin(traceEnterAndExit!(__FUNCTION__));
         Module m = allocate!Module;
         if (currentIs(tok!"scriptLine"))
-            m.scriptLine = advance();
+            advance();
         if (currentIs(tok!"module"))
             m.moduleDeclaration = parseModuleDeclaration();
-		Declaration[] declarations;
         while (moreTokens())
         {
             auto declaration = parseDeclaration();
             if (declaration !is null)
-                declarations ~= declaration;
+                m.declarations ~= declaration;
         }
-		m.declarations = ownArray(declarations);
         return m;
     }
 
@@ -3867,7 +3847,7 @@ invariant() foo();
      */
     Operands parseOperands()
     {
-//        auto node = allocate!Operands;
+        auto node = allocate!Operands;
         assert (false, "asm"); // TODO asm
     }
 
@@ -5989,11 +5969,13 @@ q{doStuff(5)}c;
         auto node = allocate!UnionDeclaration;
         // grab line number even if it's anonymous
         auto l = expect(tok!"union").line;
+        bool templated = false;
         if (currentIs(tok!"identifier"))
         {
             node.name = advance();
             if (currentIs(tok!"("))
             {
+                templated = true;
                 node.templateParameters = parseTemplateParameters();
                 if (currentIs(tok!"if"))
                     node.constraint = parseConstraint();
@@ -6781,14 +6763,21 @@ protected:
         index = i;
     }
 
-    version (unittest) static void doNothingErrorFunction(string,
-        size_t, size_t, string, bool) {}
+    version (unittest) static void doNothingErrorFunction(string fileName,
+        size_t line, size_t column, string message, bool isError) {}
 
     version (unittest) static Parser getParserForUnittest(string sourceCode,
         string testName)
     {
         auto r = byToken(cast(ubyte[]) sourceCode);
-        Parser p = allocate!Parser;
+
+        CAllocator allocator = new ParseAllocator();
+        enum numBytes = __traits(classInstanceSize, Parser);
+        void[] mem = allocator.allocate(numBytes);
+        assert (mem.length == numBytes, format("%d", mem.length));
+        Parser p = emplace!Parser(mem);
+        assert (cast(void*) p == mem.ptr, "%x, %x".format(cast(void*) p, mem.ptr));
+
         p.messageFunction = &doNothingErrorFunction;
         p.fileName = testName ~ ".d";
         p.tokens = r.array();
@@ -6861,7 +6850,7 @@ protected:
     }
     else
     {
-        void trace(lazy string) {}
+        void trace(lazy string message) {}
     }
 
     enum string BASIC_TYPE_CASES = q{

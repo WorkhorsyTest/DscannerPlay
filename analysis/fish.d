@@ -5,9 +5,11 @@
 
 module analysis.fish;
 
+import std.stdio;
 import std.d.ast;
 import std.d.lexer;
 import analysis.base;
+import analysis.helpers;
 
 /**
  * Checks for use of the deprecated floating point comparison operators.
@@ -37,3 +39,23 @@ class FloatOperatorCheck : BaseAnalyzer
 		r.accept(this);
 	}
 }
+
+unittest {
+	should_warn(q{
+		void test_fish() {
+			float z = 1.5f;
+			bool a;
+			a = z !<>= z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z !<> z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z <> z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z <>= z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z !> z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z !>= z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z !< z; // [warn]: Avoid using the deprecated floating-point operators
+			a = z !<= z; // [warn]: Avoid using the deprecated floating-point operators
+		}
+	}c, analysis.run.AnalyzerCheck.float_operator_check);
+
+	stderr.writeln("Unittest for FloatOperatorCheck passed.");
+}
+

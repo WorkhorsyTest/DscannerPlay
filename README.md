@@ -3,9 +3,7 @@ DScanner is a tool for analyzing D source code
 
 ### Building and installing
 To build DScanner, run the build.sh script (or the build.bat file on Windows).
-The build time can be rather long with the -inline flag (over 2 minutes on an
-i7 processor), so you may wish to remove it from the build script. To install,
-simply place the generated binary somewhere on your $PATH.
+To install, simply place the generated binary somewhere on your $PATH.
 
 # Usage
 The following examples assume that we are analyzing a simple file called helloworld.d

@@ -27,6 +27,30 @@ import analysis.run;
 
 int main(string[] args)
 {
+	version (unittest)
+	{
+		return 0;
+	}
+	else
+	{
+		return run(args);
+	}
+}
+
+int run(string[] args)
+{
+	version(LINUX) {
+	// Make backtraces work in Linux
+	import backtrace.backtrace;
+	PrintOptions options;
+	options.detailedForN = 2;        //number of frames to show code for
+	options.numberOfLinesBefore = 3; //number of lines of code to show before the specific line
+	options.numberOfLinesAfter  = 3; //number of lines of code to show after the specific line
+	options.colored = false;          //enable colored output for the backtrace
+	options.stopAtDMain = true;     //show stack traces after the entry point of the D code
+	backtrace.backtrace.install(stderr, options);
+	}
+
 	bool sloc;
 	bool highlight;
 	bool ctags;
@@ -124,7 +148,7 @@ int main(string[] args)
 	}
 	else if (styleCheck)
 	{
-		stdout.analyze(expandArgs(args, recursive));
+		stdout.analyze(expandArgs(args, recursive), AnalyzerCheck.all);
 	}
 	else if (syntaxCheck)
 	{
