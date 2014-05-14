@@ -32,57 +32,6 @@ abstract class ASTVisitor
 {
 public:
 
-    void visit(const ExpressionNode n)
-    {
-        if (cast(AddExpression) n) visit(cast(AddExpression) n);
-        else if (cast(AndAndExpression) n) visit(cast(AndAndExpression) n);
-        else if (cast(AndExpression) n) visit(cast(AndExpression) n);
-        else if (cast(AsmAddExp) n) visit(cast(AsmAddExp) n);
-        else if (cast(AsmAndExp) n) visit(cast(AsmAndExp) n);
-        else if (cast(AsmEqualExp) n) visit(cast(AsmEqualExp) n);
-        else if (cast(AsmLogAndExp) n) visit(cast(AsmLogAndExp) n);
-        else if (cast(AsmLogOrExp) n) visit(cast(AsmLogOrExp) n);
-        else if (cast(AsmMulExp) n) visit(cast(AsmMulExp) n);
-        else if (cast(AsmOrExp) n) visit(cast(AsmOrExp) n);
-        else if (cast(AsmRelExp) n) visit(cast(AsmRelExp) n);
-        else if (cast(AsmShiftExp) n) visit(cast(AsmShiftExp) n);
-        else if (cast(AssertExpression) n) visit(cast(AssertExpression) n);
-        else if (cast(AssignExpression) n) visit(cast(AssignExpression) n);
-        else if (cast(CmpExpression) n) visit(cast(CmpExpression) n);
-        else if (cast(DeleteExpression) n) visit(cast(DeleteExpression) n);
-        else if (cast(EqualExpression) n) visit(cast(EqualExpression) n);
-        else if (cast(Expression) n) visit(cast(Expression) n);
-        else if (cast(FunctionCallExpression) n) visit(cast(FunctionCallExpression) n);
-        else if (cast(FunctionLiteralExpression) n) visit(cast(FunctionLiteralExpression) n);
-        else if (cast(IdentityExpression) n) visit(cast(IdentityExpression) n);
-        else if (cast(ImportExpression) n) visit(cast(ImportExpression) n);
-        else if (cast(IndexExpression) n) visit(cast(IndexExpression) n);
-        else if (cast(InExpression) n) visit(cast(InExpression) n);
-        else if (cast(IsExpression) n) visit(cast(IsExpression) n);
-        else if (cast(LambdaExpression) n) visit(cast(LambdaExpression) n);
-        else if (cast(MixinExpression) n) visit(cast(MixinExpression) n);
-        else if (cast(MulExpression) n) visit(cast(MulExpression) n);
-        else if (cast(NewAnonClassExpression) n) visit(cast(NewAnonClassExpression) n);
-        else if (cast(NewExpression) n) visit(cast(NewExpression) n);
-        else if (cast(OrExpression) n) visit(cast(OrExpression) n);
-        else if (cast(OrOrExpression) n) visit(cast(OrOrExpression) n);
-        else if (cast(PostIncDecExpression) n) visit(cast(PostIncDecExpression) n);
-        else if (cast(PowExpression) n) visit(cast(PowExpression) n);
-        else if (cast(PragmaExpression) n) visit(cast(PragmaExpression) n);
-        else if (cast(PreIncDecExpression) n) visit(cast(PreIncDecExpression) n);
-        else if (cast(PrimaryExpression) n) visit(cast(PrimaryExpression) n);
-        else if (cast(RelExpression) n) visit(cast(RelExpression) n);
-        else if (cast(ShiftExpression) n) visit(cast(ShiftExpression) n);
-        else if (cast(SliceExpression) n) visit(cast(SliceExpression) n);
-        else if (cast(TemplateMixinExpression) n) visit(cast(TemplateMixinExpression) n);
-        else if (cast(TernaryExpression) n) visit(cast(TernaryExpression) n);
-        else if (cast(TraitsExpression) n) visit(cast(TraitsExpression) n);
-        else if (cast(TypeidExpression) n) visit(cast(TypeidExpression) n);
-        else if (cast(TypeofExpression) n) visit(cast(TypeofExpression) n);
-        else if (cast(UnaryExpression) n) visit(cast(UnaryExpression) n);
-        else if (cast(XorExpression) n) visit(cast(XorExpression) n);
-    }
-
     /** */ void visit(const AddExpression addExpression) { addExpression.accept(this); }
     /** */ void visit(const AliasDeclaration aliasDeclaration) { aliasDeclaration.accept(this); }
     /** */ void visit(const AliasInitializer aliasInitializer) { aliasInitializer.accept(this); }
@@ -175,6 +124,7 @@ public:
     /** */ void visit(const IdentifierOrTemplateChain identifierOrTemplateChain) { identifierOrTemplateChain.accept(this); }
     /** */ void visit(const IdentifierOrTemplateInstance identifierOrTemplateInstance) { identifierOrTemplateInstance.accept(this); }
     /** */ void visit(const IdentityExpression identityExpression) { identityExpression.accept(this); }
+    /** */ void visit(const IdType idType) { }
     /** */ void visit(const IfStatement ifStatement) { ifStatement.accept(this); }
     /** */ void visit(const ImportBind importBind) { importBind.accept(this); }
     /** */ void visit(const ImportBindings importBindings) { importBindings.accept(this); }
@@ -281,9 +231,32 @@ public:
     /** */ void visit(const WhileStatement whileStatement) { whileStatement.accept(this); }
     /** */ void visit(const WithStatement withStatement) { withStatement.accept(this); }
     /** */ void visit(const XorExpression xorExpression) { xorExpression.accept(this); }
+
+    void visit(const ExpressionNode node)
+    {
+        this.callVisit(node);
+    }
+
+    void callVisit(const Token token)
+    {
+        this.visit(token);
+    }
+
+    void callVisit(const IdType idType)
+    {
+        this.visit(idType);
+    }
+
+    void callVisit(const ASTNode unknown)
+    {
+        mixin(std.d.codegen.callOnActualType!(
+            "this.visit(actual)", 
+            "throw new Exception(std.string.format(\"Unexpected ast node type: %s\", typeid(unknown)))", 
+            NODE_TYPE_NAMES));
+    }
 }
 
-interface ASTNode
+abstract class ASTNode
 {
 public:
     /** */ void accept(ASTVisitor visitor) const;
@@ -300,14 +273,14 @@ template visitIfNotNull(fields ...)
         static if (typeof(fields[0]).stringof[$ - 2 .. $] == "[]")
         {
             static if (__traits(hasMember, typeof(fields[0][0]), "classinfo"))
-                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") if (i !is null) visitor.visit(i);\n";
+                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") if (i !is null) visitor.callVisit(i);\n";
             else
-                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") visitor.visit(i);\n";
+                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") visitor.callVisit(i);\n";
         }
         else static if (__traits(hasMember, typeof(fields[0]), "classinfo"))
-            immutable visitIfNotNull = "if (" ~ fields[0].stringof ~ " !is null) visitor.visit(" ~ fields[0].stringof ~ ");\n";
+            immutable visitIfNotNull = "if (" ~ fields[0].stringof ~ " !is null) visitor.callVisit(" ~ fields[0].stringof ~ ");\n";
         else
-            immutable visitIfNotNull = "visitor.visit(" ~ fields[0].stringof ~ ");\n";
+            immutable visitIfNotNull = "visitor.callVisit(" ~ fields[0].stringof ~ ");\n";
     }
 }
 
