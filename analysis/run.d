@@ -141,8 +141,8 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	if (analyzers & AnalyzerCheck.backwards_range_check) checks ~= new BackwardsRangeCheck(fileName);
 	if (analyzers & AnalyzerCheck.if_else_same_check) checks ~= new IfElseSameCheck(fileName);
 	if (analyzers & AnalyzerCheck.constructor_check) checks ~= new ConstructorCheck(fileName);
-/*
 	if (analyzers & AnalyzerCheck.compare_check) checks ~= new CompareCheck(fileName);
+/*
 	if (analyzers & AnalyzerCheck.size_t_check) checks ~= new NameClashCheck(fileName);
 	if (analyzers & AnalyzerCheck.unused_check) checks ~= new SizeTCheck(fileName);
 	if (analyzers & AnalyzerCheck.name_clash_check) checks ~= new CheckStringFormat(fileName);
@@ -151,7 +151,7 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 
 	foreach (check; checks)
 	{
-		check.visit(m);
+		check.callVisit(m);
 	}
 
 	MessageSet set = new MessageSet;

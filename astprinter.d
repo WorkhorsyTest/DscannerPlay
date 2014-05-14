@@ -23,12 +23,12 @@ class XMLPrinter : ASTVisitor
 	{
 		output.writeln("<addExpression operator=\"", str(addExpression.operator) ,"\">");
 		output.writeln("<left>");
-		visit(addExpression.left);
+		callVisit(addExpression.left);
 		output.writeln("</left>");
 		if (addExpression.right !is null)
 		{
 			output.writeln("<right>");
-			visit(addExpression.right);
+			callVisit(addExpression.right);
 			output.writeln("</right>");
 		}
 		output.writeln("</addExpression>");
@@ -177,7 +177,7 @@ class XMLPrinter : ASTVisitor
 			output.writeln("<item>");
 			output.writeln("<name line=\"", autoDec.identifiers[i].line, "\">",
 				autoDec.identifiers[i].text, "</name>");
-			visit(autoDec.initializers[i]);
+			callVisit(autoDec.initializers[i]);
 			output.writeln("</item>");
 		}
 		output.writeln("</autoDeclaration>");
@@ -221,17 +221,17 @@ class XMLPrinter : ASTVisitor
 		if (caseRangeStatement.low !is null)
 		{
 			output.writeln("<low>");
-			visit(caseRangeStatement.low);
+			callVisit(caseRangeStatement.low);
 			output.writeln("</low>");
 		}
 		if (caseRangeStatement.high !is null)
 		{
 			output.writeln("<high>");
-			visit(caseRangeStatement.high);
+			callVisit(caseRangeStatement.high);
 			output.writeln("</high>");
 		}
 		if (caseRangeStatement.declarationsAndStatements !is null)
-			visit(caseRangeStatement.declarationsAndStatements);
+			callVisit(caseRangeStatement.declarationsAndStatements);
 		output.writeln("</caseRangeStatement>");
 	}
 
@@ -284,15 +284,15 @@ class XMLPrinter : ASTVisitor
 	override void visit(const ConditionalDeclaration conditionalDeclaration)
 	{
 		output.writeln("<conditionalDeclaration>");
-		visit(conditionalDeclaration.compileCondition);
+		callVisit(conditionalDeclaration.compileCondition);
 		output.writeln("<trueDeclarations>");
 		foreach (dec; conditionalDeclaration.trueDeclarations)
-			visit(dec);
+			callVisit(dec);
 		output.writeln("</trueDeclarations>");
 		if (conditionalDeclaration.falseDeclaration !is null)
 		{
 			output.writeln("<falseDeclaration>");
-			visit(conditionalDeclaration.falseDeclaration);
+			callVisit(conditionalDeclaration.falseDeclaration);
 			output.writeln("</falseDeclaration>");
 		}
 		output.writeln("</conditionalDeclaration>");
@@ -301,14 +301,14 @@ class XMLPrinter : ASTVisitor
 	override void visit(const ConditionalStatement conditionalStatement)
 	{
 		output.writeln("<conditionalStatement>");
-		visit(conditionalStatement.compileCondition);
+		callVisit(conditionalStatement.compileCondition);
 		output.writeln("<trueStatement>");
-		visit(conditionalStatement.trueStatement);
+		callVisit(conditionalStatement.trueStatement);
 		output.writeln("</trueStatement>");
 		if (conditionalStatement.falseStatement !is null)
 		{
 			output.writeln("<falseStatement>");
-			visit(conditionalStatement.falseStatement);
+			callVisit(conditionalStatement.falseStatement);
 			output.writeln("</falseStatement>");
 		}
 		output.writeln("</conditionalStatement>");
@@ -482,23 +482,23 @@ class XMLPrinter : ASTVisitor
 		if (forStatement.initialization !is null)
 		{
 			output.writeln("<initialization>");
-			visit(forStatement.initialization);
+			callVisit(forStatement.initialization);
 			output.writeln("</initialization>");
 		}
 		if (forStatement.test !is null)
 		{
 			output.writeln("<test>");
-			visit(forStatement.test);
+			callVisit(forStatement.test);
 			output.writeln("</test>");
 		}
 		if (forStatement.increment !is null)
 		{
 			output.writeln("<increment>");
-			visit(forStatement.increment);
+			callVisit(forStatement.increment);
 			output.writeln("</increment>");
 		}
 		if (forStatement.declarationOrStatement !is null)
-			visit(forStatement.declarationOrStatement);
+			callVisit(forStatement.declarationOrStatement);
 		output.writeln("</forStatement>");
 	}
 
@@ -507,19 +507,19 @@ class XMLPrinter : ASTVisitor
 		output.writeln("<foreachStatement type=\"", str(
 			foreachStatement.type), "\">");
 		if (foreachStatement.foreachType !is null)
-			visit(foreachStatement.foreachType);
+			callVisit(foreachStatement.foreachType);
 		if (foreachStatement.foreachTypeList !is null)
-			visit(foreachStatement.foreachTypeList);
+			callVisit(foreachStatement.foreachTypeList);
 		output.writeln("<low>");
-		visit(foreachStatement.low);
+		callVisit(foreachStatement.low);
 		output.writeln("</low>");
 		if (foreachStatement.high !is null)
 		{
 			output.writeln("<high>");
-			visit(foreachStatement.high);
+			callVisit(foreachStatement.high);
 			output.writeln("</high>");
 		}
-		visit(foreachStatement.declarationOrStatement);
+		callVisit(foreachStatement.declarationOrStatement);
 		output.writeln("</foreachStatement>");
 	}
 
@@ -531,8 +531,8 @@ class XMLPrinter : ASTVisitor
 			output.writeln("<typeConstructor>", str(constructor), "</typeConstructor>");
 		}
 		if (foreachType.type !is null)
-			visit(foreachType.type);
-		visit(foreachType.identifier);
+			callVisit(foreachType.type);
+		callVisit(foreachType.identifier);
 		output.writeln("</foreachType>");
 
 	}
@@ -594,7 +594,7 @@ class XMLPrinter : ASTVisitor
 			output.writeln("<gotoStatement>");
 			output.writeln("<case>");
 			if (gotoStatement.expression)
-				visit(gotoStatement.expression);
+				callVisit(gotoStatement.expression);
 			output.writeln("</case>");
 			output.writeln("</gotoStatement>");
 		}
@@ -627,10 +627,10 @@ class XMLPrinter : ASTVisitor
 		else
 			output.writeln("<identityExpression operator=\"is\">");
 		output.writeln("<left>");
-		visit(identityExpression.left);
+		callVisit(identityExpression.left);
 		output.writeln("</left>");
 		output.writeln("<right>");
-		visit(identityExpression.right);
+		callVisit(identityExpression.right);
 		output.writeln("</right>");
 		output.writeln("</identityExpression>");
 	}
@@ -645,8 +645,8 @@ class XMLPrinter : ASTVisitor
 			if (ifStatement.type is null)
 				output.writeln("<auto/>");
 			else
-				visit(ifStatement.type);
-			visit(ifStatement.identifier);
+				callVisit(ifStatement.type);
+			callVisit(ifStatement.identifier);
 		}
 		ifStatement.expression.accept(this);
 		output.writeln("</condition>");
@@ -700,10 +700,10 @@ class XMLPrinter : ASTVisitor
 		else
 			output.writeln("<inExpression operator=\"in\">");
 		output.writeln("<left>");
-		visit(inExpression.left);
+		callVisit(inExpression.left);
 		output.writeln("</left>");
 		output.writeln("<right>");
-		visit(inExpression.right);
+		callVisit(inExpression.right);
 		output.writeln("</right>");
 		output.writeln("</inExpression>");
 	}
@@ -720,7 +720,7 @@ class XMLPrinter : ASTVisitor
 		else
 		{
 			output.writeln("<initialize>");
-			visit(initialize.statementNoCaseNoDefault);
+			callVisit(initialize.statementNoCaseNoDefault);
 			output.writeln("</initialize>");
 		}
 	}
@@ -732,7 +732,7 @@ class XMLPrinter : ASTVisitor
 		else
 		{
 			output.writeln("<initializer>");
-			visit(initializer.nonVoidInitializer);
+			callVisit(initializer.nonVoidInitializer);
 			output.writeln("</initializer>");
 		}
 	}
@@ -757,18 +757,18 @@ class XMLPrinter : ASTVisitor
 	override void visit(const IsExpression isExpression)
 	{
 		output.writeln("<isExpression>");
-		visit(isExpression.type);
+		callVisit(isExpression.type);
 		if (isExpression.identifier.type != tok!"")
-			visit(isExpression.identifier);
+			callVisit(isExpression.identifier);
 		if (isExpression.typeSpecialization !is null)
 		{
 			if (isExpression.equalsOrColon == tok!":")
 				output.writeln("<colon/>");
 			else
 				output.writeln("<equals/>");
-			visit(isExpression.typeSpecialization);
+			callVisit(isExpression.typeSpecialization);
 			if (isExpression.templateParameterList !is null)
-				visit(isExpression.templateParameterList);
+				callVisit(isExpression.templateParameterList);
 		}
 		output.writeln("</isExpression>");
 	}
@@ -777,10 +777,10 @@ class XMLPrinter : ASTVisitor
 	{
 		output.writeln("<keyValuePair>");
 		output.writeln("<key>");
-		visit(keyValuePair.key);
+		callVisit(keyValuePair.key);
 		output.writeln("</key>");
 		output.writeln("<value>");
-		visit(keyValuePair.value);
+		callVisit(keyValuePair.value);
 		output.writeln("</value>");
 		output.writeln("</keyValuePair>");
 	}
@@ -794,7 +794,7 @@ class XMLPrinter : ASTVisitor
 	{
 		output.writeln("<labeledStatement label=\"",
 			labeledStatement.identifier.text ,"\">");
-		visit(labeledStatement.declarationOrStatement);
+		callVisit(labeledStatement.declarationOrStatement);
 		output.writeln("</labeledStatement>");
 	}
 
@@ -870,12 +870,12 @@ class XMLPrinter : ASTVisitor
 	{
 		output.writeln("<mulExpression operator=\"", str(mulExpression.operator) ,"\">");
 		output.writeln("<left>");
-		visit(mulExpression.left);
+		callVisit(mulExpression.left);
 		output.writeln("</left>");
 		if (mulExpression.right !is null)
 		{
 			output.writeln("<right>");
-			visit(mulExpression.right);
+			callVisit(mulExpression.right);
 			output.writeln("</right>");
 		}
 		output.writeln("</mulExpression>");
@@ -1048,24 +1048,24 @@ class XMLPrinter : ASTVisitor
 			output.writeln("<singleImport>");
 		else
 			output.writeln("<singleImport rename=\"", singleImport.rename.text, "\">");
-		visit(singleImport.identifierChain);
+		callVisit(singleImport.identifierChain);
 		output.writeln("</singleImport>");
 	}
 
 	override void visit(const SliceExpression sliceExpression)
 	{
 		output.writeln("<sliceExpression>");
-		visit(sliceExpression.unaryExpression);
+		callVisit(sliceExpression.unaryExpression);
 		if (sliceExpression.lower !is null)
 		{
 			output.writeln("<low>");
-			visit(sliceExpression.lower);
+			callVisit(sliceExpression.lower);
 			output.writeln("</low>");
 		}
 		if (sliceExpression.upper !is null)
 		{
 			output.writeln("<high>");
-			visit(sliceExpression.upper);
+			callVisit(sliceExpression.upper);
 			output.writeln("</high>");
 		}
 		output.writeln("</sliceExpression>");
@@ -1154,31 +1154,31 @@ class XMLPrinter : ASTVisitor
 	{
 		output.writeln("<templateAliasParameter>");
 		if (templateAliasParameter.type !is null)
-			visit(templateAliasParameter.type);
-		visit(templateAliasParameter.identifier);
+			callVisit(templateAliasParameter.type);
+		callVisit(templateAliasParameter.identifier);
 		if (templateAliasParameter.colonExpression !is null)
 		{
 			output.writeln("<specialization>");
-			visit(templateAliasParameter.colonExpression);
+			callVisit(templateAliasParameter.colonExpression);
 			output.writeln("</specialization>");
 		}
 		else if (templateAliasParameter.colonType !is null)
 		{
 			output.writeln("<specialization>");
-			visit(templateAliasParameter.colonType);
+			callVisit(templateAliasParameter.colonType);
 			output.writeln("</specialization>");
 		}
 
 		if (templateAliasParameter.assignExpression !is null)
 		{
 			output.writeln("<default>");
-			visit(templateAliasParameter.assignExpression);
+			callVisit(templateAliasParameter.assignExpression);
 			output.writeln("</default>");
 		}
 		else if (templateAliasParameter.assignType !is null)
 		{
 			output.writeln("<default>");
-			visit(templateAliasParameter.assignType);
+			callVisit(templateAliasParameter.assignType);
 			output.writeln("</default>");
 		}
 
@@ -1210,7 +1210,7 @@ class XMLPrinter : ASTVisitor
 		if (templateDeclaration.eponymousTemplateDeclaration !is null)
 		{
 			output.writeln("<templateDeclaration>");
-			visit(templateDeclaration.eponymousTemplateDeclaration);
+			callVisit(templateDeclaration.eponymousTemplateDeclaration);
 			output.writeln("</templateDeclaration>");
 			return;
 		}
@@ -1218,12 +1218,12 @@ class XMLPrinter : ASTVisitor
 		output.writeln("<templateDeclaration line=\"",
 			templateDeclaration.name.line, "\">");
 		output.writeln("<name>", templateDeclaration.name.text, "</name>");
-		visit(templateDeclaration.templateParameters);
+		callVisit(templateDeclaration.templateParameters);
 		if (templateDeclaration.constraint !is null)
-			visit(templateDeclaration.constraint);
+			callVisit(templateDeclaration.constraint);
 		foreach (dec; templateDeclaration.declarations)
 		{
-			if (dec !is null) visit(dec);
+			if (dec !is null) callVisit(dec);
 		}
 		output.writeln("</templateDeclaration>");
 	}
@@ -1371,7 +1371,7 @@ class XMLPrinter : ASTVisitor
 				if (typeSuffix.low is null)
 				{
 					output.writeln("<typeSuffix type=\"[]\">");
-					visit(typeSuffix.type);
+					callVisit(typeSuffix.type);
 					output.writeln("</typeSuffix>");
 				}
 				else
@@ -1380,25 +1380,25 @@ class XMLPrinter : ASTVisitor
 					if (typeSuffix.high !is null)
 					{
 						output.writeln("<low>");
-						visit(typeSuffix.low);
+						callVisit(typeSuffix.low);
 						output.writeln("</low>");
 						output.writeln("<high>");
-						visit(typeSuffix.high);
+						callVisit(typeSuffix.high);
 						output.writeln("</high>");
 					}
 					else
-						visit(typeSuffix.low);
+						callVisit(typeSuffix.low);
 					output.writeln("</typeSuffix>");
 				}
 			}
 		}
 		else
 		{
-			visit(typeSuffix.delegateOrFunction);
-			visit(typeSuffix.parameters);
+			callVisit(typeSuffix.delegateOrFunction);
+			callVisit(typeSuffix.parameters);
 			foreach (attr; typeSuffix.memberFunctionAttributes)
 			{
-				if (attr !is null) visit(attr);
+				if (attr !is null) callVisit(attr);
 			}
 		}
 	}
@@ -1439,11 +1439,11 @@ class XMLPrinter : ASTVisitor
 		if (unionDeclaration.name != tok!"")
 			output.writeln("<name>", unionDeclaration.name.text, "</name>");
 		if (unionDeclaration.templateParameters !is null)
-			visit(unionDeclaration.templateParameters);
+			callVisit(unionDeclaration.templateParameters);
 		if (unionDeclaration.constraint !is null)
-			visit(unionDeclaration.constraint);
+			callVisit(unionDeclaration.constraint);
 		if (unionDeclaration.structBody !is null)
-			visit(unionDeclaration.structBody);
+			callVisit(unionDeclaration.structBody);
 		output.writeln("</unionDeclaration>");
 	}
 

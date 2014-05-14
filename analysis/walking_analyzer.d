@@ -17,9 +17,6 @@ import analysis.helpers;
 import analysis.stack_frame;
 import dlang_helper;
 
-
-// FIXME: We need a way to have separate visit events so that child classes 
-// don't override these visit events.
 /*
 This works like the BaseAnalyzer but tracks all the variables, classes, 
 functions, et cetera, and know what is in scope and hold meta data 
@@ -29,90 +26,83 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 	alias visit = BaseAnalyzer.visit;
 
 	private bool _log_info = false;
+	private bool prev_log = false;
 
 	this(string fileName, bool log_info) {
 		super(fileName);
 		_log_info = log_info;
 	}
 
-	override void visit(const AddExpression node) {
+	override void visitStart(const AddExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const AndAndExpression node) {
+	override void visitStart(const AndAndExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const AndExpression node) {
+	override void visitStart(const AndExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const AssertExpression node) {
+	override void visitStart(const AssertExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const AssignExpression node) {
+	override void visitStart(const AssignExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const BlockStatement node) {
+	override void visitStart(const BlockStatement node) {
 		info("start frame by %s", typeid(node));
 		stack_frame_start();
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const BlockStatement node) {
 		info("exit frame by %s", typeid(node));
 		stack_frame_exit();
 	}
 
-	override void visit(const ClassDeclaration node) {
+	override void visitStart(const ClassDeclaration node) {
 		parents.push(IdentifierType.class_);
 		this_pointers.push(node.name.text);
 
 		declare_class(node);
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const ClassDeclaration node) {
 		this_pointers.pop();
 		parents.pop();
 	}
 
-	override void visit(const CmpExpression node) {
+	override void visitStart(const CmpExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const Declaration node) {
+	override void visitStart(const Declaration node) {
 		// Add decorations such as properties, auto, ref, et cetera
 		Decoration decoration = get_declaration_decorations(node);
 		decorations.push(decoration);
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const Declaration node) {
 		decorations.pop();
 	}
 
-	override void visit(const EnumDeclaration node) {
+	override void visitStart(const EnumDeclaration node) {
 		parents.push(IdentifierType.enum_);
-
 		declare_enum(node);
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const EnumDeclaration node) {
 		parents.pop();
 	}
 
-	override void visit(const EqualExpression node) {
+	override void visitStart(const EqualExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const FunctionDeclaration node) {
+	override void visitStart(const FunctionDeclaration node) {
 		// Only declare if NOT a struct/class method
 		if(parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
 			declare_function(node);
@@ -120,26 +110,24 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 
 		parents.push(IdentifierType.function_);
 		stack_frame_start();
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const FunctionDeclaration node) {
 		stack_frame_exit();
 		parents.pop();
 	}
 
-	override void visit(const IdentityExpression node) {
+	override void visitStart(const IdentityExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const InExpression node) {
+	override void visitStart(const InExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const Module node) {
+	override void visitStart(const Module node) {
 		// Turn logging on if desired
-		bool prev_log = g_log_info;
+		prev_log = g_log_info;
 		g_log_info = _log_info;
 
 		info("start frame by %s", typeid(node));
@@ -174,10 +162,9 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 			// Remove decorations
 			decorations.pop();
 		}
+	}
 
-		// Walk through the declarations normally
-		node.accept(this);
-
+	override void visitEnd(const Module node) {
 		parents.pop();
 
 		info("exit frame by %s", typeid(node));
@@ -187,76 +174,63 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 		g_log_info = prev_log;
 	}
 
-	override void visit(const MulExpression node) {
+	override void visitStart(const MulExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const OrOrExpression node) {
+	override void visitStart(const OrOrExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const OrExpression node) {
+	override void visitStart(const OrExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const Parameter node) {
+	override void visitStart(const Parameter node) {
 		declare_parameter(node);
-
-		node.accept(this);
 	}
 
-	override void visit(const PowExpression node) {
+	override void visitStart(const PowExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const RelExpression node) {
+	override void visitStart(const RelExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const ShiftExpression node) {
+	override void visitStart(const ShiftExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 
-	override void visit(const SingleImport node) {
+	override void visitStart(const SingleImport node) {
 		declare_import(node);
-		node.accept(this);
 	}
 
-	override void visit(const StructDeclaration node) {
+	override void visitStart(const StructDeclaration node) {
 		parents.push(IdentifierType.struct_);
 		this_pointers.push(node.name.text);
 
 		declare_struct(node);
+	}
 
-		node.accept(this);
-
+	override void visitEnd(const StructDeclaration node) {
 		this_pointers.pop();
 		parents.pop();
 	}
 
-	override void visit(const TemplateParameters node) {
+	override void visitStart(const TemplateParameters node) {
 		declare_templates(node);
-		node.accept(this);
 	}
 
-	override void visit(const VariableDeclaration node) {
+	override void visitStart(const VariableDeclaration node) {
 		// Only declare if NOT a struct/class field
 		if(parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
 			declare_variable(node);
 		}
-
-		node.accept(this);
 	}
 
-	override void visit(const XorExpression node) {
+	override void visitStart(const XorExpression node) {
 		mark_used_variables(node);
-		node.accept(this);
 	}
 }
 

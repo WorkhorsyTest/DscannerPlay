@@ -27,7 +27,7 @@ template callOnActualType(string ifClause, string elseClause, string types) {
 
 		foreach(n, type; std.string.split(types, ".")) {
 			string condition = n ? "else if" : "if";
-			result ~= condition ~ " (auto actual = cast(const " ~ type ~ ") unknown) {\n" ~ ifClause ~ ";\n}";
+			result ~= condition ~ " (auto actual = cast(const " ~ type ~ ") unknown) {\n" ~ ifClause ~ "\n}";
 		}
 
 		result ~= "else {\n" ~ elseClause ~ ";\n}";

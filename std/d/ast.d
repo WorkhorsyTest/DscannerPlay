@@ -232,25 +232,424 @@ public:
     /** */ void visit(const WithStatement withStatement) { withStatement.accept(this); }
     /** */ void visit(const XorExpression xorExpression) { xorExpression.accept(this); }
 
-    void visit(const ExpressionNode node)
-    {
-        this.callVisit(node);
-    }
+    /** */ void visitStart(const AddExpression node) { }
+    /** */ void visitStart(const AliasDeclaration node) { }
+    /** */ void visitStart(const AliasInitializer node) { }
+    /** */ void visitStart(const AliasThisDeclaration node) { }
+    /** */ void visitStart(const AlignAttribute node) { }
+    /** */ void visitStart(const AndAndExpression node) { }
+    /** */ void visitStart(const AndExpression node) { }
+    /** */ void visitStart(const ArgumentList node) { }
+    /** */ void visitStart(const Arguments node) { }
+    /** */ void visitStart(const ArrayInitializer node) { }
+    /** */ void visitStart(const ArrayLiteral node) { }
+    /** */ void visitStart(const ArrayMemberInitialization node) { }
+    /** */ void visitStart(const AsmAddExp node) { }
+    /** */ void visitStart(const AsmAndExp node) { }
+    /** */ void visitStart(const AsmBrExp node) { }
+    /** */ void visitStart(const AsmEqualExp node) { }
+    /** */ void visitStart(const AsmExp node) { }
+    /** */ void visitStart(const AsmInstruction node) { }
+    /** */ void visitStart(const AsmLogAndExp node) { }
+    /** */ void visitStart(const AsmLogOrExp node) { }
+    /** */ void visitStart(const AsmMulExp node) { }
+    /** */ void visitStart(const AsmOrExp node) { }
+    /** */ void visitStart(const AsmPrimaryExp node) { }
+    /** */ void visitStart(const AsmRelExp node) { }
+    /** */ void visitStart(const AsmShiftExp node) { }
+    /** */ void visitStart(const AsmStatement node) { }
+    /** */ void visitStart(const AsmTypePrefix node) { }
+    /** */ void visitStart(const AsmUnaExp node) { }
+    /** */ void visitStart(const AsmXorExp node) { }
+    /** */ void visitStart(const AssertExpression node) { }
+    /** */ void visitStart(const AssignExpression node) { }
+    /** */ void visitStart(const AssocArrayLiteral node) { }
+    /** */ void visitStart(const AtAttribute node) { }
+    /** */ void visitStart(const Attribute node) { }
+    /** */ void visitStart(const AttributeDeclaration node) { }
+    /** */ void visitStart(const AutoDeclaration node) { }
+    /** */ void visitStart(const BlockStatement node) { }
+    /** */ void visitStart(const BodyStatement node) { }
+    /** */ void visitStart(const BreakStatement node) { }
+    /** */ void visitStart(const BaseClass node) { }
+    /** */ void visitStart(const BaseClassList node) { }
+    /** */ void visitStart(const CaseRangeStatement node) { }
+    /** */ void visitStart(const CaseStatement node) { }
+    /** */ void visitStart(const CastExpression node) { }
+    /** */ void visitStart(const CastQualifier node) { }
+    /** */ void visitStart(const Catch node) { }
+    /** */ void visitStart(const Catches node) { }
+    /** */ void visitStart(const ClassDeclaration node) { }
+    /** */ void visitStart(const CmpExpression node) { }
+    /** */ void visitStart(const CompileCondition node) { }
+    /** */ void visitStart(const ConditionalDeclaration node) { }
+    /** */ void visitStart(const ConditionalStatement node) { }
+    /** */ void visitStart(const Constraint node) { }
+    /** */ void visitStart(const Constructor node) { }
+    /** */ void visitStart(const ContinueStatement node) { }
+    /** */ void visitStart(const DebugCondition node) { }
+    /** */ void visitStart(const DebugSpecification node) { }
+    /** */ void visitStart(const Declaration node) { }
+    /** */ void visitStart(const DeclarationOrStatement node) { }
+    /** */ void visitStart(const DeclarationsAndStatements node) { }
+    /** */ void visitStart(const Declarator node) { }
+    /** */ void visitStart(const DefaultStatement node) { }
+    /** */ void visitStart(const DeleteExpression node) { }
+    /** */ void visitStart(const DeleteStatement node) { }
+    /** */ void visitStart(const Deprecated node) { }
+    /** */ void visitStart(const Destructor node) { }
+    /** */ void visitStart(const DoStatement node) { }
+    /** */ void visitStart(const EnumBody node) { }
+    /** */ void visitStart(const EnumDeclaration node) { }
+    /** */ void visitStart(const EnumMember node) { }
+    /** */ void visitStart(const EponymousTemplateDeclaration node) { }
+    /** */ void visitStart(const EqualExpression node) { }
+    /** */ void visitStart(const Expression node) { }
+    /** */ void visitStart(const ExpressionStatement node) { }
+    /** */ void visitStart(const FinalSwitchStatement node) { }
+    /** */ void visitStart(const Finally node) { }
+    /** */ void visitStart(const ForStatement node) { }
+    /** */ void visitStart(const ForeachStatement node) { }
+    /** */ void visitStart(const ForeachType node) { }
+    /** */ void visitStart(const ForeachTypeList node) { }
+    /** */ void visitStart(const FunctionAttribute node) { }
+    /** */ void visitStart(const FunctionBody node) { }
+    /** */ void visitStart(const FunctionCallExpression node) { }
+    /** */ void visitStart(const FunctionCallStatement node) { }
+    /** */ void visitStart(const FunctionDeclaration node) { }
+    /** */ void visitStart(const FunctionLiteralExpression node) { }
+    /** */ void visitStart(const GotoStatement node) { }
+    /** */ void visitStart(const IdentifierChain node) { }
+    /** */ void visitStart(const IdentifierList node) { }
+    /** */ void visitStart(const IdentifierOrTemplateChain node) { }
+    /** */ void visitStart(const IdentifierOrTemplateInstance node) { }
+    /** */ void visitStart(const IdentityExpression node) { }
+    /** */ void visitStart(const IdType node) { }
+    /** */ void visitStart(const IfStatement node) { }
+    /** */ void visitStart(const ImportBind node) { }
+    /** */ void visitStart(const ImportBindings node) { }
+    /** */ void visitStart(const ImportDeclaration node) { }
+    /** */ void visitStart(const ImportExpression node) { }
+    /** */ void visitStart(const IndexExpression node) { }
+    /** */ void visitStart(const InExpression node) { }
+    /** */ void visitStart(const InStatement node) { }
+    /** */ void visitStart(const Initialize node) { }
+    /** */ void visitStart(const Initializer node) { }
+    /** */ void visitStart(const InterfaceDeclaration node) { }
+    /** */ void visitStart(const Invariant  node) { }
+    /** */ void visitStart(const IsExpression node) { }
+    /** */ void visitStart(const KeyValuePair node) { }
+    /** */ void visitStart(const KeyValuePairs node) { }
+    /** */ void visitStart(const LabeledStatement node) { }
+    /** */ void visitStart(const LambdaExpression node) { }
+    /** */ void visitStart(const LastCatch node) { }
+    /** */ void visitStart(const LinkageAttribute node) { }
+    /** */ void visitStart(const MemberFunctionAttribute node) { }
+    /** */ void visitStart(const MixinDeclaration node) { }
+    /** */ void visitStart(const MixinExpression node) { }
+    /** */ void visitStart(const MixinTemplateDeclaration node) { }
+    /** */ void visitStart(const MixinTemplateName node) { }
+    /** */ void visitStart(const Module node) { }
+    /** */ void visitStart(const ModuleDeclaration node) { }
+    /** */ void visitStart(const MulExpression node) { }
+    /** */ void visitStart(const NewAnonClassExpression node) { }
+    /** */ void visitStart(const NewExpression node) { }
+    /** */ void visitStart(const NonVoidInitializer node) { }
+    /** */ void visitStart(const Operand node) { }
+    /** */ void visitStart(const Operands node) { }
+    /** */ void visitStart(const OrExpression node) { }
+    /** */ void visitStart(const OrOrExpression node) { }
+    /** */ void visitStart(const OutStatement node) { }
+    /** */ void visitStart(const Parameter node) { }
+    /** */ void visitStart(const Parameters node) { }
+    /** */ void visitStart(const Postblit node) { }
+    /** */ void visitStart(const PostIncDecExpression node) { }
+    /** */ void visitStart(const PowExpression node) { }
+    /** */ void visitStart(const PragmaDeclaration node) { }
+    /** */ void visitStart(const PragmaExpression node) { }
+    /** */ void visitStart(const PreIncDecExpression node) { }
+    /** */ void visitStart(const PrimaryExpression node) { }
+    /** */ void visitStart(const Register node) { }
+    /** */ void visitStart(const RelExpression node) { }
+    /** */ void visitStart(const ReturnStatement node) { }
+    /** */ void visitStart(const ScopeGuardStatement node) { }
+    /** */ void visitStart(const SharedStaticConstructor node) { }
+    /** */ void visitStart(const SharedStaticDestructor node) { }
+    /** */ void visitStart(const ShiftExpression node) { }
+    /** */ void visitStart(const SingleImport node) { }
+    /** */ void visitStart(const SliceExpression node) { }
+    /** */ void visitStart(const Statement node) { }
+    /** */ void visitStart(const StatementNoCaseNoDefault node) { }
+    /** */ void visitStart(const StaticAssertDeclaration node) { }
+    /** */ void visitStart(const StaticAssertStatement node) { }
+    /** */ void visitStart(const StaticConstructor node) { }
+    /** */ void visitStart(const StaticDestructor node) { }
+    /** */ void visitStart(const StaticIfCondition node) { }
+    /** */ void visitStart(const StorageClass node) { }
+    /** */ void visitStart(const StructBody node) { }
+    /** */ void visitStart(const StructDeclaration node) { }
+    /** */ void visitStart(const StructInitializer node) { }
+    /** */ void visitStart(const StructMemberInitializer node) { }
+    /** */ void visitStart(const StructMemberInitializers node) { }
+    /** */ void visitStart(const SwitchStatement node) { }
+    /** */ void visitStart(const Symbol node) { }
+    /** */ void visitStart(const SynchronizedStatement node) { }
+    /** */ void visitStart(const TemplateAliasParameter node) { }
+    /** */ void visitStart(const TemplateArgument node) { }
+    /** */ void visitStart(const TemplateArgumentList node) { }
+    /** */ void visitStart(const TemplateArguments node) { }
+    /** */ void visitStart(const TemplateDeclaration node) { }
+    /** */ void visitStart(const TemplateInstance node) { }
+    /** */ void visitStart(const TemplateMixinExpression node) { }
+    /** */ void visitStart(const TemplateParameter node) { }
+    /** */ void visitStart(const TemplateParameterList node) { }
+    /** */ void visitStart(const TemplateParameters node) { }
+    /** */ void visitStart(const TemplateSingleArgument node) { }
+    /** */ void visitStart(const TemplateThisParameter node) { }
+    /** */ void visitStart(const TemplateTupleParameter node) { }
+    /** */ void visitStart(const TemplateTypeParameter node) { }
+    /** */ void visitStart(const TemplateValueParameter node) { }
+    /** */ void visitStart(const TemplateValueParameterDefault node) { }
+    /** */ void visitStart(const TernaryExpression node) { }
+    /** */ void visitStart(const ThrowStatement node) { }
+    /** */ void visitStart(const Token node) { }
+    /** */ void visitStart(const TraitsExpression node) { }
+    /** */ void visitStart(const TryStatement node) { }
+    /** */ void visitStart(const Type node) { }
+    /** */ void visitStart(const Type2 node) { }
+    /** */ void visitStart(const TypeSpecialization node) { }
+    /** */ void visitStart(const TypeSuffix node) { }
+    /** */ void visitStart(const TypeidExpression node) { }
+    /** */ void visitStart(const TypeofExpression node) { }
+    /** */ void visitStart(const UnaryExpression node) { }
+    /** */ void visitStart(const UnionDeclaration node) { }
+    /** */ void visitStart(const Unittest node) { }
+    /** */ void visitStart(const VariableDeclaration node) { }
+    /** */ void visitStart(const Vector node) { }
+    /** */ void visitStart(const VersionCondition node) { }
+    /** */ void visitStart(const VersionSpecification node) { }
+    /** */ void visitStart(const WhileStatement node) { }
+    /** */ void visitStart(const WithStatement node) { }
+    /** */ void visitStart(const XorExpression node) { }
+
+    /** */ void visitEnd(const AddExpression node) { }
+    /** */ void visitEnd(const AliasDeclaration node) { }
+    /** */ void visitEnd(const AliasInitializer node) { }
+    /** */ void visitEnd(const AliasThisDeclaration node) { }
+    /** */ void visitEnd(const AlignAttribute node) { }
+    /** */ void visitEnd(const AndAndExpression node) { }
+    /** */ void visitEnd(const AndExpression node) { }
+    /** */ void visitEnd(const ArgumentList node) { }
+    /** */ void visitEnd(const Arguments node) { }
+    /** */ void visitEnd(const ArrayInitializer node) { }
+    /** */ void visitEnd(const ArrayLiteral node) { }
+    /** */ void visitEnd(const ArrayMemberInitialization node) { }
+    /** */ void visitEnd(const AsmAddExp node) { }
+    /** */ void visitEnd(const AsmAndExp node) { }
+    /** */ void visitEnd(const AsmBrExp node) { }
+    /** */ void visitEnd(const AsmEqualExp node) { }
+    /** */ void visitEnd(const AsmExp node) { }
+    /** */ void visitEnd(const AsmInstruction node) { }
+    /** */ void visitEnd(const AsmLogAndExp node) { }
+    /** */ void visitEnd(const AsmLogOrExp node) { }
+    /** */ void visitEnd(const AsmMulExp node) { }
+    /** */ void visitEnd(const AsmOrExp node) { }
+    /** */ void visitEnd(const AsmPrimaryExp node) { }
+    /** */ void visitEnd(const AsmRelExp node) { }
+    /** */ void visitEnd(const AsmShiftExp node) { }
+    /** */ void visitEnd(const AsmStatement node) { }
+    /** */ void visitEnd(const AsmTypePrefix node) { }
+    /** */ void visitEnd(const AsmUnaExp node) { }
+    /** */ void visitEnd(const AsmXorExp node) { }
+    /** */ void visitEnd(const AssertExpression node) { }
+    /** */ void visitEnd(const AssignExpression node) { }
+    /** */ void visitEnd(const AssocArrayLiteral node) { }
+    /** */ void visitEnd(const AtAttribute node) { }
+    /** */ void visitEnd(const Attribute node) { }
+    /** */ void visitEnd(const AttributeDeclaration node) { }
+    /** */ void visitEnd(const AutoDeclaration node) { }
+    /** */ void visitEnd(const BlockStatement node) { }
+    /** */ void visitEnd(const BodyStatement node) { }
+    /** */ void visitEnd(const BreakStatement node) { }
+    /** */ void visitEnd(const BaseClass node) { }
+    /** */ void visitEnd(const BaseClassList node) { }
+    /** */ void visitEnd(const CaseRangeStatement node) { }
+    /** */ void visitEnd(const CaseStatement node) { }
+    /** */ void visitEnd(const CastExpression node) { }
+    /** */ void visitEnd(const CastQualifier node) { }
+    /** */ void visitEnd(const Catch node) { }
+    /** */ void visitEnd(const Catches node) { }
+    /** */ void visitEnd(const ClassDeclaration node) { }
+    /** */ void visitEnd(const CmpExpression node) { }
+    /** */ void visitEnd(const CompileCondition node) { }
+    /** */ void visitEnd(const ConditionalDeclaration node) { }
+    /** */ void visitEnd(const ConditionalStatement node) { }
+    /** */ void visitEnd(const Constraint node) { }
+    /** */ void visitEnd(const Constructor node) { }
+    /** */ void visitEnd(const ContinueStatement node) { }
+    /** */ void visitEnd(const DebugCondition node) { }
+    /** */ void visitEnd(const DebugSpecification node) { }
+    /** */ void visitEnd(const Declaration node) { }
+    /** */ void visitEnd(const DeclarationOrStatement node) { }
+    /** */ void visitEnd(const DeclarationsAndStatements node) { }
+    /** */ void visitEnd(const Declarator node) { }
+    /** */ void visitEnd(const DefaultStatement node) { }
+    /** */ void visitEnd(const DeleteExpression node) { }
+    /** */ void visitEnd(const DeleteStatement node) { }
+    /** */ void visitEnd(const Deprecated node) { }
+    /** */ void visitEnd(const Destructor node) { }
+    /** */ void visitEnd(const DoStatement node) { }
+    /** */ void visitEnd(const EnumBody node) { }
+    /** */ void visitEnd(const EnumDeclaration node) { }
+    /** */ void visitEnd(const EnumMember node) { }
+    /** */ void visitEnd(const EponymousTemplateDeclaration node) { }
+    /** */ void visitEnd(const EqualExpression node) { }
+    /** */ void visitEnd(const Expression node) { }
+    /** */ void visitEnd(const ExpressionStatement node) { }
+    /** */ void visitEnd(const FinalSwitchStatement node) { }
+    /** */ void visitEnd(const Finally node) { }
+    /** */ void visitEnd(const ForStatement node) { }
+    /** */ void visitEnd(const ForeachStatement node) { }
+    /** */ void visitEnd(const ForeachType node) { }
+    /** */ void visitEnd(const ForeachTypeList node) { }
+    /** */ void visitEnd(const FunctionAttribute node) { }
+    /** */ void visitEnd(const FunctionBody node) { }
+    /** */ void visitEnd(const FunctionCallExpression node) { }
+    /** */ void visitEnd(const FunctionCallStatement node) { }
+    /** */ void visitEnd(const FunctionDeclaration node) { }
+    /** */ void visitEnd(const FunctionLiteralExpression node) { }
+    /** */ void visitEnd(const GotoStatement node) { }
+    /** */ void visitEnd(const IdentifierChain node) { }
+    /** */ void visitEnd(const IdentifierList node) { }
+    /** */ void visitEnd(const IdentifierOrTemplateChain node) { }
+    /** */ void visitEnd(const IdentifierOrTemplateInstance node) { }
+    /** */ void visitEnd(const IdentityExpression node) { }
+    /** */ void visitEnd(const IdType node) { }
+    /** */ void visitEnd(const IfStatement node) { }
+    /** */ void visitEnd(const ImportBind node) { }
+    /** */ void visitEnd(const ImportBindings node) { }
+    /** */ void visitEnd(const ImportDeclaration node) { }
+    /** */ void visitEnd(const ImportExpression node) { }
+    /** */ void visitEnd(const IndexExpression node) { }
+    /** */ void visitEnd(const InExpression node) { }
+    /** */ void visitEnd(const InStatement node) { }
+    /** */ void visitEnd(const Initialize node) { }
+    /** */ void visitEnd(const Initializer node) { }
+    /** */ void visitEnd(const InterfaceDeclaration node) { }
+    /** */ void visitEnd(const Invariant  node) { }
+    /** */ void visitEnd(const IsExpression node) { }
+    /** */ void visitEnd(const KeyValuePair node) { }
+    /** */ void visitEnd(const KeyValuePairs node) { }
+    /** */ void visitEnd(const LabeledStatement node) { }
+    /** */ void visitEnd(const LambdaExpression node) { }
+    /** */ void visitEnd(const LastCatch node) { }
+    /** */ void visitEnd(const LinkageAttribute node) { }
+    /** */ void visitEnd(const MemberFunctionAttribute node) { }
+    /** */ void visitEnd(const MixinDeclaration node) { }
+    /** */ void visitEnd(const MixinExpression node) { }
+    /** */ void visitEnd(const MixinTemplateDeclaration node) { }
+    /** */ void visitEnd(const MixinTemplateName node) { }
+    /** */ void visitEnd(const Module node) { }
+    /** */ void visitEnd(const ModuleDeclaration node) { }
+    /** */ void visitEnd(const MulExpression node) { }
+    /** */ void visitEnd(const NewAnonClassExpression node) { }
+    /** */ void visitEnd(const NewExpression node) { }
+    /** */ void visitEnd(const NonVoidInitializer node) { }
+    /** */ void visitEnd(const Operand node) { }
+    /** */ void visitEnd(const Operands node) { }
+    /** */ void visitEnd(const OrExpression node) { }
+    /** */ void visitEnd(const OrOrExpression node) { }
+    /** */ void visitEnd(const OutStatement node) { }
+    /** */ void visitEnd(const Parameter node) { }
+    /** */ void visitEnd(const Parameters node) { }
+    /** */ void visitEnd(const Postblit node) { }
+    /** */ void visitEnd(const PostIncDecExpression node) { }
+    /** */ void visitEnd(const PowExpression node) { }
+    /** */ void visitEnd(const PragmaDeclaration node) { }
+    /** */ void visitEnd(const PragmaExpression node) { }
+    /** */ void visitEnd(const PreIncDecExpression node) { }
+    /** */ void visitEnd(const PrimaryExpression node) { }
+    /** */ void visitEnd(const Register node) { }
+    /** */ void visitEnd(const RelExpression node) { }
+    /** */ void visitEnd(const ReturnStatement node) { }
+    /** */ void visitEnd(const ScopeGuardStatement node) { }
+    /** */ void visitEnd(const SharedStaticConstructor node) { }
+    /** */ void visitEnd(const SharedStaticDestructor node) { }
+    /** */ void visitEnd(const ShiftExpression node) { }
+    /** */ void visitEnd(const SingleImport node) { }
+    /** */ void visitEnd(const SliceExpression node) { }
+    /** */ void visitEnd(const Statement node) { }
+    /** */ void visitEnd(const StatementNoCaseNoDefault node) { }
+    /** */ void visitEnd(const StaticAssertDeclaration node) { }
+    /** */ void visitEnd(const StaticAssertStatement node) { }
+    /** */ void visitEnd(const StaticConstructor node) { }
+    /** */ void visitEnd(const StaticDestructor node) { }
+    /** */ void visitEnd(const StaticIfCondition node) { }
+    /** */ void visitEnd(const StorageClass node) { }
+    /** */ void visitEnd(const StructBody node) { }
+    /** */ void visitEnd(const StructDeclaration node) { }
+    /** */ void visitEnd(const StructInitializer node) { }
+    /** */ void visitEnd(const StructMemberInitializer node) { }
+    /** */ void visitEnd(const StructMemberInitializers node) { }
+    /** */ void visitEnd(const SwitchStatement node) { }
+    /** */ void visitEnd(const Symbol node) { }
+    /** */ void visitEnd(const SynchronizedStatement node) { }
+    /** */ void visitEnd(const TemplateAliasParameter node) { }
+    /** */ void visitEnd(const TemplateArgument node) { }
+    /** */ void visitEnd(const TemplateArgumentList node) { }
+    /** */ void visitEnd(const TemplateArguments node) { }
+    /** */ void visitEnd(const TemplateDeclaration node) { }
+    /** */ void visitEnd(const TemplateInstance node) { }
+    /** */ void visitEnd(const TemplateMixinExpression node) { }
+    /** */ void visitEnd(const TemplateParameter node) { }
+    /** */ void visitEnd(const TemplateParameterList node) { }
+    /** */ void visitEnd(const TemplateParameters node) { }
+    /** */ void visitEnd(const TemplateSingleArgument node) { }
+    /** */ void visitEnd(const TemplateThisParameter node) { }
+    /** */ void visitEnd(const TemplateTupleParameter node) { }
+    /** */ void visitEnd(const TemplateTypeParameter node) { }
+    /** */ void visitEnd(const TemplateValueParameter node) { }
+    /** */ void visitEnd(const TemplateValueParameterDefault node) { }
+    /** */ void visitEnd(const TernaryExpression node) { }
+    /** */ void visitEnd(const Token node) { }
+    /** */ void visitEnd(const ThrowStatement node) { }
+    /** */ void visitEnd(const TraitsExpression node) { }
+    /** */ void visitEnd(const TryStatement node) { }
+    /** */ void visitEnd(const Type node) { }
+    /** */ void visitEnd(const Type2 node) { }
+    /** */ void visitEnd(const TypeSpecialization node) { }
+    /** */ void visitEnd(const TypeSuffix node) { }
+    /** */ void visitEnd(const TypeidExpression node) { }
+    /** */ void visitEnd(const TypeofExpression node) { }
+    /** */ void visitEnd(const UnaryExpression node) { }
+    /** */ void visitEnd(const UnionDeclaration node) { }
+    /** */ void visitEnd(const Unittest node) { }
+    /** */ void visitEnd(const VariableDeclaration node) { }
+    /** */ void visitEnd(const Vector node) { }
+    /** */ void visitEnd(const VersionCondition node) { }
+    /** */ void visitEnd(const VersionSpecification node) { }
+    /** */ void visitEnd(const WhileStatement node) { }
+    /** */ void visitEnd(const WithStatement node) { }
+    /** */ void visitEnd(const XorExpression node) { }
 
     void callVisit(const Token token)
     {
+        this.visitStart(token);
         this.visit(token);
+        this.visitEnd(token);
     }
 
     void callVisit(const IdType idType)
     {
+        this.visitStart(idType);
         this.visit(idType);
+        this.visitEnd(idType);
     }
 
     void callVisit(const ASTNode unknown)
     {
         mixin(std.d.codegen.callOnActualType!(
-            "this.visit(actual)", 
+            "this.visitStart(actual);\nthis.visit(actual);\nthis.visitEnd(actual);", 
             "throw new Exception(std.string.format(\"Unexpected ast node type: %s\", typeid(unknown)))", 
             NODE_TYPE_NAMES));
     }
@@ -287,7 +686,7 @@ template visitIfNotNull(fields ...)
 // FIXME: Change all accept methods to be generated with this
 mixin template acceptMembersIfNotNull()
 {
-    override void accept(ASTVisitor analyzer) const
+    override void accept(ASTVisitor visitor) const
     {
         foreach (member_string; __traits(allMembers, typeof(this)))
         {
@@ -301,7 +700,7 @@ mixin template acceptMembersIfNotNull()
                     && !is(member == enum)
                     && __traits(identifier, member) != "Monitor")
             {
-                mixin("analyzer.visit(this." ~ member_string ~ ");\n");
+                mixin("visitor.callVisit(this." ~ member_string ~ ");\n");
             }
         }
     }
@@ -774,9 +1173,10 @@ final class AutoDeclaration : ASTNode
 public:
     override void accept(ASTVisitor visitor) const
     {
+        // FIXME: Is there a reason why this does not use the visitIfNotNull template?
         foreach (i; 0 .. initializers.length)
         {
-            visitor.visit(initializers[i]);
+            visitor.callVisit(initializers[i]);
         }
     }
     /** */ Token[] identifiers;

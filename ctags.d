@@ -30,7 +30,7 @@ void printCtags(File output, string[] fileNames)
 		Module m = parseModule(tokens.array, fileName, null, &doNothing);
 		auto printer = new CTagsPrinter;
 		printer.fileName = fileName;
-		printer.visit(m);
+		printer.callVisit(m);
 		tags ~= printer.tagLines;
 	}
 	output.write("!_TAG_FILE_FORMAT\t2\n"

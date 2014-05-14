@@ -39,7 +39,7 @@ int main(string[] args)
 
 int run(string[] args)
 {
-	version(LINUX) {
+	version(linux) {
 	// Make backtraces work in Linux
 	import backtrace.backtrace;
 	PrintOptions options;
@@ -198,7 +198,7 @@ int run(string[] args)
 			if (imports)
 			{
 				auto visitor = new ImportPrinter;
-				visitor.visit(mod);
+				visitor.callVisit(mod);
 				foreach (imp; visitor.imports[])
 					writeln(imp);
 			}
@@ -206,12 +206,12 @@ int run(string[] args)
 			{
 				auto printer = new XMLPrinter;
 				printer.output = stdout;
-				printer.visit(mod);
+				printer.callVisit(mod);
 			}
 			else if (outline)
 			{
 				auto outliner = new Outliner(stdout);
-				outliner.visit(mod);
+				outliner.callVisit(mod);
 			}
 		}
 	}
