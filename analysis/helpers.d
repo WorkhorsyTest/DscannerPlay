@@ -397,13 +397,15 @@ void load_module(string file_name) {
 		TemplateData[] datas;
 		if(templateParameters && templateParameters.templateParameterList) {
 			foreach(item; templateParameters.templateParameterList.items) {
-				if(item) {
+				if(item && item.templateTypeParameter) {
 					auto identifier = item.templateTypeParameter.identifier;
-					TemplateData data;
-					data.name = identifier.text;
-					data.line = identifier.line;
-					data.column = identifier.column;
-					datas ~= data;
+					if(identifier !is Token.init) {
+						TemplateData data;
+						data.name = identifier.text;
+						data.line = identifier.line;
+						data.column = identifier.column;
+						datas ~= data;
+					}
 				}
 			}
 		}
