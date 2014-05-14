@@ -23,6 +23,7 @@ import analysis.numbers;
 import analysis.objectconst;
 import analysis.range;
 import analysis.ifelsesame;
+import analysis.unused;
 import analysis.constructors;
 import analysis.check_compare;
 import analysis.check_name_clash;
@@ -41,12 +42,13 @@ enum AnalyzerCheck : int {
 	backwards_range_check = 0x80, 
 	if_else_same_check = 0x100, 
 	constructor_check = 0x200, 
-	compare_check = 0x400, 
-	size_t_check = 0x800, 
-	unused_check = 0x1000, 
-	name_clash_check = 0x2000, 
-	check_string_format = 0x4000, 
-	all = 0x7FFF
+	unused_variable_check = 0x400, 
+	compare_check = 0x800, 
+	size_t_check = 0x1000, 
+	unused_check = 0x2000, 
+	name_clash_check = 0x4000, 
+	check_string_format = 0x8000, 
+	all = 0xFFFF
 }
 
 void messageFunction(string fileName, size_t line, size_t column, string message,
@@ -141,13 +143,12 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	if (analyzers & AnalyzerCheck.backwards_range_check) checks ~= new BackwardsRangeCheck(fileName);
 	if (analyzers & AnalyzerCheck.if_else_same_check) checks ~= new IfElseSameCheck(fileName);
 	if (analyzers & AnalyzerCheck.constructor_check) checks ~= new ConstructorCheck(fileName);
+	if (analyzers & AnalyzerCheck.unused_variable_check) checks ~= new UnusedVariableCheck(fileName);
 	if (analyzers & AnalyzerCheck.compare_check) checks ~= new CompareCheck(fileName);
-/*
-	if (analyzers & AnalyzerCheck.size_t_check) checks ~= new NameClashCheck(fileName);
-	if (analyzers & AnalyzerCheck.unused_check) checks ~= new SizeTCheck(fileName);
-	if (analyzers & AnalyzerCheck.name_clash_check) checks ~= new CheckStringFormat(fileName);
-	if (analyzers & AnalyzerCheck.check_string_format) checks ~= new UnusedCheck(fileName);
-*/
+	if (analyzers & AnalyzerCheck.name_clash_check) checks ~= new NameClashCheck(fileName);
+	if (analyzers & AnalyzerCheck.size_t_check) checks ~= new SizeTCheck(fileName);
+	if (analyzers & AnalyzerCheck.check_string_format) checks ~= new CheckStringFormat(fileName);
+	if (analyzers & AnalyzerCheck.unused_check) checks ~= new UnusedCheck(fileName);
 
 	foreach (check; checks)
 	{

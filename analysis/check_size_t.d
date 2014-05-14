@@ -17,7 +17,7 @@ import analysis.base;
 import analysis.helpers;
 import analysis.stack_frame;
 import analysis.walking_analyzer;
-version(none) {
+
 /**
  * Checks for errors with using size_t:
  * size_t = long fails on 32bit but not on 64bit
@@ -30,19 +30,19 @@ class SizeTCheck : BaseWalkingAnalyzer {
 		super(fileName, false);
 	}
 
-	override void visit(const VariableDeclaration varDec, VisitMode visit_mode) {
-		if(visit_mode == VisitMode.on_start)
-			check_size_t_initializer(varDec);
+	override void visit(const VariableDeclaration varDec) {
+		check_size_t_initializer(varDec);
+		varDec.accept(this);
 	}
 
-	override void visit(const AssignExpression assExp, VisitMode visit_mode) {
-		if(visit_mode == VisitMode.on_exit)
-			check_size_t_expression(assExp);
+	override void visit(const AssignExpression assExp) {
+		assExp.accept(this);
+		check_size_t_expression(assExp);
 	}
 
-	override void visit(const FunctionCallExpression fncExp, VisitMode visit_mode) {
-		if(visit_mode == VisitMode.on_exit)
-			check_size_t_function_calls(fncExp);
+	override void visit(const FunctionCallExpression fncExp) {
+		fncExp.accept(this);
+		check_size_t_function_calls(fncExp);
 	}
 
 	void check_size_t_initializer(const VariableDeclaration varDec) {
@@ -391,4 +391,4 @@ version(none) {
 	}c, analysis.run.AnalyzerCheck.size_t_check);
 	stderr.writeln("Unittest for SizeTCheck passed.");
 }
-}
+

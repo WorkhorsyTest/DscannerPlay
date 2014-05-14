@@ -17,7 +17,7 @@ import analysis.base;
 import analysis.helpers;
 import analysis.stack_frame;
 import analysis.walking_analyzer;
-version(none) {
+
 /**
  * Checks for unused variables and function parameters.
  */
@@ -28,14 +28,14 @@ class UnusedCheck : BaseWalkingAnalyzer {
 		super(fileName, false);
 	}
 
-	override void visit(const BlockStatement blockSta, VisitMode visit_mode) {
-		if(visit_mode == VisitMode.on_exit)
-			check_variables_unused();
+	override void visit(const BlockStatement blockSta) {
+		blockSta.accept(this);
+		check_variables_unused();
 	}
 
-	override void visit(const FunctionDeclaration funcDec, VisitMode visit_mode) {
-		if(visit_mode == VisitMode.on_exit)
-			check_function_params_unused(funcDec);
+	override void visit(const FunctionDeclaration funcDec) {
+		funcDec.accept(this);
+		check_function_params_unused(funcDec);
 	}
 
 	void check_function_params_unused(const FunctionDeclaration funcDec) {
@@ -199,4 +199,4 @@ unittest {
 
 	stderr.writeln("Unittest for UnusedCheck passed.");
 }
-}
+

@@ -17,7 +17,7 @@ import analysis.base;
 import analysis.helpers;
 import analysis.stack_frame;
 import analysis.walking_analyzer;
-version(none) {
+
 /**
  * Checks for name clashes in classes, structs, variables, parameters, enums, and members.
  */
@@ -28,9 +28,8 @@ class NameClashCheck : BaseWalkingAnalyzer {
 		super(fileName, false);
 	}
 
-	override void visit(const Module mod, VisitMode visit_mode) {
-		if(visit_mode != VisitMode.on_exit)
-			return;
+	override void visit(const Module mod) {
+		mod.accept(this);
 
 		foreach(name, positions; get_name_clashes()) {
 			// Skip if there are less than two
@@ -136,4 +135,4 @@ unittest {
 
 	stderr.writeln("Unittest for NameClashCheck passed.");
 }
-}
+

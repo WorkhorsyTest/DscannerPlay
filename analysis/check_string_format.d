@@ -18,7 +18,7 @@ import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
 import analysis.walking_analyzer;
-version(none) {
+
 /*
 FIXME: Make this work with:
  // http://dlang.org/phobos/std_string.html#.sformat
@@ -82,9 +82,8 @@ class CheckStringFormat : BaseWalkingAnalyzer {
 		super(fileName, false);
 	}
 
-	override void visit(const FunctionCallExpression funcCallExp, VisitMode visit_mode) {
-		if(visit_mode != VisitMode.on_start)
-			return;
+	override void visit(const FunctionCallExpression funcCallExp) {
+		funcCallExp.accept(this);
 
 		// Get the function name and args
 		string func_name = get_function_call_name(funcCallExp);
@@ -254,4 +253,4 @@ unittest {
 
 	stderr.writeln("Unittest for CheckStringFormat passed.");
 }
-}
+
