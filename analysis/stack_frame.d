@@ -469,10 +469,10 @@ void add_function(FunctionData func_data) {
 	info("add_function");
 
 	// Make sure everything is sane
-	assert(func_data != FunctionData.init, "function was null");
+	assert(func_data !is FunctionData.init, "function was null");
 	assert(func_data.name, "function name was null");
 	assert(func_data.name.length, "function name was blank");
-	assert(func_data.return_type != TypeData.init, "function return type was null");
+	assert(func_data.return_type !is TypeData.init, "function return type was null");
 	assert(func_data.line, "function line was 0");
 	assert(func_data.column, "function column was 0");
 
@@ -500,7 +500,7 @@ void add_template_parameter(TemplateData temp_data) {
 	info("add_template_parameter");
 
 	// Make sure everything is sane
-	assert(temp_data != TemplateData.init, "template was null");
+	assert(temp_data !is TemplateData.init, "template was null");
 	assert(temp_data.name, "template name was null");
 	assert(temp_data.name.length, "template name was blank");
 	assert(temp_data.line, "template line was 0");
@@ -531,10 +531,10 @@ void add_variable(VariableData var_data) {
 	info("add_variable");
 
 	// Make sure everything is sane
-	assert(var_data != VariableData.init, "variable was null");
+	assert(var_data !is VariableData.init, "variable was null");
 	assert(var_data.name, "variable name was null");
 	assert(var_data.name.length, "variable name was blank");
-	assert(var_data.type != TypeData.init, "variable type was null");
+	assert(var_data.type !is TypeData.init, "variable type was null");
 	assert(var_data.line, "variable line was 0");
 	assert(var_data.column, "variable column was 0");
 
@@ -568,7 +568,7 @@ void add_class(ClassData class_data) {
 	info("add_class");
 
 	// Make sure everything is sane
-	assert(class_data != ClassData.init, "class was null");
+	assert(class_data !is ClassData.init, "class was null");
 	assert(class_data.name, "class name was null");
 	assert(class_data.name.length, "class name was blank");
 	assert(class_data.line, "class line was 0");
@@ -606,7 +606,7 @@ void add_struct(StructData struct_data) {
 	info("add_struct");
 
 	// Make sure everything is sane
-	assert(struct_data != StructData.init, "Struct was null");
+	assert(struct_data !is StructData.init, "Struct was null");
 	assert(struct_data.name, "struct name was null");
 	assert(struct_data.name.length, "struct name was blank");
 	assert(struct_data.line, "struct line was 0");
@@ -644,7 +644,7 @@ void add_enum(EnumData enum_data) {
 	info("add_enum");
 
 	// Make sure everything is sane
-	assert(enum_data != EnumData.init, "enum was null");
+	assert(enum_data !is EnumData.init, "enum was null");
 	assert(enum_data.name, "enum name was null");
 	assert(enum_data.name.length, "enum name was blank");
 	assert(enum_data.line, "enum line was 0");
@@ -678,7 +678,7 @@ void add_module(ModuleData module_data) {
 	info("add_module");
 
 	// Make sure everything is sane
-	assert(module_data != ModuleData.init, "Module was null");
+	assert(module_data !is ModuleData.init, "Module was null");
 	assert(module_data.name, "module name was null");
 	assert(module_data.name.length, "module name was blank");
 
@@ -710,27 +710,27 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 	IdentifierType old_type;
 
 	// A variable has that name
-	if(var_data != VariableData.init) {
+	if(var_data !is VariableData.init) {
 		old_line = var_data.line;
 		old_column = var_data.column;
 		old_type = IdentifierType.variable_;
 	// A function has that name
-	} else if(func_data != FunctionData.init) {
+	} else if(func_data !is FunctionData.init) {
 		old_line = func_data.line;
 		old_column = func_data.column;
 		old_type = IdentifierType.function_;
 	// A struct has that name
-	} else if(struct_data != StructData.init) {
+	} else if(struct_data !is StructData.init) {
 		old_line = struct_data.line;
 		old_column = struct_data.column;
 		old_type = IdentifierType.struct_;
 	// A class has that name
-	} else if(class_data != ClassData.init) {
+	} else if(class_data !is ClassData.init) {
 		old_line = class_data.line;
 		old_column = class_data.column;
 		old_type = IdentifierType.class_;
 	// An enum has that name
-	} else if(enum_data != EnumData.init) {
+	} else if(enum_data !is EnumData.init) {
 		old_line = enum_data.line;
 		old_column = enum_data.column;
 		old_type = IdentifierType.enum_;

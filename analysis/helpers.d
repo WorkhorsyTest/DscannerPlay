@@ -363,7 +363,7 @@ void load_module(string file_name) {
 			string[] names = get_variable_names(varDec);
 			TokenData token_data = get_expression_return_token_data(varDec.autoDeclaration);
 
-			if(token_data == TokenData.init) {
+			if(token_data is TokenData.init) {
 				throw new Exception("Failed to get valid token from auto variable declaration.");
 			}
 
@@ -594,7 +594,7 @@ void load_module(string file_name) {
 
 		// Auto return type
 		auto decoration = analysis.stack_frame.decorations.peak;
-		if(decoration != Decoration.init && decoration.is_auto) {
+		if(decoration !is Decoration.init && decoration.is_auto) {
 			return TypeData("auto");
 		}
 
@@ -681,7 +681,7 @@ void load_module(string file_name) {
 			else
 				data = get_expression_return_token_data(ternaryExp);
 			//stderr.writefln("!!! token_data token_type:%s, data_type:%s, name:%s", data.token_type, data.type_data, data.name);
-			if(data != TokenData.init && data.name && 
+			if(data !is TokenData.init && data.name && 
 				(data.token_type == TokenType.variable || data.token_type == TokenType.field || data.token_type == TokenType.method)) {
 				string name = data.name.before(".");
 				set_variable_is_used_by_name(name);
@@ -778,7 +778,7 @@ void load_module(string file_name) {
 
 	bool is_same_token_variable(const TokenData a, const TokenData b) {
 		return 
-			a != TokenData.init && b != TokenData.init && 
+			a !is TokenData.init && b !is TokenData.init && 
 			(a.token_type == TokenType.variable && b.token_type == TokenType.variable || 
 			a.token_type == TokenType.field && b.token_type == TokenType.field) && 
 			a.name && b.name && 
@@ -978,11 +978,11 @@ void load_module(string file_name) {
 				return get_expression_return_token(primaryExp.vector, indent);
 
 			// return type
-			if(get_token_data(primaryExp.dot) != TokenData.init)
+			if(get_token_data(primaryExp.dot) !is TokenData.init)
 				return primaryExp.dot;
-			if(get_token_data(primaryExp.primary) != TokenData.init)
+			if(get_token_data(primaryExp.primary) !is TokenData.init)
 				return primaryExp.primary;
-			if(get_token_data(primaryExp.basicType) != TokenData.init)
+			if(get_token_data(primaryExp.basicType) !is TokenData.init)
 				return primaryExp.basicType;
 
 			string message = std.string.format(
@@ -1039,7 +1039,7 @@ void load_module(string file_name) {
 			if(ternaryExp.ternaryExpression)
 				return get_expression_return_token(ternaryExp.ternaryExpression, indent);
 		} else if(auto tempSingArg = cast(const TemplateSingleArgument) node) {
-			if(get_token_data(tempSingArg.token) != TokenData.init)
+			if(get_token_data(tempSingArg.token) !is TokenData.init)
 				return tempSingArg.token;
 		} else if(auto type = cast(const Type) node) {
 			if(type.type2)
@@ -1369,7 +1369,7 @@ void load_module(string file_name) {
 			auto struct_data = get_struct_data_by_name(this_pointers.peak);
 
 			// Class
-			if(class_data != ClassData.init) {
+			if(class_data !is ClassData.init) {
 				// Token is a field
 				if(member in class_data.fields) {
 					data.token_type = TokenType.this_field;
@@ -1384,7 +1384,7 @@ void load_module(string file_name) {
 					return data;
 				}
 			// Struct
-			} else if(struct_data != StructData.init) {
+			} else if(struct_data !is StructData.init) {
 				// Token is a field
 				if(member in struct_data.fields) {
 					data.token_type = TokenType.this_field;
@@ -1426,13 +1426,13 @@ void load_module(string file_name) {
 			auto var_data = get_variable_data_by_name(identifier);
 
 			// Token is a struct/class instance
-			if(var_data != VariableData.init) {
+			if(var_data !is VariableData.init) {
 				string type_name = var_data.type.name;
 				auto class_data = get_class_data_by_name(type_name);
 				auto struct_data = get_struct_data_by_name(type_name);
 
 				// Class instance member
-				if(member && class_data != ClassData.init) {
+				if(member && class_data !is ClassData.init) {
 					// Class instance field
 					if(member in class_data.fields) {
 						data.type_data = class_data.fields[member].type;
@@ -1446,7 +1446,7 @@ void load_module(string file_name) {
 					}
 					return data;
 				// Struct instance member
-				} else if(member && struct_data != StructData.init) {
+				} else if(member && struct_data !is StructData.init) {
 					// Struct instance field
 					if(member in struct_data.fields) {
 						data.type_data = struct_data.fields[member].type;
@@ -1463,7 +1463,7 @@ void load_module(string file_name) {
 			}
 
 			// Token is a variable with member
-			if(var_data != VariableData.init && member) {
+			if(var_data !is VariableData.init && member) {
 				// Is a standard property
 				switch(member) {
 					case "alignof":
@@ -1559,7 +1559,7 @@ void load_module(string file_name) {
 			}
 
 			// Token is a variable
-			if(var_data != VariableData.init && identifier) {
+			if(var_data !is VariableData.init && identifier) {
 				data.type_data = var_data.type;
 				data.name = token.text;
 				data.token_type = TokenType.variable;
@@ -1568,7 +1568,7 @@ void load_module(string file_name) {
 
 			// Token is a template parameter
 			auto temp_data = get_template_data_by_name(identifier);
-			if(temp_data != TemplateData.init) {
+			if(temp_data !is TemplateData.init) {
 				data.token_type = TokenType.template_;
 				data.type_data = TypeData(identifier);
 				data.name = null;
@@ -1578,7 +1578,7 @@ void load_module(string file_name) {
 
 			// Token is a function name
 			auto func_data = get_function_data_by_name(identifier);
-			if(func_data != FunctionData.init) {
+			if(func_data !is FunctionData.init) {
 				data.token_type = TokenType.function_;
 				data.type_data = func_data.return_type;
 				data.name = token.text;
@@ -1587,7 +1587,7 @@ void load_module(string file_name) {
 
 			// Token is a class name
 			auto class_data = get_class_data_by_name(identifier);
-			if(class_data != ClassData.init) {
+			if(class_data !is ClassData.init) {
 				data.token_type = TokenType.class_;
 				data.type_data = TypeData(token.text);
 				data.name = null;
@@ -1596,7 +1596,7 @@ void load_module(string file_name) {
 
 			// Token is a struct name
 			auto struct_data = get_struct_data_by_name(identifier);
-			if(struct_data != StructData.init) {
+			if(struct_data !is StructData.init) {
 				data.token_type = TokenType.struct_;
 				data.type_data = TypeData(token.text);
 				data.name = null;
@@ -1605,7 +1605,7 @@ void load_module(string file_name) {
 
 			// Token is an enum
 			auto enum_data = get_enum_data_by_name(identifier);
-			if(enum_data != EnumData.init) {
+			if(enum_data !is EnumData.init) {
 				data.name = token.text;
 				// Enum field
 				if(member in enum_data.fields) {
@@ -1630,7 +1630,7 @@ void load_module(string file_name) {
 			string identifier = token.text;
 
 			// Class
-			if(class_data != ClassData.init) {
+			if(class_data !is ClassData.init) {
 				// Token is a field
 				if(identifier in class_data.fields) {
 					data.token_type = TokenType.this_field;
@@ -1645,7 +1645,7 @@ void load_module(string file_name) {
 					return data;
 				}
 			// Struct
-			} else if(struct_data != StructData.init) {
+			} else if(struct_data !is StructData.init) {
 				// Token is a field
 				if(identifier in struct_data.fields) {
 					data.token_type = TokenType.this_field;
@@ -1694,7 +1694,7 @@ void load_module(string file_name) {
 							module_data = candidate_module;
 						}
 					}
-					if(module_data != ModuleData.init)
+					if(module_data !is ModuleData.init)
 						goto got_module;
 				}
 			}
