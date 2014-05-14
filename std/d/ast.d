@@ -284,6 +284,29 @@ template visitIfNotNull(fields ...)
     }
 }
 
+// FIXME: Change all accept methods to be generated with this
+mixin template acceptMembersIfNotNull()
+{
+    override void accept(ASTVisitor analyzer) const
+    {
+        foreach (member_string; __traits(allMembers, typeof(this)))
+        {
+            mixin("alias member = " ~ __traits(identifier, typeof(this)) ~ "." ~ member_string ~ ";");
+            static if (!is(typeof(member) == function)
+                    && !is(typeof(member) == delegate)
+                    && !is(member == function)
+                    && !is(member == delegate)
+                    && !is(member == class)
+                    && !is(member == struct)
+                    && !is(member == enum)
+                    && __traits(identifier, member) != "Monitor")
+            {
+                mixin("analyzer.visit(this." ~ member_string ~ ");\n");
+            }
+        }
+    }
+}
+
 mixin template OpEquals()
 {
     override bool opEquals(Object other) const
