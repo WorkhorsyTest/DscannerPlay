@@ -145,6 +145,7 @@ struct Position {
 	}
 }
 
+// FIXME: All the name clash checks should be extracted and moved into the name clash checker.
 /*private*/ Position[][string] name_clashes;
 /*private*/ ScopeFrame[] frames;
 /*private*/ ModuleData[string] modules;
