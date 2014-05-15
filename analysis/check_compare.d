@@ -15,13 +15,13 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.walking_analyzer;
+import analysis.scope_analyzer;
 
 /**
  * Checks for comparing a variable with itself.
  */
-class CompareCheck : BaseWalkingAnalyzer {
-	alias visit = BaseWalkingAnalyzer.visit;
+class CompareCheck : ScopeAnalyzer {
+	alias visit = ScopeAnalyzer.visit;
 
 	this(string fileName) {
 		super(fileName, false);

@@ -13,7 +13,7 @@ import std.conv;
 
 import std.d.ast;
 import std.d.lexer;
-import analysis.stack_frame;
+import analysis.scope_frame;
 import dlang_helper;
 
 const string[] BASIC_TYPES = [
@@ -106,7 +106,7 @@ struct ModuleFunctionSet {
 
 // Returns true if a ModuleFunctionSet has a function.
 bool has_function(const ModuleFunctionSet func_set, string func_name) {
-	bool is_imported = analysis.stack_frame.is_already_imported(func_set.import_name);
+	bool is_imported = analysis.scope_frame.is_already_imported(func_set.import_name);
 
 	foreach(func; func_set.functions) {
 		// If the module is imported the short function name may be used
@@ -128,7 +128,7 @@ void should_warn(string code, analysis.run.AnalyzerCheck analyzers, string file=
 	import analysis.run;
 
 	// Reset everything
-	stack_frame_clear_everything();
+	scope_frame_clear_everything();
 
 	// Run the code and get any warnings
 	string[] raw_warnings = analyze("test", cast(ubyte[]) code, analyzers);
@@ -593,7 +593,7 @@ void load_module(string file_name) {
 		}
 
 		// Auto return type
-		auto decoration = analysis.stack_frame.decorations.peak;
+		auto decoration = analysis.scope_frame.decorations.peak;
 		if(decoration !is Decoration.init && decoration.is_auto) {
 			return TypeData("auto");
 		}
@@ -1669,7 +1669,7 @@ void load_module(string file_name) {
 			ModuleData module_data;
 
 			// Match full module name
-			foreach(mod; analysis.stack_frame.modules) {
+			foreach(mod; analysis.scope_frame.modules) {
 				if(full_identifier.startsWith(mod.name) && full_identifier.length > mod.name.length) {
 					module_data = mod;
 					auto offset = mod.name.length + 1;
@@ -1679,10 +1679,10 @@ void load_module(string file_name) {
 			}
 
 			// Match partial module name using imports
-			foreach(frame; std.range.retro(analysis.stack_frame.frames)) {
+			foreach(frame; std.range.retro(analysis.scope_frame.frames)) {
 				foreach(import_name; frame.imports) {
-					if(import_name in analysis.stack_frame.modules) {
-						auto candidate_module = analysis.stack_frame.modules[import_name];
+					if(import_name in analysis.scope_frame.modules) {
+						auto candidate_module = analysis.scope_frame.modules[import_name];
 
 						// FIXME: Make it work with enum fields, static methods, and properties
 						if(full_identifier in candidate_module.variables || 

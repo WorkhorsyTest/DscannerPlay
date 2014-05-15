@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module analysis.walking_analyzer;
+module analysis.scope_analyzer;
 
 import std.stdio;
 import std.string;
@@ -14,7 +14,7 @@ import std.d.codegen;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.stack_frame;
+import analysis.scope_frame;
 import dlang_helper;
 
 /*
@@ -22,7 +22,7 @@ This works like the BaseAnalyzer but tracks all the variables, classes,
 functions, et cetera, and know what is in scope and hold meta data 
 about everything.
 */
-class BaseWalkingAnalyzer : BaseAnalyzer {
+class ScopeAnalyzer : BaseAnalyzer {
 	alias visit = BaseAnalyzer.visit;
 
 	private bool _log_info = false;
@@ -55,12 +55,12 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 
 	override void visitStart(const BlockStatement node) {
 		info("start frame by %s", typeid(node));
-		stack_frame_start();
+		scope_frame_start();
 	}
 
 	override void visitEnd(const BlockStatement node) {
 		info("exit frame by %s", typeid(node));
-		stack_frame_exit();
+		scope_frame_exit();
 	}
 
 	override void visitStart(const ClassDeclaration node) {
@@ -109,11 +109,11 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 		}
 
 		parents.push(IdentifierType.function_);
-		stack_frame_start();
+		scope_frame_start();
 	}
 
 	override void visitEnd(const FunctionDeclaration node) {
-		stack_frame_exit();
+		scope_frame_exit();
 		parents.pop();
 	}
 
@@ -131,7 +131,7 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 		g_log_info = _log_info;
 
 		info("start frame by %s", typeid(node));
-		stack_frame_start();
+		scope_frame_start();
 
 		parents.push(IdentifierType.module_);
 		declare_module(node);
@@ -168,7 +168,7 @@ class BaseWalkingAnalyzer : BaseAnalyzer {
 		parents.pop();
 
 		info("exit frame by %s", typeid(node));
-		stack_frame_exit();
+		scope_frame_exit();
 
 		// Return to previous logging mode
 		g_log_info = prev_log;

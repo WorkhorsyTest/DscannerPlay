@@ -17,7 +17,7 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.walking_analyzer;
+import analysis.scope_analyzer;
 
 /*
 FIXME: Make this work with:
@@ -75,8 +75,8 @@ ModuleFunctionSet("std.string", [
 /**
  * Checks for improper use of std.stdio.writefln and std.string.format
  */
-class CheckStringFormat : BaseWalkingAnalyzer {
-	alias visit = BaseWalkingAnalyzer.visit;
+class CheckStringFormat : ScopeAnalyzer {
+	alias visit = ScopeAnalyzer.visit;
 
 	this(string fileName) {
 		super(fileName, false);

@@ -15,14 +15,14 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.stack_frame;
-import analysis.walking_analyzer;
+import analysis.scope_frame;
+import analysis.scope_analyzer;
 
 /**
  * Checks for name clashes in classes, structs, variables, parameters, enums, and members.
  */
-class NameClashCheck : BaseWalkingAnalyzer {
-	alias visit = BaseWalkingAnalyzer.visit;
+class NameClashCheck : ScopeAnalyzer {
+	alias visit = ScopeAnalyzer.visit;
 
 	this(string fileName) {
 		super(fileName, false);

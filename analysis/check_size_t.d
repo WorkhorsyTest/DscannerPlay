@@ -15,16 +15,16 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.stack_frame;
-import analysis.walking_analyzer;
+import analysis.scope_frame;
+import analysis.scope_analyzer;
 
 /**
  * Checks for errors with using size_t:
  * size_t = long fails on 32bit but not on 64bit
  * int = size_t fails on 64bit but not on 32bit
  */
-class SizeTCheck : BaseWalkingAnalyzer {
-	alias visit = BaseWalkingAnalyzer.visit;
+class SizeTCheck : ScopeAnalyzer {
+	alias visit = ScopeAnalyzer.visit;
 
 	this(string fileName) {
 		super(fileName, false);

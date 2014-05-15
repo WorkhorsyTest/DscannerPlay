@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module analysis.stack_frame;
+module analysis.scope_frame;
 /*
 This module has functions for managing what is in scope. This includes:
   1. What the this pointer is
@@ -13,7 +13,7 @@ This module has functions for managing what is in scope. This includes:
      available to the current scope.
   5. The names, types, return types, parameters, line, and columns of everything
 
-A good example of how to use it would be the BaseWalkingAnalyzer.
+A good example of how to use it would be the ScopeAnalyzer.
 */
 
 import std.stdio;
@@ -104,7 +104,7 @@ struct ModuleData {
 	EnumData[string] enums;
 }
 
-struct StackFrame {
+struct ScopeFrame {
 	string[] imports;
 	TemplateData[string] templates;
 	VariableData[string] variables;
@@ -146,13 +146,13 @@ struct Position {
 }
 
 /*private*/ Position[][string] name_clashes;
-/*private*/ StackFrame[] frames;
+/*private*/ ScopeFrame[] frames;
 /*private*/ ModuleData[string] modules;
 Queue!string this_pointers;
 Queue!Decoration decorations;
 Queue!IdentifierType parents;
 
-void stack_frame_print_all() {
+void scope_frame_print_all() {
 	stderr.writefln("!!! modules");
 	foreach(mod; modules) {
 		stderr.writefln("module: %s", mod.name);
@@ -172,7 +172,7 @@ void stack_frame_print_all() {
 			stderr.writefln("            enum:%s:%s", name, enum_data);
 		}
 	}
-	stderr.writefln("!!! stack_frame_print_all()");
+	stderr.writefln("!!! scope_frame_print_all()");
 	foreach(frame; frames) {
 		foreach(name, var_data; frame.variables) {
 			stderr.writefln("            var:%s:%s, is_used:%d", name, var_data, var_data.is_used);
@@ -192,7 +192,7 @@ void stack_frame_print_all() {
 	}
 }
 
-void stack_frame_clear_everything() {
+void scope_frame_clear_everything() {
 	name_clashes.clear();
 	frames.clear();
 	modules.clear();
@@ -201,18 +201,18 @@ void stack_frame_clear_everything() {
 	parents.clear();
 }
 
-void stack_frame_start() {
-	// Add a new stack frame
-	StackFrame frame;
+void scope_frame_start() {
+	// Add a new scope frame
+	ScopeFrame frame;
 	frames ~= frame;
 
-	info("stack_frame_start #%s", frames.length-1);
+	info("scope_frame_start #%s", frames.length-1);
 }
 
-void stack_frame_exit() {
-	info("stack_frame_exit");
+void scope_frame_exit() {
+	info("scope_frame_exit");
 
-	// Print all the variables & functions in the stack frames
+	// Print all the variables & functions in the scope frames
 	info("    Dumping frame #%s", frames.length-1);
 	auto frame = frames[$-1];
 	foreach(name, var_data; frame.variables) {
@@ -231,11 +231,11 @@ void stack_frame_exit() {
 		info("            enum:%s:%s", name, enum_data);
 	}
 
-	// Remove the current stack frame
+	// Remove the current scope frame
 	frames = frames[0 .. $-1];
 }
 
-VariableData[string] get_current_stack_frame_variables() {
+VariableData[string] get_current_scope_frame_variables() {
 	if(frames.length == 0)
 		return null;
 
@@ -243,7 +243,7 @@ VariableData[string] get_current_stack_frame_variables() {
 }
 
 FunctionData get_function_data_by_name(string name) {
-	// Match functions in stack frames
+	// Match functions in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.functions) {
 			return frame.functions[name];
@@ -277,7 +277,7 @@ FunctionData get_function_data_by_name(string name) {
 }
 
 VariableData get_variable_data_by_name(string name) {
-	// Match variables in stack frames
+	// Match variables in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.variables) {
 			return frame.variables[name];
@@ -311,7 +311,7 @@ VariableData get_variable_data_by_name(string name) {
 }
 
 TemplateData get_template_data_by_name(string name) {
-	// Match template in stack frames
+	// Match template in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.templates) {
 			return frame.templates[name];
@@ -322,7 +322,7 @@ TemplateData get_template_data_by_name(string name) {
 }
 
 StructData get_struct_data_by_name(string name) {
-	// Match structs in stack frames
+	// Match structs in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.structs) {
 			return frame.structs[name];
@@ -356,7 +356,7 @@ StructData get_struct_data_by_name(string name) {
 }
 
 ClassData get_class_data_by_name(string name) {
-	// Match classes in stack frames
+	// Match classes in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.classes) {
 			return frame.classes[name];
@@ -390,7 +390,7 @@ ClassData get_class_data_by_name(string name) {
 }
 
 EnumData get_enum_data_by_name(string name) {
-	// Match enums in stack frames
+	// Match enums in scope frames
 	foreach(frame; std.range.retro(frames)) {
 		if(name in frame.enums) {
 			return frame.enums[name];
@@ -738,7 +738,7 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 
 	// Check struct fields and methods
 	if(old_type == IdentifierType.invalid_) {
-		// Each stack frame
+		// Each scope frame
 		foreach(frame; frames) {
 			// Each struct
 			foreach(struct_name, struct_data; frame.structs) {
@@ -764,7 +764,7 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 
 	// Check class fields and methods
 	if(old_type == IdentifierType.invalid_) {
-		// Each stack frame
+		// Each scope frame
 		foreach(frame; frames) {
 			// Each class
 			foreach(class_name, class_data; frame.classes) {
@@ -790,7 +790,7 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 
 	// Check enum fields
 	if(old_type == IdentifierType.invalid_) {
-		// Each stack frame
+		// Each scope frame
 		foreach(frame; frames) {
 			// Each enum
 			foreach(enum_name, enum_data; frame.enums) {

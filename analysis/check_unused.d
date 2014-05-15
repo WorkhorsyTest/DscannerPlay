@@ -15,14 +15,14 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
-import analysis.stack_frame;
-import analysis.walking_analyzer;
+import analysis.scope_frame;
+import analysis.scope_analyzer;
 
 /**
  * Checks for unused variables and function parameters.
  */
-class UnusedCheck : BaseWalkingAnalyzer {
-	alias visit = BaseWalkingAnalyzer.visit;
+class UnusedCheck : ScopeAnalyzer {
+	alias visit = ScopeAnalyzer.visit;
 
 	this(string fileName) {
 		super(fileName, false);
@@ -58,8 +58,8 @@ class UnusedCheck : BaseWalkingAnalyzer {
 	}
 
 	void check_variables_unused() {
-		// Before the variables in the current stack frame are destroyed, look to see if they were used.
-		foreach(name, data; get_current_stack_frame_variables()) {
+		// Before the variables in the current scope frame are destroyed, look to see if they were used.
+		foreach(name, data; get_current_scope_frame_variables()) {
 			if(data != VariableData.init && !data.is_used) {
 				string message = "Variable \"%s\" is not used.".format(name);
 				addErrorMessage(data.line, data.column, message);
