@@ -21,6 +21,7 @@ import std.traits;
 import std.algorithm;
 import std.array;
 import std.string;
+import std.stdio;
 
 // TODO: Many of these classes can be simplified by using std.variant.Algebraic
 
@@ -632,22 +633,28 @@ public:
     /** */ void visitEnd(const WithStatement node) { }
     /** */ void visitEnd(const XorExpression node) { }
 
-    void callVisit(const Token token)
+    void callVisit(T)(const T thing)
     {
-        this.visitStart(token);
-        this.visit(token);
-        this.visitEnd(token);
-    }
-
-    void callVisit(const IdType idType)
-    {
-        this.visitStart(idType);
-        this.visit(idType);
-        this.visitEnd(idType);
+        // Visit Token and IdType
+        static if(is(T == Token) || is(T == IdType))
+        {
+            if(thing !is T.init) {
+            this.visitStart(thing);
+            this.visit(thing);
+            this.visitEnd(thing);
+            }
+        }
+        // Visit anything else that is not null
+        else static if(!is(T == typeof(null)))
+        {
+            stderr.writefln("!!! callVisit does not know how to handle the type %s.", typeid(T));
+        }
     }
 
     void callVisit(const ASTNode unknown)
     {
+        if(unknown is null) return;
+
         mixin(std.d.codegen.callOnActualType!(
             "this.visitStart(actual);\nthis.visit(actual);\nthis.visitEnd(actual);", 
             "throw new Exception(std.string.format(\"Unexpected ast node type: %s\", typeid(unknown)))", 
@@ -683,7 +690,6 @@ template visitIfNotNull(fields ...)
     }
 }
 
-// FIXME: Change all accept methods to be generated with this
 mixin template acceptMembersIfNotNull()
 {
     override void accept(ASTVisitor visitor) const
@@ -764,10 +770,7 @@ mixin template BinaryExpressionBody()
 final class AddExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
@@ -777,10 +780,7 @@ public:
 final class AliasDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(linkageAttribute, type, name, initializers));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ LinkageAttribute linkageAttribute;
     /** */ Type type;
@@ -793,10 +793,7 @@ public:
 final class AliasInitializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(name, type));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ Token name;
     /** */ Type type;
@@ -806,10 +803,7 @@ public:
 final class AliasThisDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ Token identifier;
 }
@@ -818,10 +812,7 @@ public:
 final class AlignAttribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(intLiteral));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ Token intLiteral;
 }
@@ -830,10 +821,7 @@ public:
 final class AndAndExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     mixin BinaryExpressionBody;
 }
@@ -842,10 +830,7 @@ public:
 final class AndExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     mixin BinaryExpressionBody;
 }
@@ -854,10 +839,7 @@ public:
 final class ArgumentList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ AssignExpression[] items;
 }
@@ -866,10 +848,7 @@ public:
 final class Arguments : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(argumentList));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ ArgumentList argumentList;
 }
@@ -878,10 +857,7 @@ public:
 final class ArrayInitializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(arrayMemberInitializations));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ ArrayMemberInitialization[] arrayMemberInitializations;
 }
@@ -890,10 +866,7 @@ public:
 final class ArrayLiteral : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(argumentList));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ ArgumentList argumentList;
 }
@@ -902,10 +875,7 @@ public:
 final class ArrayMemberInitialization : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression, nonVoidInitializer));
-    }
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ AssignExpression assignExpression;
     /** */ NonVoidInitializer nonVoidInitializer;
@@ -1088,10 +1058,7 @@ public:
 final class AssertExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assertion, message));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assertion;
     /** */ AssignExpression message;
     mixin OpEquals;
@@ -1101,10 +1068,7 @@ public:
 final class AssignExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(ternaryExpression, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ ExpressionNode ternaryExpression;
     /** */ ExpressionNode assignExpression;
     /** */ IdType operator;
@@ -1117,10 +1081,7 @@ public:
 final class AssocArrayLiteral : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(keyValuePairs));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ KeyValuePairs keyValuePairs;
     mixin OpEquals;
 }
@@ -1129,10 +1090,7 @@ public:
 final class AtAttribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionCallExpression, argumentList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionCallExpression functionCallExpression;
     /** */ ArgumentList argumentList;
     /** */ Token identifier;
@@ -1143,11 +1101,7 @@ public:
 final class Attribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(linkageAttribute, alignAttribute,
-            pragmaExpression, storageClass));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ LinkageAttribute linkageAttribute;
     /** */ AlignAttribute alignAttribute;
     /** */ PragmaExpression pragmaExpression;
@@ -1159,10 +1113,7 @@ public:
 ///
 final class AttributeDeclaration : ASTNode
 {
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(attribute));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Attribute attribute;
     mixin OpEquals;
 }
