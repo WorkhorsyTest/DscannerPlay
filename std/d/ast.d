@@ -638,17 +638,26 @@ public:
         // Visit Token and IdType
         static if(is(T == Token) || is(T == IdType))
         {
-            if(thing !is T.init) {
-            this.visitStart(thing);
-            this.visit(thing);
-            this.visitEnd(thing);
+            if(thing !is T.init)
+            {
+                this.visitStart(thing);
+                this.visit(thing);
+                this.visitEnd(thing);
             }
         }
         // Visit anything else that is not null
         else static if(!is(T == typeof(null)))
         {
-            stderr.writefln("!!! callVisit does not know how to handle the type %s.", typeid(T));
+            //stderr.writefln("!!! callVisit is ignoring the type %s.", typeid(T));
         }
+    }
+
+    void callVisit(const ASTNode[] unknowns)
+    {
+        if(unknowns is null) return;
+
+        foreach(unknown; unknowns)
+            callVisit(unknown);
     }
 
     void callVisit(const ASTNode unknown)
@@ -666,28 +675,6 @@ abstract class ASTNode
 {
 public:
     /** */ void accept(ASTVisitor visitor) const;
-}
-
-immutable string DEFAULT_ACCEPT = q{override void accept(ASTVisitor visitor) const {}};
-
-template visitIfNotNull(fields ...)
-{
-    static if (fields.length > 1)
-        immutable visitIfNotNull = visitIfNotNull!(fields[0]) ~ visitIfNotNull!(fields[1..$]);
-    else
-    {
-        static if (typeof(fields[0]).stringof[$ - 2 .. $] == "[]")
-        {
-            static if (__traits(hasMember, typeof(fields[0][0]), "classinfo"))
-                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") if (i !is null) visitor.callVisit(i);\n";
-            else
-                immutable visitIfNotNull = "foreach (i; " ~ fields[0].stringof ~ ") visitor.callVisit(i);\n";
-        }
-        else static if (__traits(hasMember, typeof(fields[0]), "classinfo"))
-            immutable visitIfNotNull = "if (" ~ fields[0].stringof ~ " !is null) visitor.callVisit(" ~ fields[0].stringof ~ ");\n";
-        else
-            immutable visitIfNotNull = "visitor.callVisit(" ~ fields[0].stringof ~ ");\n";
-    }
 }
 
 mixin template acceptMembersIfNotNull()
@@ -885,7 +872,7 @@ public:
 final class AsmAddExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
@@ -895,7 +882,7 @@ public:
 final class AsmAndExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     mixin BinaryExpressionBody;
 }
@@ -904,7 +891,7 @@ public:
 final class AsmBrExp : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ AsmBrExp asmBrExp;
     /** */ AsmEqualExp asmEqualExp;
@@ -915,7 +902,7 @@ public:
 final class AsmEqualExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
     /** */ Token operator;
@@ -925,7 +912,7 @@ public:
 final class AsmExp : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ AsmLogOrExp left;
     /** */ AsmExp middle;
@@ -936,7 +923,7 @@ public:
 final class AsmInstruction : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ Token identifierOrIntegerOrOpcode;
     /** */ bool hasAlign;
@@ -948,7 +935,7 @@ public:
 final class AsmLogAndExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -957,7 +944,7 @@ public:
 final class AsmLogOrExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -966,7 +953,7 @@ public:
 final class AsmMulExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -977,7 +964,7 @@ public:
 final class AsmOrExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -986,7 +973,7 @@ public:
 final class AsmPrimaryExp : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ IdentifierChain identifierChain;
     /** */ Register register;
     /** */ Token token;
@@ -997,7 +984,7 @@ public:
 final class AsmRelExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     /** */ Token operator;
     mixin OpEquals;
@@ -1007,7 +994,7 @@ public:
 final class AsmShiftExp : ExpressionNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     /** */ Token operator;
     mixin OpEquals;
@@ -1017,7 +1004,7 @@ public:
 final class AsmStatement : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ AsmInstruction[] asmInstructions;
     mixin OpEquals;
 }
@@ -1026,7 +1013,7 @@ public:
 final class AsmTypePrefix : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ Token left;
     /** */ Token right;
     mixin OpEquals;
@@ -1036,7 +1023,7 @@ public:
 final class AsmUnaExp : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ AsmTypePrefix asmTypePrefix;
     /** */ AsmExp asmExp;
     /** */ Token prefix;
@@ -1049,7 +1036,7 @@ public:
 final class AsmXorExp : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -1122,14 +1109,7 @@ final class AttributeDeclaration : ASTNode
 final class AutoDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        // FIXME: Is there a reason why this does not use the visitIfNotNull template?
-        foreach (i; 0 .. initializers.length)
-        {
-            visitor.callVisit(initializers[i]);
-        }
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token[] identifiers;
     /** */ Initializer[] initializers;
     mixin OpEquals;
@@ -1139,11 +1119,7 @@ public:
 final class BlockStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarationsAndStatements));
-    }
-
+    mixin acceptMembersIfNotNull;
     /**
      * Byte position of the opening brace
      */
@@ -1162,10 +1138,7 @@ public:
 final class BodyStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(blockStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ BlockStatement blockStatement;
     mixin OpEquals;
 }
@@ -1174,10 +1147,7 @@ public:
 final class BreakStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(label));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token label;
     mixin OpEquals;
 }
@@ -1186,10 +1156,7 @@ public:
 final class BaseClass : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifierOrTemplateChain, typeofExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdentifierOrTemplateChain identifierOrTemplateChain;
     /** */ TypeofExpression typeofExpression;
     mixin OpEquals;
@@ -1199,10 +1166,7 @@ public:
 final class BaseClassList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ BaseClass[] items;
     mixin OpEquals;
 }
@@ -1211,10 +1175,7 @@ public:
 final class CaseRangeStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(low, high, declarationsAndStatements));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression low;
     /** */ AssignExpression high;
     /** */ DeclarationsAndStatements declarationsAndStatements;
@@ -1225,10 +1186,7 @@ public:
 final class CaseStatement: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(argumentList, declarationsAndStatements));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ ArgumentList argumentList;
     /** */ DeclarationsAndStatements declarationsAndStatements;
     mixin OpEquals;
@@ -1238,10 +1196,7 @@ public:
 final class CastExpression: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, castQualifier, unaryExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ CastQualifier castQualifier;
     /** */ UnaryExpression unaryExpression;
@@ -1252,10 +1207,7 @@ public:
 final class CastQualifier: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(first, second));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token first;
     /** */ Token second;
     mixin OpEquals;
@@ -1265,10 +1217,7 @@ public:
 final class Catches: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(catches, lastCatch));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Catch[] catches;
     /** */ LastCatch lastCatch;
     mixin OpEquals;
@@ -1278,10 +1227,7 @@ public:
 final class Catch: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, identifier, declarationOrStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Token identifier;
     /** */ DeclarationOrStatement declarationOrStatement;
@@ -1292,12 +1238,7 @@ public:
 final class ClassDeclaration: ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateParameters, constraint, baseClassList,
-            structBody));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ Constraint constraint;
@@ -1311,11 +1252,7 @@ public:
 final class CmpExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(shiftExpression, equalExpression,
-            identityExpression, relExpression, inExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ ExpressionNode shiftExpression;
     /** */ ExpressionNode equalExpression;
     /** */ ExpressionNode identityExpression;
@@ -1328,10 +1265,7 @@ public:
 final class CompileCondition : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(versionCondition, debugCondition, staticIfCondition));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ VersionCondition versionCondition;
     /** */ DebugCondition debugCondition;
     /** */ StaticIfCondition staticIfCondition;
@@ -1342,10 +1276,7 @@ public:
 final class ConditionalDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(compileCondition, trueDeclarations, falseDeclaration));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ CompileCondition compileCondition;
     /** */ Declaration[] trueDeclarations;
     /** */ Declaration falseDeclaration;
@@ -1356,10 +1287,7 @@ public:
 final class ConditionalStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(compileCondition, trueStatement, falseStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ CompileCondition compileCondition;
     /** */ DeclarationOrStatement trueStatement;
     /** */ DeclarationOrStatement falseStatement;
@@ -1370,10 +1298,7 @@ public:
 final class Constraint : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     mixin OpEquals;
 }
@@ -1382,11 +1307,7 @@ public:
 final class Constructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(parameters, templateParameters, constraint,
-            memberFunctionAttributes, functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Parameters parameters;
     /** */ FunctionBody functionBody;
     /** */ Constraint constraint;
@@ -1403,10 +1324,7 @@ public:
 final class ContinueStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(label));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token label;
     mixin OpEquals;
 }
@@ -1415,10 +1333,7 @@ public:
 final class DebugCondition : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifierOrInteger));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifierOrInteger;
     mixin OpEquals;
 }
@@ -1427,10 +1342,7 @@ public:
 final class DebugSpecification : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifierOrInteger));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifierOrInteger;
     mixin OpEquals;
 }
@@ -1440,20 +1352,7 @@ final class Declaration : ASTNode
 {
 public:
 
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(attributes, attributeDeclaration,
-            importDeclaration, functionDeclaration,
-            variableDeclaration, aliasThisDeclaration, structDeclaration,
-            classDeclaration, interfaceDeclaration, unionDeclaration,
-            enumDeclaration, aliasDeclaration, mixinDeclaration,
-            mixinTemplateDeclaration, unittest_, staticAssertDeclaration,
-            templateDeclaration, constructor,
-            destructor, staticConstructor, staticDestructor,
-            sharedStaticDestructor, sharedStaticConstructor,
-            conditionalDeclaration, pragmaDeclaration, versionSpecification,
-            invariant_, postblit, declarations));
-    }
+    mixin acceptMembersIfNotNull;
 
     /** */ Attribute[] attributes;
     /** */ AttributeDeclaration attributeDeclaration;
@@ -1490,11 +1389,7 @@ public:
 ///
 final class DeclarationsAndStatements : ASTNode
 {
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarationsAndStatements));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ DeclarationOrStatement[] declarationsAndStatements;
     mixin OpEquals;
 }
@@ -1503,11 +1398,7 @@ final class DeclarationsAndStatements : ASTNode
 final class DeclarationOrStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declaration, statement));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Declaration declaration;
     /** */ Statement statement;
     mixin OpEquals;
@@ -1517,10 +1408,7 @@ public:
 final class Declarator : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(initializer));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ Initializer initializer;
     mixin OpEquals;
@@ -1530,10 +1418,7 @@ public:
 final class DefaultStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarationsAndStatements));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ DeclarationsAndStatements declarationsAndStatements;
     mixin OpEquals;
 }
@@ -1542,10 +1427,7 @@ public:
 final class DeleteExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(unaryExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ UnaryExpression unaryExpression;
     /** */ size_t line;
     /** */ size_t column;
@@ -1556,10 +1438,7 @@ public:
 final class DeleteStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(deleteExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ DeleteExpression deleteExpression;
     mixin OpEquals;
 }
@@ -1568,10 +1447,7 @@ public:
 final class Deprecated : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     mixin OpEquals;
 }
@@ -1580,10 +1456,7 @@ public:
 final class Destructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(memberFunctionAttributes, functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ MemberFunctionAttribute[] memberFunctionAttributes;
     /** */ FunctionBody functionBody;
     /** */ size_t line;
@@ -1597,10 +1470,7 @@ public:
 final class DoStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, statementNoCaseNoDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     /** */ Expression expression;
     mixin OpEquals;
@@ -1610,10 +1480,7 @@ public:
 final class EnumBody : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(enumMembers));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ EnumMember[] enumMembers;
 
     /**
@@ -1632,10 +1499,7 @@ public:
 final class EnumDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, enumBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ Type type;
     /** */ EnumBody enumBody;
@@ -1647,10 +1511,7 @@ public:
 final class EnumMember : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(name, type, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ Type type;
     /** */ AssignExpression assignExpression;
@@ -1662,10 +1523,7 @@ public:
 final class EponymousTemplateDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(name, templateParameters, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ AssignExpression assignExpression;
@@ -1676,10 +1534,7 @@ public:
 final class EqualExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -1689,10 +1544,7 @@ public:
 final class Expression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression[] items;
     mixin OpEquals;
 }
@@ -1701,10 +1553,7 @@ public:
 final class ExpressionStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     mixin OpEquals;
 }
@@ -1713,10 +1562,7 @@ public:
 final class FinalSwitchStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(switchStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ SwitchStatement switchStatement;
     mixin OpEquals;
 }
@@ -1725,10 +1571,7 @@ public:
 final class Finally : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarationOrStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ DeclarationOrStatement declarationOrStatement;
     mixin OpEquals;
 }
@@ -1737,11 +1580,7 @@ public:
 final class ForStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(initialization, test, increment,
-            declarationOrStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ DeclarationOrStatement initialization;
     /** */ ExpressionStatement test;
     /** */ Expression increment;
@@ -1754,11 +1593,7 @@ public:
 final class ForeachStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(foreachType, foreachTypeList, low, high,
-            declarationOrStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType type;
     /** */ ForeachTypeList foreachTypeList;
     /** */ ForeachType foreachType;
@@ -1773,10 +1608,7 @@ public:
 final class ForeachType : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, identifier));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType[] typeConstructors;
     /** */ Type type;
     /** */ Token identifier;
@@ -1787,10 +1619,7 @@ public:
 final class ForeachTypeList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ ForeachType[] items;
     mixin OpEquals;
 }
@@ -1799,10 +1628,7 @@ public:
 final class FunctionAttribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token, atAttribute));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token token;
     /** */ AtAttribute atAttribute;
     mixin OpEquals;
@@ -1812,12 +1638,7 @@ public:
 final class FunctionBody : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(inStatement, outStatement, bodyStatement,
-            blockStatement));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ BlockStatement blockStatement;
     /** */ BodyStatement bodyStatement;
     /** */ OutStatement outStatement;
@@ -1829,10 +1650,7 @@ public:
 final class FunctionCallExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, unaryExpression, templateArguments, arguments));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ UnaryExpression unaryExpression;
     /** */ TemplateArguments templateArguments;
@@ -1844,10 +1662,7 @@ public:
 final class FunctionCallStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionCallExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionCallExpression functionCallExpression;
     mixin OpEquals;
 }
@@ -1856,11 +1671,7 @@ public:
 final class FunctionDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(returnType, parameters, templateParameters,
-            constraint, memberFunctionAttributes, functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ bool hasAuto;
     /** */ bool hasRef;
     /** */ Type returnType;
@@ -1878,11 +1689,7 @@ public:
 final class FunctionLiteralExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, parameters, functionAttributes,
-            functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType functionOrDelegate;
     /** */ Type type;
     /** */ Parameters parameters;
@@ -1895,10 +1702,7 @@ public:
 final class GotoStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(label, expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ Token label;
     mixin OpEquals;
@@ -1908,10 +1712,7 @@ public:
 final class IdentifierChain : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifiers));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token[] identifiers;
     mixin OpEquals;
 }
@@ -1920,10 +1721,7 @@ public:
 final class IdentifierList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifiers));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token[] identifiers;
     mixin OpEquals;
 }
@@ -1932,11 +1730,7 @@ public:
 final class IdentifierOrTemplateChain : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifiersOrTemplateInstances));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ IdentifierOrTemplateInstance[] identifiersOrTemplateInstances;
     mixin OpEquals;
 }
@@ -1945,11 +1739,7 @@ public:
 final class IdentifierOrTemplateInstance : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, templateInstance));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ TemplateInstance templateInstance;
     mixin OpEquals;
@@ -1959,10 +1749,7 @@ public:
 final class IdentityExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ bool negated;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -1972,11 +1759,7 @@ public:
 final class IfStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, type, expression, thenStatement,
-            elseStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ Type type;
     /** */ Expression expression;
@@ -1992,10 +1775,7 @@ public:
 final class ImportBind : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token left;
     /** */ Token right;
     mixin OpEquals;
@@ -2005,10 +1785,7 @@ public:
 final class ImportBindings : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(singleImport, importBinds));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ SingleImport singleImport;
     /** */ ImportBind[] importBinds;
     mixin OpEquals;
@@ -2018,10 +1795,7 @@ public:
 final class ImportDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(singleImports, importBindings));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ SingleImport[] singleImports;
     /** */ ImportBindings importBindings;
     mixin OpEquals;
@@ -2031,10 +1805,7 @@ public:
 final class ImportExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     mixin OpEquals;
 }
@@ -2043,10 +1814,7 @@ public:
 final class IndexExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(unaryExpression, argumentList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ UnaryExpression unaryExpression;
     /** */ ArgumentList argumentList;
     mixin OpEquals;
@@ -2056,10 +1824,7 @@ public:
 final class InExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     bool negated;
     mixin OpEquals;
@@ -2069,10 +1834,7 @@ public:
 final class InStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(blockStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ BlockStatement blockStatement;
     mixin OpEquals;
 }
@@ -2081,10 +1843,7 @@ public:
 final class Initialize : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(statementNoCaseNoDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     mixin OpEquals;
 }
@@ -2093,10 +1852,7 @@ public:
 final class Initializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(nonVoidInitializer));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ NonVoidInitializer nonVoidInitializer;
     mixin OpEquals;
 }
@@ -2105,11 +1861,7 @@ public:
 final class InterfaceDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateParameters, constraint, baseClassList,
-            structBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ Constraint constraint;
@@ -2123,10 +1875,7 @@ public:
 final class Invariant : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(blockStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ BlockStatement blockStatement;
     /** */ string comment;
     size_t line;
@@ -2138,11 +1887,7 @@ public:
 final class IsExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, identifier, typeSpecialization,
-            templateParameterList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Token identifier;
     /** */ TypeSpecialization typeSpecialization;
@@ -2155,10 +1900,7 @@ public:
 final class KeyValuePair : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(key, value));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression key;
     /** */ AssignExpression value;
     mixin OpEquals;
@@ -2168,10 +1910,7 @@ public:
 final class KeyValuePairs : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(keyValuePairs));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ KeyValuePair[] keyValuePairs;
     mixin OpEquals;
 }
@@ -2180,10 +1919,7 @@ public:
 final class LabeledStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, declarationOrStatement));
-    }
+    mixin acceptMembersIfNotNull;
     Token identifier;
     /** */ DeclarationOrStatement declarationOrStatement;
     mixin OpEquals;
@@ -2193,11 +1929,7 @@ public:
 final class LambdaExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, parameters, functionAttributes,
-            assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType functionType;
     /** */ Token identifier;
     /** */ Parameters parameters;
@@ -2210,10 +1942,7 @@ public:
 final class LastCatch : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(statementNoCaseNoDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     mixin OpEquals;
 }
@@ -2222,11 +1951,7 @@ public:
 final class LinkageAttribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        version (DIP61) mixin (visitIfNotNull!(identifier, identifierChain));
-        else mixin (visitIfNotNull!(identifier));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ bool hasPlusPlus;
     version (DIP61) /** */ IdentifierChain identifierChain;
@@ -2237,10 +1962,7 @@ public:
 final class MemberFunctionAttribute : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(atAttribute));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType tokenType;
     /** */ AtAttribute atAttribute;
     mixin OpEquals;
@@ -2250,10 +1972,7 @@ public:
 final class MixinDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(mixinExpression, templateMixinExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ MixinExpression mixinExpression;
     /** */ TemplateMixinExpression templateMixinExpression;
     mixin OpEquals;
@@ -2263,10 +1982,7 @@ public:
 final class MixinExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     mixin OpEquals;
 }
@@ -2275,10 +1991,7 @@ public:
 final class MixinTemplateDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateDeclaration));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateDeclaration templateDeclaration;
     mixin OpEquals;
 }
@@ -2287,10 +2000,7 @@ public:
 final class MixinTemplateName : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(symbol, typeofExpression, identifierOrTemplateChain));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Symbol symbol;
     /** */ IdentifierOrTemplateChain identifierOrTemplateChain;
     /** */ TypeofExpression typeofExpression;
@@ -2301,10 +2011,7 @@ public:
 final class Module : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(scriptLine, moduleDeclaration, declarations));
-    }
+    mixin acceptMembersIfNotNull;
 	/** */ Token scriptLine;
     /** */ ModuleDeclaration moduleDeclaration;
     /** */ Declaration[] declarations;
@@ -2315,10 +2022,7 @@ public:
 final class ModuleDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(moduleName));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdentifierChain moduleName;
     mixin OpEquals;
 }
@@ -2328,10 +2032,7 @@ public:
 final class MulExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -2341,11 +2042,7 @@ public:
 final class NewAnonClassExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(allocatorArguments, constructorArguments,
-            baseClassList, structBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Arguments allocatorArguments;
     /** */ Arguments constructorArguments;
     /** */ BaseClassList baseClassList;
@@ -2357,11 +2054,7 @@ public:
 final class NewExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(newAnonClassExpression, type, arguments,
-            assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ NewAnonClassExpression newAnonClassExpression;
     /** */ Arguments arguments;
@@ -2374,17 +2067,7 @@ public:
 final class StatementNoCaseNoDefault : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(labeledStatement, blockStatement, ifStatement,
-            whileStatement, doStatement, forStatement, foreachStatement,
-            switchStatement, finalSwitchStatement, continueStatement,
-            breakStatement, returnStatement, gotoStatement, withStatement,
-            synchronizedStatement, tryStatement, throwStatement,
-            scopeGuardStatement, asmStatement, conditionalStatement,
-            staticAssertStatement, versionSpecification, debugSpecification,
-            functionCallStatement, expressionStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ LabeledStatement labeledStatement;
     /** */ BlockStatement blockStatement;
     /** */ IfStatement ifStatement;
@@ -2417,11 +2100,7 @@ public:
 final class NonVoidInitializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression, arrayInitializer,
-            structInitializer, functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     /** */ ArrayInitializer arrayInitializer;
     /** */ StructInitializer structInitializer;
@@ -2434,7 +2113,7 @@ public:
 final class Operand : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ AsmExp asmExp;
     mixin OpEquals;
 }
@@ -2443,7 +2122,7 @@ public:
 final class Operands : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ Operand[] operands;
     mixin OpEquals;
 }
@@ -2452,10 +2131,7 @@ public:
 final class OrExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -2464,10 +2140,7 @@ public:
 final class OrOrExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -2476,10 +2149,7 @@ public:
 final class OutStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(parameter, blockStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token parameter;
     /** */ BlockStatement blockStatement;
     mixin OpEquals;
@@ -2489,11 +2159,7 @@ public:
 final class Parameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, name, default_));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ IdType[] parameterAttributes;
     /** */ Type type;
     /** */ Token name;
@@ -2506,11 +2172,7 @@ public:
 final class Parameters : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(parameters));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Parameter[] parameters;
     /** */ bool hasVarargs;
     mixin OpEquals;
@@ -2520,10 +2182,7 @@ public:
 final class Postblit : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionBody functionBody;
     /** */ MemberFunctionAttribute[] memberFunctionAttributes;
     mixin OpEquals;
@@ -2533,10 +2192,7 @@ public:
 final class PostIncDecExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(unaryExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     /** */ UnaryExpression unaryExpression;
     mixin OpEquals;
@@ -2546,10 +2202,7 @@ public:
 final class PowExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
@@ -2558,10 +2211,7 @@ public:
 final class PragmaDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(pragmaExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ PragmaExpression pragmaExpression;
     mixin OpEquals;
 }
@@ -2570,10 +2220,7 @@ public:
 final class PragmaExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, argumentList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ ArgumentList argumentList;
     mixin OpEquals;
@@ -2583,10 +2230,7 @@ public:
 final class PreIncDecExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(unaryExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     /** */ UnaryExpression unaryExpression;
     mixin OpEquals;
@@ -2596,14 +2240,7 @@ public:
 final class PrimaryExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(basicType, primary, typeofExpression,
-            typeidExpression, arrayLiteral, assocArrayLiteral, expression,
-            dot, identifierOrTemplateInstance, isExpression, lambdaExpression,
-            functionLiteralExpression, traitsExpression, mixinExpression,
-            importExpression, vector));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token dot;
     /** */ Token primary;
     /** */ IdentifierOrTemplateInstance identifierOrTemplateInstance;
@@ -2627,7 +2264,7 @@ public:
 final class Register : ASTNode
 {
 public:
-    mixin (DEFAULT_ACCEPT);
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ Token intLiteral;
     /** */ bool hasIntegerLiteral;
@@ -2638,10 +2275,7 @@ public:
 final class RelExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -2651,10 +2285,7 @@ public:
 final class ReturnStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ size_t startLocation;
     /** */ size_t endLocation;
@@ -2665,10 +2296,7 @@ public:
 final class ScopeGuardStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, statementNoCaseNoDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     mixin OpEquals;
@@ -2678,10 +2306,7 @@ public:
 final class SharedStaticConstructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionBody functionBody;
     /** */ size_t location;
     /** */ string comment;
@@ -2692,10 +2317,7 @@ public:
 final class SharedStaticDestructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionBody functionBody;
     /** */ size_t location;
     /** */ string comment;
@@ -2706,10 +2328,7 @@ public:
 final class ShiftExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ IdType operator;
     mixin BinaryExpressionBody;
     mixin OpEquals;
@@ -2719,10 +2338,7 @@ public:
 final class SingleImport : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(rename, identifierChain));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token rename;
     /** */ IdentifierChain identifierChain;
     mixin OpEquals;
@@ -2732,10 +2348,7 @@ public:
 final class SliceExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(unaryExpression, lower, upper));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ UnaryExpression unaryExpression;
     /** */ AssignExpression lower;
     /** */ AssignExpression upper;
@@ -2746,11 +2359,7 @@ public:
 final class Statement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(statementNoCaseNoDefault, caseStatement,
-            caseRangeStatement, defaultStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     /** */ CaseStatement caseStatement;
     /** */ CaseRangeStatement caseRangeStatement;
@@ -2762,10 +2371,7 @@ public:
 final class StaticAssertDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(staticAssertStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StaticAssertStatement staticAssertStatement;
     mixin OpEquals;
 }
@@ -2774,10 +2380,7 @@ public:
 final class StaticAssertStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assertExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssertExpression assertExpression;
     mixin OpEquals;
 }
@@ -2786,10 +2389,7 @@ public:
 final class StaticConstructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionBody functionBody;
     /** */ size_t location;
     /** */ string comment;
@@ -2800,10 +2400,7 @@ public:
 final class StaticDestructor : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(functionBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ FunctionBody functionBody;
     /** */ size_t location;
     /** */ string comment;
@@ -2814,10 +2411,7 @@ public:
 final class StaticIfCondition : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     mixin OpEquals;
 }
@@ -2826,10 +2420,7 @@ public:
 final class StorageClass : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token, deprecated_, atAttribute));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AtAttribute atAttribute;
     /** */ Deprecated deprecated_;
     /** */ Token token;
@@ -2840,11 +2431,7 @@ public:
 final class StructBody : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarations));
-    }
-
+    mixin acceptMembersIfNotNull;
     /**
      * Byte position of the opening brace
      */
@@ -2862,10 +2449,7 @@ public:
 final class StructDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateParameters, constraint, structBody));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ Constraint constraint;
@@ -2878,10 +2462,7 @@ public:
 final class StructInitializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(structMemberInitializers));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StructMemberInitializers structMemberInitializers;
 
     mixin OpEquals;
@@ -2891,10 +2472,7 @@ public:
 final class StructMemberInitializer : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, nonVoidInitializer));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ NonVoidInitializer nonVoidInitializer;
     mixin OpEquals;
@@ -2904,10 +2482,7 @@ public:
 final class StructMemberInitializers : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(structMemberInitializers));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ StructMemberInitializer[] structMemberInitializers;
     mixin OpEquals;
 }
@@ -2916,10 +2491,7 @@ public:
 final class SwitchStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, statement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ Statement statement;
     mixin OpEquals;
@@ -2929,11 +2501,7 @@ public:
 final class Symbol : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifierOrTemplateChain));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ IdentifierOrTemplateChain identifierOrTemplateChain;
     /** */ bool dot;
     mixin OpEquals;
@@ -2943,10 +2511,7 @@ public:
 final class SynchronizedStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, statementNoCaseNoDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     mixin OpEquals;
@@ -2956,11 +2521,7 @@ public:
 final class TemplateAliasParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, identifier, colonType, colonExpression,
-            assignType, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Token identifier;
     /** */ Type colonType;
@@ -2974,10 +2535,7 @@ public:
 final class TemplateArgument : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ AssignExpression assignExpression;
     mixin OpEquals;
@@ -2987,10 +2545,7 @@ public:
 final class TemplateArgumentList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateArgument[] items;
     mixin OpEquals;
 }
@@ -2999,10 +2554,7 @@ public:
 final class TemplateArguments : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateArgumentList, templateSingleArgument));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateArgumentList templateArgumentList;
     /** */ TemplateSingleArgument templateSingleArgument;
     mixin OpEquals;
@@ -3012,11 +2564,7 @@ public:
 final class TemplateDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(name, templateParameters, constraint,
-            declarations, eponymousTemplateDeclaration));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ Constraint constraint;
@@ -3030,10 +2578,7 @@ public:
 final class TemplateInstance : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, templateArguments));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ TemplateArguments templateArguments;
     mixin OpEquals;
@@ -3043,10 +2588,7 @@ public:
 final class TemplateMixinExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, templateArguments, mixinTemplateName));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ TemplateArguments templateArguments;
     /** */ MixinTemplateName mixinTemplateName;
@@ -3057,12 +2599,7 @@ public:
 final class TemplateParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateTypeParameter, templateValueParameter,
-            templateAliasParameter, templateTupleParameter,
-            templateThisParameter));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateTypeParameter templateTypeParameter;
     /** */ TemplateValueParameter templateValueParameter;
     /** */ TemplateAliasParameter templateAliasParameter;
@@ -3075,10 +2612,7 @@ public:
 final class TemplateParameterList : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(items));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateParameter[] items;
     mixin OpEquals;
 }
@@ -3087,10 +2621,7 @@ public:
 final class TemplateParameters : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateParameterList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateParameterList templateParameterList;
     mixin OpEquals;
 }
@@ -3099,10 +2630,7 @@ public:
 final class TemplateSingleArgument : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token token;
     mixin OpEquals;
 }
@@ -3111,10 +2639,7 @@ public:
 final class TemplateThisParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(templateTypeParameter));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ TemplateTypeParameter templateTypeParameter;
     mixin OpEquals;
 }
@@ -3123,10 +2648,7 @@ public:
 final class TemplateTupleParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     mixin OpEquals;
 }
@@ -3135,10 +2657,7 @@ public:
 final class TemplateTypeParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, colonType, assignType));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ Type colonType;
     /** */ Type assignType;
@@ -3149,11 +2668,7 @@ public:
 final class TemplateValueParameter : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, identifier, expression,
-            templateValueParameterDefault));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Token identifier;
     /** */ Expression expression;
@@ -3165,10 +2680,7 @@ public:
 final class TemplateValueParameterDefault : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token, assignExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ AssignExpression assignExpression;
     /** */ Token token;
     mixin OpEquals;
@@ -3178,10 +2690,7 @@ public:
 final class TernaryExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(orOrExpression, expression, ternaryExpression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ ExpressionNode orOrExpression;
     /** */ ExpressionNode expression;
     /** */ ExpressionNode ternaryExpression;
@@ -3192,10 +2701,7 @@ public:
 final class ThrowStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     mixin OpEquals;
 }
@@ -3204,10 +2710,7 @@ public:
 final class TraitsExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(identifier, templateArgumentList));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token identifier;
     /** */ TemplateArgumentList templateArgumentList;
     mixin OpEquals;
@@ -3217,10 +2720,7 @@ public:
 final class TryStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(declarationOrStatement, catches, finally_));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ DeclarationOrStatement declarationOrStatement;
     /** */ Catches catches;
     /** */ Finally finally_;
@@ -3231,11 +2731,7 @@ public:
 final class Type : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type2, typeSuffixes));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ IdType[] typeConstructors;
     /** */ TypeSuffix[] typeSuffixes;
     /** */ Type2 type2;
@@ -3246,12 +2742,7 @@ public:
 final class Type2 : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(symbol, typeofExpression,
-            identifierOrTemplateChain, type));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ IdType builtinType;
     /** */ Symbol symbol;
     /** */ TypeofExpression typeofExpression;
@@ -3265,10 +2756,7 @@ public:
 final class TypeSpecialization : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token, type));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token token;
     /** */ Type type;
     mixin OpEquals;
@@ -3278,12 +2766,7 @@ public:
 final class TypeSuffix : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, low, high, delegateOrFunction, parameters,
-            memberFunctionAttributes));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Token delegateOrFunction;
     /** */ bool star;
     /** */ bool array;
@@ -3299,10 +2782,7 @@ public:
 final class TypeidExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type, expression));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Expression expression;
     mixin OpEquals;
@@ -3312,10 +2792,7 @@ public:
 final class TypeofExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, return_));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ Token return_;
     mixin OpEquals;
@@ -3325,15 +2802,7 @@ public:
 final class UnaryExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        // TODO prefix, postfix, unary
-        mixin (visitIfNotNull!(primaryExpression, newExpression,
-            deleteExpression, castExpression, functionCallExpression, argumentList,
-            unaryExpression, type, identifierOrTemplateInstance, assertExpression,
-            sliceExpression, indexExpression));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ PrimaryExpression primaryExpression;
     /** */ Token prefix;
@@ -3355,11 +2824,7 @@ public:
 final class UnionDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(name, templateParameters, constraint, structBody));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ Constraint constraint;
@@ -3372,10 +2837,7 @@ public:
 final class Unittest : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(blockStatement));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ BlockStatement blockStatement;
     /** */ string comment;
     mixin OpEquals;
@@ -3385,10 +2847,7 @@ public:
 final class VariableDeclaration : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(storageClass, type, declarators, autoDeclaration));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     /** */ Declarator[] declarators;
     /** */ StorageClass storageClass;
@@ -3401,10 +2860,7 @@ public:
 final class Vector : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(type));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Type type;
     mixin OpEquals;
 }
@@ -3413,10 +2869,7 @@ public:
 final class VersionCondition : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token token;
     mixin OpEquals;
 }
@@ -3425,10 +2878,7 @@ public:
 final class VersionSpecification : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(token));
-    }
+    mixin acceptMembersIfNotNull;
     /** */ Token token;
     mixin OpEquals;
 }
@@ -3437,11 +2887,7 @@ public:
 final class WhileStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, declarationOrStatement));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ DeclarationOrStatement declarationOrStatement;
     /** */ size_t startIndex;
@@ -3452,11 +2898,7 @@ public:
 final class WithStatement : ASTNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(expression, statementNoCaseNoDefault));
-    }
-
+    mixin acceptMembersIfNotNull;
     /** */ Expression expression;
     /** */ StatementNoCaseNoDefault statementNoCaseNoDefault;
     mixin OpEquals;
@@ -3466,10 +2908,7 @@ public:
 final class XorExpression : ExpressionNode
 {
 public:
-    override void accept(ASTVisitor visitor) const
-    {
-        mixin (visitIfNotNull!(left, right));
-    }
+    mixin acceptMembersIfNotNull;
     mixin BinaryExpressionBody;
     mixin OpEquals;
 }
