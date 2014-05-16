@@ -113,31 +113,20 @@ class CheckStringFormat : ScopeAnalyzer {
 		// Get all the arguments passed to the function
 		TokenData[] token_args = get_function_call_arguments(funcCallExp);
 
-		// Just return if less than 1 arg, or the first arg is not a string
-		if(token_args.length < 1)
-			return;
-
 		// Get the format string and arguments
-		string string_with_formats;
-		size_t line, column;
-		TokenData[] args = [];
+		size_t arg_offset = 0;
 		if(full_func_name == "std.string.sformat") {
-			if(token_args.length < 2 || token_args[1].type_data.name != "string")
-				return;
-			string_with_formats = token_args[1].value;
-			line = token_args[1].line;
-			column = token_args[1].column;
-			if(token_args.length > 2)
-				args = token_args[2 .. $];
-		} else {
-			if(token_args.length < 1 || token_args[0].type_data.name != "string")
-				return;
-			string_with_formats = token_args[0].value;
-			line = token_args[0].line;
-			column = token_args[0].column;
-			if(token_args.length > 1)
-				args = token_args[1 .. $];
+			arg_offset = 1;
 		}
+		// Just return if there are not enough args, or the format arg is not a string
+		if(token_args.length < arg_offset+1 || token_args[arg_offset].type_data.name != "string")
+			return;
+		string string_with_formats = token_args[arg_offset].value;
+		size_t line = token_args[arg_offset].line;
+		size_t column = token_args[arg_offset].column;
+		TokenData[] args = [];
+		if(token_args.length > arg_offset+1)
+			args = token_args[arg_offset+1 .. $];
 
 		// Get all the format strings
 		auto any_format = regex(r"\%\w");
@@ -261,21 +250,8 @@ unittest {
 			format("total: %d", 400); // Called with import namespace
 			//FIXME: "total: %d".format(400); // Called with UFC
 
-			// No argument
-			std.string.format("%s"); // [warn]: Found 1 format strings, but there were 0 arguments.
-
-			// No formats
-			std.string.format("", 99); // [warn]: Found 0 format strings, but there were 1 arguments.
-
-			// Too many arguments
-			std.string.format("%s", 1, 2, 3); // [warn]: Found 1 format strings, but there were 3 arguments.
-			format("%s", 1, 2, 3); // [warn]: Found 1 format strings, but there were 3 arguments.
-
-			// Too few arguments
-			std.string.format("%s, %d, %s", 1); // [warn]: Found 3 format strings, but there were 1 arguments.
-
 			// Incompatible format
-			std.string.format("%d", "blah"); // [warn]: Format '%d' expects an integer/bool/char type, not 'string'.
+			format("%d", "blah"); // [warn]: Format '%d' expects an integer/bool/char type, not 'string'.
 			std.string.format("%f", 3); // [warn]: Format '%f' expects a float type, not 'int'.
 		}
 
@@ -286,6 +262,7 @@ unittest {
 
 			// Control
 			output = std.string.sformat(buf, "%d", 1);
+			output = sformat(buf, "%d", 1);
 
 			// No args and no format
 			output = sformat(buf, "%d"); // [warn]: Found 1 format strings, but there were 0 arguments.
