@@ -21,9 +21,6 @@ import analysis.scope_analyzer;
 
 /*
 FIXME: Make this work with:
- // http://dlang.org/phobos/std_string.html#.sformat
- std.string.sformat
-
  // http://dlang.org/phobos/std_format.html
  std.format.formattedWrite
  std.format.formattedRead
@@ -66,9 +63,26 @@ ModuleFunctionSet("std.stdio", [
 
 const auto FORMAT_FUNCTIONS = 
 ModuleFunctionSet("std.string", [
-	"format"
+	"format", 
+	"sformat"
 ]);
 
+string get_full_function_name(string func_name) {
+	auto func_sets = [
+		WRITE_F_FUNCTIONS, 
+		WRITE_FUNCTIONS, 
+		FORMAT_FUNCTIONS
+	];
+
+	foreach(func_set; func_sets) {
+		string full_name = get_function_full_name(func_set, func_name);
+		if(full_name) {
+			return full_name;
+		}
+	}
+
+	return null;
+}
 
 
 // FIXME: Works with everything but UFC
@@ -94,21 +108,36 @@ class CheckStringFormat : ScopeAnalyzer {
 			&& !FORMAT_FUNCTIONS.has_function(func_name)) {
 			return;
 		}
+		string full_func_name = get_full_function_name(func_name);
 
 		// Get all the arguments passed to the function
 		TokenData[] token_args = get_function_call_arguments(funcCallExp);
 
 		// Just return if less than 1 arg, or the first arg is not a string
-		if(token_args.length < 1 || token_args[0].type_data.name != "string")
+		if(token_args.length < 1)
 			return;
 
 		// Get the format string and arguments
-		string string_with_formats = token_args[0].value;
-		size_t line = token_args[0].line;
-		size_t column = token_args[0].column;
+		string string_with_formats;
+		size_t line, column;
 		TokenData[] args = [];
-		if(token_args.length > 1)
-			args = token_args[1 .. $];
+		if(full_func_name == "std.string.sformat") {
+			if(token_args.length < 2 || token_args[1].type_data.name != "string")
+				return;
+			string_with_formats = token_args[1].value;
+			line = token_args[1].line;
+			column = token_args[1].column;
+			if(token_args.length > 2)
+				args = token_args[2 .. $];
+		} else {
+			if(token_args.length < 1 || token_args[0].type_data.name != "string")
+				return;
+			string_with_formats = token_args[0].value;
+			line = token_args[0].line;
+			column = token_args[0].column;
+			if(token_args.length > 1)
+				args = token_args[1 .. $];
+		}
 
 		// Get all the format strings
 		auto any_format = regex(r"\%\w");
@@ -248,6 +277,19 @@ unittest {
 			// Incompatible format
 			std.string.format("%d", "blah"); // [warn]: Format '%d' expects an integer/bool/char type, not 'string'.
 			std.string.format("%f", 3); // [warn]: Format '%f' expects a float type, not 'int'.
+		}
+
+		void test_sformat() {
+			import std.string;
+			char[100] buf;
+			char[] output;
+
+			// Control
+			output = std.string.sformat(buf, "%d", 1);
+
+			// No args and no format
+			output = sformat(buf, "%d"); // [warn]: Found 1 format strings, but there were 0 arguments.
+			output = std.string.sformat(buf, "", 88); // [warn]: Found 0 format strings, but there were 1 arguments.
 		}
 	}c, analysis.run.AnalyzerCheck.check_string_format);
 

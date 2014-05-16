@@ -106,22 +106,27 @@ struct ModuleFunctionSet {
 
 // Returns true if a ModuleFunctionSet has a function.
 bool has_function(const ModuleFunctionSet func_set, string func_name) {
+	return get_function_full_name(func_set, func_name) !is null;
+}
+
+string get_function_full_name(const ModuleFunctionSet func_set, string func_name) {
 	bool is_imported = analysis.scope_frame.is_already_imported(func_set.import_name);
 
 	foreach(func; func_set.functions) {
+		string full_func_name = "%s.%s".format(func_set.import_name, func);
+
 		// If the module is imported the short function name may be used
 		if(is_imported && func_name == func) {
-			return true;
+			return full_func_name;
 		}
 
 		// If the module is not imported, the full function name must be used
-		string full_func_name = "%s.%s".format(func_set.import_name, func);
 		if(func_name == full_func_name) {
-			return true;
+			return full_func_name;
 		}
 	}
 
-	return false;
+	return null;
 }
 
 void should_warn(string code, analysis.run.AnalyzerCheck analyzers, string file=__FILE__, size_t line=__LINE__) {
