@@ -22,7 +22,6 @@ import analysis.scope_analyzer;
 /*
 FIXME: Make this work with:
  // http://dlang.org/phobos/std_format.html
- std.format.formattedWrite
  std.format.formattedRead
  std.format.FormatSpec
  std.format.singleSpec
@@ -61,16 +60,22 @@ ModuleFunctionSet("std.stdio", [
 	"writeln"
 ]);
 
-const auto FORMAT_FUNCTIONS = 
+const auto STRING_FUNCTIONS = 
 ModuleFunctionSet("std.string", [
 	"format", 
 	"sformat"
+]);
+
+const auto FORMAT_FUNCTIONS = 
+ModuleFunctionSet("std.format", [
+	"formattedWrite"
 ]);
 
 string get_full_function_name(string func_name) {
 	auto func_sets = [
 		WRITE_F_FUNCTIONS, 
 		WRITE_FUNCTIONS, 
+		STRING_FUNCTIONS, 
 		FORMAT_FUNCTIONS
 	];
 
@@ -103,19 +108,16 @@ class CheckStringFormat : ScopeAnalyzer {
 		string func_name = get_function_call_name(funcCallExp);
 
 		// Just return if not one of the functions to test
-		if(!WRITE_F_FUNCTIONS.has_function(func_name)
-			&& !WRITE_FUNCTIONS.has_function(func_name)
-			&& !FORMAT_FUNCTIONS.has_function(func_name)) {
-			return;
-		}
 		string full_func_name = get_full_function_name(func_name);
+		if(full_func_name is null)
+			return;
 
 		// Get all the arguments passed to the function
 		TokenData[] token_args = get_function_call_arguments(funcCallExp);
 
 		// Get the format string and arguments
 		size_t arg_offset = 0;
-		if(full_func_name == "std.string.sformat") {
+		if(full_func_name == "std.string.sformat" || full_func_name == "std.format.formattedWrite") {
 			arg_offset = 1;
 		}
 		// Just return if there are not enough args, or the format arg is not a string
@@ -267,6 +269,20 @@ unittest {
 			// No args and no format
 			output = sformat(buf, "%d"); // [warn]: Found 1 format strings, but there were 0 arguments.
 			output = std.string.sformat(buf, "", 88); // [warn]: Found 0 format strings, but there were 1 arguments.
+		}
+
+		void test_formatted_write() {
+			import std.array;
+			import std.format;
+
+			// Control
+			auto writer = appender!string();
+			formattedWrite(writer, "%d", 77);
+			std.format.formattedWrite(writer, "%s.", "blah");
+
+			// No args and no format
+			formattedWrite(writer, "%d", "blah"); // [warn]: Format '%d' expects an integer/bool/char type, not 'string'.
+			std.format.formattedWrite(writer, "%f.", "3"); // [warn]: Format '%f' expects a float type, not 'string'.
 		}
 	}c, analysis.run.AnalyzerCheck.check_string_format);
 
