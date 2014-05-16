@@ -19,15 +19,6 @@ import analysis.base;
 import analysis.helpers;
 import analysis.scope_analyzer;
 
-/*
-FIXME: Make this work with:
- // http://dlang.org/phobos/std_format.html
- std.format.formattedRead
- std.format.FormatSpec
- std.format.singleSpec
- std.format.formatValue
- std.format.unformatValue
-*/
 
 // http://dlang.org/phobos/std_format.html
 const string[] FORMAT_STRINGS = [
@@ -90,10 +81,31 @@ string get_full_function_name(string func_name) {
 }
 
 
-// FIXME: Works with everything but UFC
+// FIXME: This does not work when calling function using UFC
 /**
- * Checks for improper use of std.stdio.writefln and std.string.format
- */
+ * Checks for improper use of format functions. Including:
+ * 1. Number of format strings and arguments don't match
+ * 2. Using write instead of writef
+ * 3. Using writeln instead of writefln
+ * 4. Using %c with non char types
+ * 5. Using %d, %b, %x, %o with non integer/bool/char types
+ * 6. Using %f, %e, %g, %a with non float types
+ *
+ * Functions that are checked:
+ * std.stdio.writef
+ * std.stdio.writefln
+ * std.string.format
+ * std.string.sformat
+ * std.format.formattedWrite
+ *
+ * FIXME: Make these functions work too:
+ * // http://dlang.org/phobos/std_format.html
+ * std.format.formattedRead
+ * std.format.FormatSpec
+ * std.format.singleSpec
+ * std.format.formatValue
+ * std.format.unformatValue
+ **/
 class CheckStringFormat : ScopeAnalyzer {
 	alias visit = ScopeAnalyzer.visit;
 
