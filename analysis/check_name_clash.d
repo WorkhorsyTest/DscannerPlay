@@ -31,7 +31,7 @@ class NameClashCheck : ScopeAnalyzer {
 	override void visit(const Module mod) {
 		mod.accept(this);
 
-		foreach(name, positions; get_name_clashes()) {
+		foreach(name, positions; getNameClashes()) {
 			// Skip if there are less than two
 			if(positions.length < 2)
 				continue;
@@ -57,7 +57,7 @@ class NameClashCheck : ScopeAnalyzer {
 unittest {
 	// FIXME: Make it work with class/struct static fields and methods.
 	// FIXME: Make it work with functions, and delegates too.
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		// Variable vs nested variable
 		string sound = "quack";
 		void talk() {

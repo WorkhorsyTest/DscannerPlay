@@ -29,7 +29,7 @@ void extra_inspect(T)(T thing, uint indent, string name) {
 			writefln("%s%s : %s", pad(indent++), name, "Token");
 			//writefln("%stext: \"%s\"", pad(indent), thing.text);
 			//writefln("%stype: \"%s\"", pad(indent), thing.type.str);
-			writefln("%svalue: data_type:%s, token_type:%s, line:%s, column:%s", pad(indent), data.type_data, data.token_type, data.line, data.column);
+			writefln("%svalue: typeData:%s, tokenType:%s, line:%s, column:%s", pad(indent), data.typeData, data.tokenType, data.line, data.column);
 		}
 	} else static if(is(T == const IdType)) {
 		if(thing != IdType.init) {

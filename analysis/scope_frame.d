@@ -3,6 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+// FIXME: Restructure everything is in module so we can access it by going:
+// Scope.blah
 module analysis.scope_frame;
 /*
 This module has functions for managing what is in scope. This includes:
@@ -21,60 +23,59 @@ import std.string;
 import std.stdint;
 import dlang_helper;
 
-struct TypeData {
+struct TypeData
+{
 	string name;
-	bool is_array;
-	bool is_template; // FIXME: Not actually used yet
+	bool isArray;
+	bool isTemplate; // FIXME: Not actually used yet
 
-	this(string name) {
-		if(name.ends_with("[]")) {
-			this.is_array = true;
+	this(string name)
+	{
+		if (name.ends_with("[]"))
+		{
+			this.isArray = true;
 		}
 		this.name = name.before("[]");
 	}
 
-	const string toString() {
-		if(this.is_array) {
+	const string toString()
+	{
+		if (this.isArray)
 			return "%s[]".format(this.name);
-		} else {
+		else
 			return this.name;
-		}
 	}
 }
 
-struct FunctionData {
+struct FunctionData
+{
 	string name;
 	TemplateData[] templates;
-	TypeData return_type;
-	TypeData[] arg_types;
+	TypeData returnType;
+	TypeData[] argTypes;
 	size_t line;
 	size_t column;
 }
 
-struct VariableData {
+struct VariableData
+{
 	string name;
 	TypeData type;
-	bool is_used;
-	bool is_parameter;
+	bool isUsed;
+	bool isParameter;
 	size_t line;
 	size_t column;
 }
 
-struct TemplateData {
+struct TemplateData
+{
 	string name;
 	size_t line;
 	size_t column;
 }
 
-struct StructData {
-	string name;
-	VariableData[string] fields;
-	FunctionData[string] methods;
-	size_t line;
-	size_t column;
-}
-
-struct ClassData {
+struct StructData
+{
 	string name;
 	VariableData[string] fields;
 	FunctionData[string] methods;
@@ -82,12 +83,23 @@ struct ClassData {
 	size_t column;
 }
 
-struct FieldData {
+struct ClassData
+{
+	string name;
+	VariableData[string] fields;
+	FunctionData[string] methods;
 	size_t line;
 	size_t column;
 }
 
-struct EnumData {
+struct FieldData
+{
+	size_t line;
+	size_t column;
+}
+
+struct EnumData
+{
 	string name;
 	TypeData type;
 	FieldData[string] fields;
@@ -95,7 +107,8 @@ struct EnumData {
 	size_t column;
 }
 
-struct ModuleData {
+struct ModuleData
+{
 	string name;
 	VariableData[string] variables;
 	FunctionData[string] functions;
@@ -104,7 +117,8 @@ struct ModuleData {
 	EnumData[string] enums;
 }
 
-struct ScopeFrame {
+struct ScopeFrame
+{
 	string[] imports;
 	TemplateData[string] templates;
 	VariableData[string] variables;
@@ -114,95 +128,61 @@ struct ScopeFrame {
 	EnumData[string] enums;
 }
 
-enum IdentifierType : string {
-	invalid_ = "invalid", 
-	module_ = "module", 
-	class_ = "class", 
-	struct_ = "struct", 
-	function_ = "function", 
-	method_ = "method", 
-	delegate_ = "delegate", 
-	variable_ = "variable", 
-	parameter_ = "parameter", 
-	template_ = "template", 
-	field_ = "field", 
+enum IdentifierType : string
+{
+	invalid_ = "invalid",
+	module_ = "module",
+	class_ = "class",
+	struct_ = "struct",
+	function_ = "function",
+	method_ = "method",
+	delegate_ = "delegate",
+	variable_ = "variable",
+	parameter_ = "parameter",
+	template_ = "template",
+	field_ = "field",
 	enum_ = "enum"
 }
 
-struct Decoration {
-	bool is_property;
-	bool is_ref;
-	bool is_auto;
+struct Decoration
+{
+	bool isProperty;
+	bool isRef;
+	bool isAuto;
 }
 
-struct Position {
+struct Position
+{
 	size_t line;
 	size_t column;
 	IdentifierType type;
 
-	string type_name() {
+	string typeName()
+	{
 		return cast(string) this.type;
 	}
 }
 
 // FIXME: All the name clash checks should be extracted and moved into the name clash checker.
-/*private*/ Position[][string] name_clashes;
+/*private*/ Position[][string] nameClashes;
 /*private*/ ScopeFrame[] frames;
 /*private*/ ModuleData[string] modules;
 Queue!string this_pointers;
 Queue!Decoration decorations;
 Queue!IdentifierType parents;
 
-void scope_frame_print_all() {
-	stderr.writefln("!!! modules");
-	foreach(mod; modules) {
-		stderr.writefln("module: %s", mod.name);
-		foreach(name, var_data; mod.variables) {
-			stderr.writefln("            var:%s:%s, is_used:%d", name, var_data, var_data.is_used);
-		}
-		foreach(name, func_data; mod.functions) {
-			stderr.writefln("            func:%s:%s", name, func_data);
-		}
-		foreach(name, struct_data; mod.structs) {
-			stderr.writefln("            struct:%s:%s", name, struct_data);
-		}
-		foreach(name, class_data; mod.classes) {
-			stderr.writefln("            class:%s:%s", name, class_data);
-		}
-		foreach(name, enum_data; mod.enums) {
-			stderr.writefln("            enum:%s:%s", name, enum_data);
-		}
-	}
-	stderr.writefln("!!! scope_frame_print_all()");
-	foreach(frame; frames) {
-		foreach(name, var_data; frame.variables) {
-			stderr.writefln("            var:%s:%s, is_used:%d", name, var_data, var_data.is_used);
-		}
-		foreach(name, func_data; frame.functions) {
-			stderr.writefln("            func:%s:%s", name, func_data);
-		}
-		foreach(name, struct_data; frame.structs) {
-			stderr.writefln("            struct:%s:%s", name, struct_data);
-		}
-		foreach(name, class_data; frame.classes) {
-			stderr.writefln("            class:%s:%s", name, class_data);
-		}
-		foreach(name, enum_data; frame.enums) {
-			stderr.writefln("            enum:%s:%s", name, enum_data);
-		}
-	}
-}
-
-void scope_frame_clear_everything() {
-	name_clashes.clear();
+void scopeFrameClearEverything()
+{
+	nameClashes.clear();
 	frames.clear();
 	modules.clear();
-	this_pointers.clear();
+	thisPointers.clear();
 	decorations.clear();
 	parents.clear();
 }
 
-void scope_frame_start() {
+void scopeFrameStart()
+{
 	// Add a new scope frame
 	ScopeFrame frame;
 	frames ~= frame;
@@ -210,64 +190,70 @@ void scope_frame_start() {
 	info("scope_frame_start #%s", frames.length-1);
 }
 
-void scope_frame_exit() {
-	info("scope_frame_exit");
+void scopeFrameExit()
+{
+	info("scopeFrameExit");
 
 	// Print all the variables & functions in the scope frames
 	info("    Dumping frame #%s", frames.length-1);
 	auto frame = frames[$-1];
-	foreach(name, var_data; frame.variables) {
-		info("            var:%s:%s, is_used:%d", name, var_data, var_data.is_used);
-	}
-	foreach(name, func_data; frame.functions) {
-		info("            func:%s:%s", name, func_data);
-	}
-	foreach(name, struct_data; frame.structs) {
-		info("            struct:%s:%s", name, struct_data);
-	}
-	foreach(name, class_data; frame.classes) {
-		info("            class:%s:%s", name, class_data);
-	}
-	foreach(name, enum_data; frame.enums) {
-		info("            enum:%s:%s", name, enum_data);
-	}
+	foreach (name, varData; frame.variables)
+		info("            var:%s:%s, isUsed:%d", name, varData, varData.isUsed);
+	foreach (name, funcData; frame.functions)
+		info("            func:%s:%s", name, funcData);
+	foreach (name, structData; frame.structs)
+		info("            struct:%s:%s", name, structData);
+	foreach (name, classData; frame.classes)
+		info("            class:%s:%s", name, classData);
+	foreach (name, enumData; frame.enums)
+		info("            enum:%s:%s", name, enumData);
 
 	// Remove the current scope frame
 	frames = frames[0 .. $-1];
 }
 
-VariableData[string] get_current_scope_frame_variables() {
-	if(frames.length == 0)
+VariableData[string] getCurrentScopeFrameVariables()
+{
+	if (frames.length == 0)
 		return null;
 
 	return frames[$-1].variables;
 }
 
-FunctionData get_function_data_by_name(string name) {
+FunctionData getFunctionDataByName(string name)
+{
 	// Match functions in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.functions) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.functions)
+		{
 			return frame.functions[name];
 		}
 	}
 
 	// Match exact module function name in other module
-	foreach(mod; modules) {
-		if(name.startsWith(mod.name) && name.length > mod.name.length) {
+	foreach (mod; modules)
+	{
+		if (name.startsWith(mod.name) && name.length > mod.name.length)
+		{
 			auto offset = mod.name.length + 1;
-			string offset_name = name[offset .. $];
-			if(offset_name in mod.functions) {
-				return mod.functions[offset_name];
+			string offsetName = name[offset .. $];
+			if (offsetName in mod.functions)
+			{
+				return mod.functions[offsetName];
 			}
 		}
 	}
 
 	// Match partial module function name using imports
-	foreach(frame; std.range.retro(frames)) {
-		foreach(import_name; frame.imports) {
-			if(import_name in modules) {
-				auto mod = modules[import_name];
-				if(name in mod.functions) {
+	foreach (frame; std.range.retro(frames))
+	{
+		foreach (importName; frame.imports)
+		{
+			if (importName in modules)
+			{
+				auto mod = modules[importName];
+				if (name in mod.functions) {
 					return mod.functions[name];
 				}
 			}
@@ -277,31 +263,40 @@ FunctionData get_function_data_by_name(string name) {
 	return FunctionData.init;
 }
 
-VariableData get_variable_data_by_name(string name) {
+VariableData getVariableDataByName(string name) {
 	// Match variables in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.variables) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.variables)
+		{
 			return frame.variables[name];
 		}
 	}
 
 	// Match exact module variable name in other module
-	foreach(mod; modules) {
-		if(name.startsWith(mod.name) && name.length > mod.name.length) {
+	foreach (mod; modules)
+	{
+		if (name.startsWith(mod.name) && name.length > mod.name.length)
+		{
 			auto offset = mod.name.length + 1;
-			string offset_name = name[offset .. $];
-			if(offset_name in mod.variables) {
-				return mod.variables[offset_name];
+			string offsetName = name[offset .. $];
+			if (offsetName in mod.variables)
+			{
+				return mod.variables[offsetName];
 			}
 		}
 	}
 
 	// Match partial module variable name using imports
-	foreach(frame; std.range.retro(frames)) {
-		foreach(import_name; frame.imports) {
-			if(import_name in modules) {
-				auto mod = modules[import_name];
-				if(name in mod.variables) {
+	foreach (frame; std.range.retro(frames))
+	{
+		foreach (importName; frame.imports)
+		{
+			if (importName in modules)
+			{
+				auto mod = modules[importName];
+				if (name in mod.variables)
+				{
 					return mod.variables[name];
 				}
 			}
@@ -311,10 +306,12 @@ VariableData get_variable_data_by_name(string name) {
 	return VariableData.init;
 }
 
-TemplateData get_template_data_by_name(string name) {
+TemplateData getTemplateDataByName(string name) {
 	// Match template in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.templates) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.templates)
+		{
 			return frame.templates[name];
 		}
 	}
@@ -322,31 +319,41 @@ TemplateData get_template_data_by_name(string name) {
 	return TemplateData.init;
 }
 
-StructData get_struct_data_by_name(string name) {
+StructData getStructDataByName(string name)
+{
 	// Match structs in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.structs) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.structs)
+		{
 			return frame.structs[name];
 		}
 	}
 
 	// Match exact module struct name in other module
-	foreach(mod; modules) {
-		if(name.startsWith(mod.name) && name.length > mod.name.length) {
+	foreach (mod; modules)
+	{
+		if (name.startsWith(mod.name) && name.length > mod.name.length)
+		{
 			auto offset = mod.name.length + 1;
-			string offset_name = name[offset .. $];
-			if(offset_name in mod.structs) {
-				return mod.structs[offset_name];
+			string offsetName = name[offset .. $];
+			if (offsetName in mod.structs)
+			{
+				return mod.structs[offsetName];
 			}
 		}
 	}
 
 	// Match partial module struct name using imports
-	foreach(frame; std.range.retro(frames)) {
-		foreach(import_name; frame.imports) {
-			if(import_name in modules) {
-				auto mod = modules[import_name];
-				if(name in mod.structs) {
+	foreach (frame; std.range.retro(frames))
+	{
+		foreach (importName; frame.imports)
+		{
+			if (importName in modules)
+			{
+				auto mod = modules[importName];
+				if (name in mod.structs)
+				{
 					return mod.structs[name];
 				}
 			}
@@ -356,31 +363,41 @@ StructData get_struct_data_by_name(string name) {
 	return StructData.init;
 }
 
-ClassData get_class_data_by_name(string name) {
+ClassData getClassDataByName(string name)
+{
 	// Match classes in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.classes) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.classes)
+		{
 			return frame.classes[name];
 		}
 	}
 
 	// Match exact module class name in other module
-	foreach(mod; modules) {
-		if(name.startsWith(mod.name) && name.length > mod.name.length) {
+	foreach (mod; modules)
+	{
+		if (name.startsWith(mod.name) && name.length > mod.name.length)
+		{
 			auto offset = mod.name.length + 1;
-			string offset_name = name[offset .. $];
-			if(offset_name in mod.classes) {
-				return mod.classes[offset_name];
+			string offsetName = name[offset .. $];
+			if (offsetName in mod.classes)
+			{
+				return mod.classes[offsetName];
 			}
 		}
 	}
 
 	// Match partial module class name using imports
-	foreach(frame; std.range.retro(frames)) {
-		foreach(import_name; frame.imports) {
-			if(import_name in modules) {
-				auto mod = modules[import_name];
-				if(name in mod.classes) {
+	foreach (frame; std.range.retro(frames))
+	{
+		foreach (importName; frame.imports)
+		{
+			if (importName in modules)
+			{
+				auto mod = modules[importName];
+				if (name in mod.classes)
+				{
 					return mod.classes[name];
 				}
 			}
@@ -390,31 +407,41 @@ ClassData get_class_data_by_name(string name) {
 	return ClassData.init;
 }
 
-EnumData get_enum_data_by_name(string name) {
+EnumData getEnumDataByName(string name)
+{
 	// Match enums in scope frames
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.enums) {
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.enums)
+		{
 			return frame.enums[name];
 		}
 	}
 
 	// Match exact module enum name in other module
-	foreach(mod; modules) {
-		if(name.startsWith(mod.name) && name.length > mod.name.length) {
+	foreach (mod; modules)
+	{
+		if (name.startsWith(mod.name) && name.length > mod.name.length)
+		{
 			auto offset = mod.name.length + 1;
-			string offset_name = name[offset .. $];
-			if(offset_name in mod.enums) {
-				return mod.enums[offset_name];
+			string offsetName = name[offset .. $];
+			if (offsetName in mod.enums)
+			{
+				return mod.enums[offsetName];
 			}
 		}
 	}
 
 	// Match partial module enum name using imports
-	foreach(frame; std.range.retro(frames)) {
-		foreach(import_name; frame.imports) {
-			if(import_name in modules) {
-				auto mod = modules[import_name];
-				if(name in mod.enums) {
+	foreach (frame; std.range.retro(frames))
+	{
+		foreach (importName; frame.imports)
+		{
+			if (importName in modules)
+			{
+				auto mod = modules[importName];
+				if (name in mod.enums)
+				{
 					return mod.enums[name];
 				}
 			}
@@ -424,18 +451,23 @@ EnumData get_enum_data_by_name(string name) {
 	return EnumData.init;
 }
 
-ModuleData get_module_data_by_name(string name) {
-	if(name in modules) {
+ModuleData getModuleDataByName(string name)
+{
+	if (name in modules)
+	{
 		return modules[name];
 	}
 
 	return ModuleData.init;
 }
 
-void set_variable_is_used_by_name(string name) {
-	foreach(frame; std.range.retro(frames)) {
-		if(name in frame.variables) {
-			frame.variables[name].is_used = true;
+void setVariableIsUsedByName(string name)
+{
+	foreach (frame; std.range.retro(frames))
+	{
+		if (name in frame.variables)
+		{
+			frame.variables[name].isUsed = true;
 			return;
 		}
 	}
@@ -443,10 +475,14 @@ void set_variable_is_used_by_name(string name) {
 	throw new Exception("Could not find any declared variable named: %s".format(name));
 }
 
-bool is_already_imported(string import_name) {
-	foreach(frame; frames) {
-		foreach(imp; frame.imports) {
-			if(imp == import_name) {
+bool isAlreadyImported(string importName)
+{
+	foreach (frame; frames)
+	{
+		foreach (imp; frame.imports)
+		{
+			if (imp == importName)
+			{
 				return true;
 			}
 		}
@@ -455,34 +491,38 @@ bool is_already_imported(string import_name) {
 	return false;
 }
 
-void add_import(string import_name) {
-	info("add_import");
+void addImport(string importName)
+{
+	info("addImport");
 
 	// Make sure everything is sane
-	assert(import_name, "import name was null");
-	assert(import_name.length, "import name was blank");
+	assert (importName, "import name was null");
+	assert (importName.length, "import name was blank");
 
-	frames[$-1].imports ~= import_name;
-	info("    add import: %s", import_name);
+	frames[$-1].imports ~= importName;
+	info("    add import: %s", importName);
 }
 
-void add_function(FunctionData func_data) {
-	info("add_function");
+void addFunction(FunctionData funcData)
+{
+	info("addFunction");
 
 	// Make sure everything is sane
-	assert(func_data !is FunctionData.init, "function was null");
-	assert(func_data.name, "function name was null");
-	assert(func_data.name.length, "function name was blank");
-	assert(func_data.return_type !is TypeData.init, "function return type was null");
-	assert(func_data.line, "function line was 0");
-	assert(func_data.column, "function column was 0");
+	assert (funcData !is FunctionData.init, "function was null");
+	assert (funcData.name, "function name was null");
+	assert (funcData.name.length, "function name was blank");
+	assert (funcData.returnType !is TypeData.init, "function return type was null");
+	assert (funcData.line, "function line was 0");
+	assert (funcData.column, "function column was 0");
 
 	// Skip if declaring same function
-	foreach(frame; frames) {
-		if(func_data.name in frame.functions) {
-			auto func_other = frame.functions[func_data.name];
-			if(func_other == func_data) {
-				info("Tried to redeclare function '%s'.", func_data.name);
+	foreach (frame; frames)
+	{
+		if (funcData.name in frame.functions)
+		{
+			auto funcOther = frame.functions[funcData.name];
+			if (funcOther == funcData) {
+				info("Tried to redeclare function '%s'.", funcData.name);
 				return;
 			}
 		}
@@ -490,29 +530,33 @@ void add_function(FunctionData func_data) {
 
 	// Declare the function
 	info("    frame count: %d", frames.length);
-	frames[$-1].functions[func_data.name] = func_data;
-	info("    declare function: %s:%s", func_data.name, func_data.return_type);
+	frames[$-1].functions[funcData.name] = funcData;
+	info("    declare function: %s:%s", funcData.name, funcData.returnType);
 
 	// Check to see if the name is already used
-	check_name_clashes(func_data.name, func_data.line, func_data.column, IdentifierType.function_);
+	checkNameClashes(funcData.name, funcData.line, funcData.column, IdentifierType.function_);
 }
 
-void add_template_parameter(TemplateData temp_data) {
-	info("add_template_parameter");
+void addTemplateParameter(TemplateData tempData)
+{
+	info("addTemplateParameter");
 
 	// Make sure everything is sane
-	assert(temp_data !is TemplateData.init, "template was null");
-	assert(temp_data.name, "template name was null");
-	assert(temp_data.name.length, "template name was blank");
-	assert(temp_data.line, "template line was 0");
-	assert(temp_data.column, "template column was 0");
+	assert (tempData !is TemplateData.init, "template was null");
+	assert (tempData.name, "template name was null");
+	assert (tempData.name.length, "template name was blank");
+	assert (tempData.line, "template line was 0");
+	assert (tempData.column, "template column was 0");
 
 	// Skip if declaring same template
-	foreach(frame; frames) {
-		if(temp_data.name in frame.templates) {
-			auto temp_other = frame.templates[temp_data.name];
-			if(temp_other == temp_data) {
-				info("Tried to redeclare template param '%s'.", temp_data.name);
+	foreach (frame; frames)
+	{
+		if (tempData.name in frame.templates)
+		{
+			auto tempOther = frame.templates[tempData.name];
+			if (tempOther == tempData)
+			{
+				info("Tried to redeclare template param '%s'.", tempData.name);
 				return;
 			}
 		}
@@ -520,31 +564,35 @@ void add_template_parameter(TemplateData temp_data) {
 
 	// Declare the template
 	info("    frame count: %d", frames.length);
-	frames[$-1].templates[temp_data.name] = temp_data;
-	info("    declare template: %s:%s", temp_data.name);
+	frames[$-1].templates[tempData.name] = tempData;
+	info("    declare template: %s:%s", tempData.name);
 
 	// Check to see if the name is already used
-	auto iden_type = IdentifierType.template_;
-	check_name_clashes(temp_data.name, temp_data.line, temp_data.column, iden_type);
+	auto idenType = IdentifierType.template_;
+	checkNameClashes(tempData.name, tempData.line, tempData.column, idenType);
 }
 
-void add_variable(VariableData var_data) {
-	info("add_variable");
+void addVariable(VariableData varData)
+{
+	info("addVariable");
 
 	// Make sure everything is sane
-	assert(var_data !is VariableData.init, "variable was null");
-	assert(var_data.name, "variable name was null");
-	assert(var_data.name.length, "variable name was blank");
-	assert(var_data.type !is TypeData.init, "variable type was null");
-	assert(var_data.line, "variable line was 0");
-	assert(var_data.column, "variable column was 0");
+	assert (varData !is VariableData.init, "variable was null");
+	assert (varData.name, "variable name was null");
+	assert (varData.name.length, "variable name was blank");
+	assert (varData.type !is TypeData.init, "variable type was null");
+	assert (varData.line, "variable line was 0");
+	assert (varData.column, "variable column was 0");
 
 	// Skip if declaring same variable
-	foreach(frame; frames) {
-		if(var_data.name in frame.variables) {
-			auto var_other = frame.variables[var_data.name];
-			if(var_other == var_data) {
-				info("Tried to redeclare variable '%s'.", var_data.name);
+	foreach (frame; frames)
+	{
+		if (varData.name in frame.variables)
+		{
+			auto varOther = frame.variables[varData.name];
+			if (varOther == varData)
+			{
+				info("Tried to redeclare variable '%s'.", varData.name);
 				return;
 			}
 		}
@@ -552,35 +600,39 @@ void add_variable(VariableData var_data) {
 
 	// Declare the variable
 	info("    frame count: %d", frames.length);
-	frames[$-1].variables[var_data.name] = var_data;
-	info("    declare variable: %s:%s", var_data.name, var_data.type);
+	frames[$-1].variables[varData.name] = varData;
+	info("    declare variable: %s:%s", varData.name, varData.type);
 
 	// Check to see if the name is already used
 	IdentifierType identifier;
-	if(var_data.is_parameter)
+	if (varData.isParameter)
 		identifier = IdentifierType.parameter_;
 	else
 		identifier = IdentifierType.variable_;
 
-	check_name_clashes(var_data.name, var_data.line, var_data.column, identifier);
+	checkNameClashes(varData.name, varData.line, varData.column, identifier);
 }
 
-void add_class(ClassData class_data) {
-	info("add_class");
+void addClass(ClassData classData)
+{
+	info("addClass");
 
 	// Make sure everything is sane
-	assert(class_data !is ClassData.init, "class was null");
-	assert(class_data.name, "class name was null");
-	assert(class_data.name.length, "class name was blank");
-	assert(class_data.line, "class line was 0");
-	assert(class_data.column, "class column was 0");
+	assert (classData !is ClassData.init, "class was null");
+	assert (classData.name, "class name was null");
+	assert (classData.name.length, "class name was blank");
+	assert (classData.line, "class line was 0");
+	assert (classData.column, "class column was 0");
 
 	// Skip if declaring same class
-	foreach(frame; frames) {
-		if(class_data.name in frame.classes) {
-			auto class_other = frame.classes[class_data.name];
-			if(class_other == class_data) {
-				info("Tried to redeclare class '%s'.", class_data.name);
+	foreach (frame; frames)
+	{
+		if (classData.name in frame.classes)
+		{
+			auto classOther = frame.classes[classData.name];
+			if (classOther == classData)
+			{
+				info("Tried to redeclare class '%s'.", classData.name);
 				return;
 			}
 		}
@@ -588,37 +640,43 @@ void add_class(ClassData class_data) {
 
 	// Declare the class
 	info("    frame count: %d", frames.length);
-	frames[$-1].classes[class_data.name] = class_data;
-	info("    declare class: %s", class_data.name);
+	frames[$-1].classes[classData.name] = classData;
+	info("    declare class: %s", classData.name);
 
 	// Check to see if the name is already used
-	check_name_clashes(class_data.name, class_data.line, class_data.column, IdentifierType.class_);
+	checkNameClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
 	// Check to see if the field names are already used
-	foreach(field_name, field; class_data.fields) {
-		check_name_clashes(field_name, field.line, field.column, IdentifierType.field_);
+	foreach (fieldName, field; classData.fields)
+	{
+		checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
 	}
 	// Check to see if the method names are already used
-	foreach(method_name, method; class_data.methods) {
-		check_name_clashes(method_name, method.line, method.column, IdentifierType.method_);
+	foreach (methodName, method; classData.methods)
+	{
+		checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
 	}
 }
 
-void add_struct(StructData struct_data) {
-	info("add_struct");
+void addStruct(StructData structData)
+{
+	info("addStruct");
 
 	// Make sure everything is sane
-	assert(struct_data !is StructData.init, "Struct was null");
-	assert(struct_data.name, "struct name was null");
-	assert(struct_data.name.length, "struct name was blank");
-	assert(struct_data.line, "struct line was 0");
-	assert(struct_data.column, "struct column was 0");
+	assert (structData !is StructData.init, "Struct was null");
+	assert (structData.name, "struct name was null");
+	assert (structData.name.length, "struct name was blank");
+	assert (structData.line, "struct line was 0");
+	assert (structData.column, "struct column was 0");
 
 	// Skip if declaring same struct
-	foreach(frame; frames) {
-		if(struct_data.name in frame.structs) {
-			auto struct_other = frame.structs[struct_data.name];
-			if(struct_other == struct_data) {
-				info("Tried to redeclare struct '%s'.", struct_data.name);
+	foreach (frame; frames)
+	{
+		if (structData.name in frame.structs)
+		{
+			auto structOther = frame.structs[structData.name];
+			if (structOther == structData)
+			{
+				info("Tried to redeclare struct '%s'.", structData.name);
 				return;
 			}
 		}
@@ -626,37 +684,42 @@ void add_struct(StructData struct_data) {
 
 	// Declare the struct
 	info("    frame count: %d", frames.length);
-	frames[$-1].structs[struct_data.name] = struct_data;
-	info("    declare struct: %s", struct_data.name);
+	frames[$-1].structs[structData.name] = structData;
+	info("    declare struct: %s", structData.name);
 
 	// Check to see if the name is already used
-	check_name_clashes(struct_data.name, struct_data.line, struct_data.column, IdentifierType.struct_);
+	checkNameClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
 	// Check to see if the field names are already used
-	foreach(field_name, field; struct_data.fields) {
-		check_name_clashes(field_name, field.line, field.column, IdentifierType.field_);
+	foreach (fieldName, field; structData.fields)
+	{
+		checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
 	}
 	// Check to see if the method names are already used
-	foreach(method_name, method; struct_data.methods) {
-		check_name_clashes(method_name, method.line, method.column, IdentifierType.method_);
+	foreach (methodName, method; structData.methods)
+	{
+		checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
 	}
 }
 
-void add_enum(EnumData enum_data) {
-	info("add_enum");
+void addEnum(EnumData enumData) {
+	info("addEnum");
 
 	// Make sure everything is sane
-	assert(enum_data !is EnumData.init, "enum was null");
-	assert(enum_data.name, "enum name was null");
-	assert(enum_data.name.length, "enum name was blank");
-	assert(enum_data.line, "enum line was 0");
-	assert(enum_data.column, "enum column was 0");
+	assert (enumData !is EnumData.init, "enum was null");
+	assert (enumData.name, "enum name was null");
+	assert (enumData.name.length, "enum name was blank");
+	assert (enumData.line, "enum line was 0");
+	assert (enumData.column, "enum column was 0");
 
 	// Skip if declaring same enum
-	foreach(frame; frames) {
-		if(enum_data.name in frame.enums) {
-			auto enum_other = frame.enums[enum_data.name];
-			if(enum_other == enum_data) {
-				info("Tried to redeclare enum '%s'.", enum_data.name);
+	foreach (frame; frames)
+	{
+		if (enumData.name in frame.enums)
+		{
+			auto enumOther = frame.enums[enumData.name];
+			if (enumOther == enumData)
+			{
+				info("Tried to redeclare enum '%s'.", enumData.name);
 				return;
 			}
 		}
@@ -664,99 +727,121 @@ void add_enum(EnumData enum_data) {
 
 	// Declare the enum
 	info("    frame count: %d", frames.length);
-	frames[$-1].enums[enum_data.name] = enum_data;
-	info("    declare enum: %s", enum_data.name);
+	frames[$-1].enums[enumData.name] = enumData;
+	info("    declare enum: %s", enumData.name);
 
 	// Check to see if the name is already used
-	check_name_clashes(enum_data.name, enum_data.line, enum_data.column, IdentifierType.enum_);
+	checkNameClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
 	// Check to see if the field names are already used
-	foreach(field_name, field; enum_data.fields) {
-		check_name_clashes(field_name, field.line, field.column, IdentifierType.field_);
+	foreach (fieldName, field; enumData.fields)
+	{
+		checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
 	}
 }
 
-void add_module(ModuleData module_data) {
-	info("add_module");
+void addModule(ModuleData moduleData)
+{
+	info("addModule");
 
 	// Make sure everything is sane
-	assert(module_data !is ModuleData.init, "Module was null");
-	assert(module_data.name, "module name was null");
-	assert(module_data.name.length, "module name was blank");
+	assert (moduleData !is ModuleData.init, "Module was null");
+	assert (moduleData.name, "module name was null");
+	assert (moduleData.name.length, "module name was blank");
 
 	// Skip if declaring same module
-	if(module_data.name in modules) {
-		auto module_other = modules[module_data.name];
-		if(module_other == module_data) {
-			info("Tried to redeclare module '%s'.", module_data.name);
+	if (moduleData.name in modules)
+	{
+		auto moduleOther = modules[moduleData.name];
+		if (moduleOther == moduleData)
+		{
+			info("Tried to redeclare module '%s'.", moduleData.name);
 			return;
 		}
 	}
 
 	// Declare the module
-	modules[module_data.name] = module_data;
-	info("    declare module: %s", module_data.name);
+	modules[moduleData.name] = moduleData;
+	info("    declare module: %s", moduleData.name);
 }
 
-Position[][string] get_name_clashes() {
-	return name_clashes;
+Position[][string] getNameClashes()
+{
+	return nameClashes;
 }
 
-void check_name_clashes(string name, size_t line, size_t column, IdentifierType type) {
-	auto var_data = get_variable_data_by_name(name);
-	auto func_data = get_function_data_by_name(name);
-	auto struct_data = get_struct_data_by_name(name);
-	auto class_data = get_class_data_by_name(name);
-	auto enum_data = get_enum_data_by_name(name);
-	size_t old_line, old_column;
-	IdentifierType old_type;
+void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
+{
+	auto varData = getVariableDataByName(name);
+	auto funcData = getFunctionDataByName(name);
+	auto structData = getStructDataByName(name);
+	auto classData = getClassDataByName(name);
+	auto enumData = getEnumDataByName(name);
+	size_t oldLine, oldColumn;
+	IdentifierType oldType;
 
 	// A variable has that name
-	if(var_data !is VariableData.init) {
-		old_line = var_data.line;
-		old_column = var_data.column;
-		old_type = IdentifierType.variable_;
+	if (varData !is VariableData.init)
+	{
+		oldLine = varData.line;
+		oldColumn = varData.column;
+		oldType = IdentifierType.variable_;
 	// A function has that name
-	} else if(func_data !is FunctionData.init) {
-		old_line = func_data.line;
-		old_column = func_data.column;
-		old_type = IdentifierType.function_;
+	}
+	else if (funcData !is FunctionData.init)
+	{
+		oldLine = funcData.line;
+		oldColumn = funcData.column;
+		oldType = IdentifierType.function_;
 	// A struct has that name
-	} else if(struct_data !is StructData.init) {
-		old_line = struct_data.line;
-		old_column = struct_data.column;
-		old_type = IdentifierType.struct_;
+	}
+	else if (structData !is StructData.init)
+	{
+		oldLine = structData.line;
+		oldColumn = structData.column;
+		oldType = IdentifierType.struct_;
 	// A class has that name
-	} else if(class_data !is ClassData.init) {
-		old_line = class_data.line;
-		old_column = class_data.column;
-		old_type = IdentifierType.class_;
+	}
+	else if (classData !is ClassData.init)
+	{
+		oldLine = classData.line;
+		oldColumn = classData.column;
+		oldType = IdentifierType.class_;
 	// An enum has that name
-	} else if(enum_data !is EnumData.init) {
-		old_line = enum_data.line;
-		old_column = enum_data.column;
-		old_type = IdentifierType.enum_;
+	}
+	else if (enumData !is EnumData.init)
+	{
+		oldLine = enumData.line;
+		oldColumn = enumData.column;
+		oldType = IdentifierType.enum_;
 	}
 
 	// Check struct fields and methods
-	if(old_type == IdentifierType.invalid_) {
+	if (oldType == IdentifierType.invalid_)
+	{
 		// Each scope frame
-		foreach(frame; frames) {
+		foreach (frame; frames)
+		{
 			// Each struct
-			foreach(struct_name, struct_data; frame.structs) {
+			foreach (structName, structData; frame.structs)
+			{
 				// Each field
-				foreach(field_name, field_data; struct_data.fields) {
-					if(field_name == name) {
-						old_line = field_data.line;
-						old_column = field_data.column;
-						old_type = IdentifierType.field_;
+				foreach (fieldName, fieldData; structData.fields)
+				{
+					if (fieldName == name)
+					{
+						oldLine = fieldData.line;
+						oldColumn = fieldData.column;
+						oldType = IdentifierType.field_;
 					}
 				}
 				// Each method
-				foreach(method_name, method_data; struct_data.methods) {
-					if(method_name == name) {
-						old_line = method_data.line;
-						old_column = method_data.column;
-						old_type = IdentifierType.method_;
+				foreach (methodName, methodData; structData.methods)
+				{
+					if (methodName == name)
+					{
+						oldLine = methodData.line;
+						oldColumn = methodData.column;
+						oldType = IdentifierType.method_;
 					}
 				}
 			}
@@ -764,25 +849,32 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 	}
 
 	// Check class fields and methods
-	if(old_type == IdentifierType.invalid_) {
+	if (oldType == IdentifierType.invalid_)
+	{
 		// Each scope frame
-		foreach(frame; frames) {
+		foreach (frame; frames)
+		{
 			// Each class
-			foreach(class_name, class_data; frame.classes) {
+			foreach (className, classData; frame.classes)
+			{
 				// Each field
-				foreach(field_name, field_data; class_data.fields) {
-					if(field_name == name) {
-						old_line = field_data.line;
-						old_column = field_data.column;
-						old_type = IdentifierType.field_;
+				foreach (fieldName, fieldData; classData.fields)
+				{
+					if (field_name == name)
+					{
+						oldLine = fieldData.line;
+						oldColumn = fieldData.column;
+						oldType = IdentifierType.field_;
 					}
 				}
 				// Each method
-				foreach(method_name, method_info; class_data.methods) {
-					if(method_name == name) {
-						old_line = method_info.line;
-						old_column = method_info.column;
-						old_type = IdentifierType.method_;
+				foreach (methodName, methodInfo; classData.methods)
+				{
+					if (methodName == name)
+					{
+						oldLine = methodInfo.line;
+						oldColumn = methodInfo.column;
+						oldType = IdentifierType.method_;
 					}
 				}
 			}
@@ -790,17 +882,22 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 	}
 
 	// Check enum fields
-	if(old_type == IdentifierType.invalid_) {
+	if (oldType == IdentifierType.invalid_)
+	{
 		// Each scope frame
-		foreach(frame; frames) {
+		foreach (frame; frames)
+		{
 			// Each enum
-			foreach(enum_name, enum_data; frame.enums) {
+			foreach (enumName, enumData; frame.enums)
+			{
 				// Each field
-				foreach(field_name, field_data; enum_data.fields) {
-					if(field_name == name) {
-						old_line = field_data.line;
-						old_column = field_data.column;
-						old_type = IdentifierType.field_;
+				foreach (fieldName, fieldData; enumData.fields)
+				{
+					if (fieldName == name)
+					{
+						oldLine = fieldData.line;
+						oldColumn = fieldData.column;
+						oldType = IdentifierType.field_;
 					}
 				}
 			}
@@ -808,25 +905,28 @@ void check_name_clashes(string name, size_t line, size_t column, IdentifierType 
 	}
 
 	// Just return if there is nothing declared with that name
-	if(old_type == IdentifierType.invalid_)
+	if (oldType == IdentifierType.invalid_)
 		return;
 
 	// Save the line and column of the original declaration
-	if(name !in name_clashes) {
-		name_clashes[name] = [];
-		name_clashes[name] ~= Position(old_line, old_column, old_type);
+	if (name !in nameClashes)
+	{
+		nameClashes[name] = [];
+		nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
 	}
 
 	// It is a redeclaration if the line and column are already used
-	bool is_redeclaration = false;
-	foreach(pos; name_clashes[name]) {
-		if(pos.line == line && pos.column == column && pos.type == type)
-			is_redeclaration = true;
+	bool isRedeclaration = false;
+	foreach (pos; nameClashes[name])
+	{
+		if (pos.line == line && pos.column == column && pos.type == type)
+			isRedeclaration = true;
 	}
 
 	// Save it if it is not a redeclaration
-	if(!is_redeclaration) {
-		name_clashes[name] ~= Position(line, column, type);
+	if (!isRedeclaration)
+	{
+		nameClashes[name] ~= Position(line, column, type);
 	}
 }
 

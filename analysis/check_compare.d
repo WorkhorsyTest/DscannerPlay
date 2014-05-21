@@ -36,7 +36,7 @@ class CompareCheck : ScopeAnalyzer {
 		const string operator = idenExp.negated ? "!is" : "is";
 
 		if(is_same_token_variable(left, right)) {
-			string type = left.token_type.capitalize();
+			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" identified(%s) with itself.".format(type, left.name, operator);
 			addErrorMessage(left.line, left.column, message);
 		}
@@ -55,7 +55,7 @@ class CompareCheck : ScopeAnalyzer {
 		TokenData right = get_expression_return_token_data(eqlExp.right);
 
 		if(is_same_token_variable(left, right) && is_operator) {
-			string type = left.token_type.capitalize();
+			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" equaled(%s) with itself.".format(type, left.name, eqlExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
 		}
@@ -78,7 +78,7 @@ class CompareCheck : ScopeAnalyzer {
 		TokenData right = get_expression_return_token_data(relExp.right);
 
 		if(is_same_token_variable(left, right) && is_operator) {
-			string type = left.token_type.capitalize();
+			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" relationed(%s) with itself.".format(type, left.name, relExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
 		}
@@ -127,7 +127,7 @@ class CompareCheck : ScopeAnalyzer {
 		}
 
 		if(is_same_token_variable(left, right)) {
-			string type = left.token_type.capitalize();
+			string type = left.tokenType.capitalize();
 			string message = null;
 			if(operator == tok!"||") {
 				message = "%s \"%s\" logical ored(||) with itself.".format(type, left.name);
@@ -160,7 +160,7 @@ class CompareCheck : ScopeAnalyzer {
 		}
 
 		if(is_same_token_variable(left, right)) {
-			string type = left.token_type.capitalize();
+			string type = left.tokenType.capitalize();
 			string message = null;
 			if(operator == tok!"&") {
 				message = "%s \"%s\" bitwise anded(&) with itself.".format(type, left.name);
@@ -175,7 +175,7 @@ class CompareCheck : ScopeAnalyzer {
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_compare() {
 			int a;
 			bool b;

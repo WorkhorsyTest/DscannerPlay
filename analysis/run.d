@@ -32,22 +32,22 @@ import analysis.check_string_format;
 import analysis.check_unused;
 
 enum AnalyzerCheck : int {
-	style_check = 0x1, 
-	enum_array_literal_check = 0x2, 
-	exception_check = 0x4, 
-	delete_check = 0x8, 
-	float_operator_check = 0x10, 
-	number_style_check = 0x20, 
-	object_const_check = 0x40, 
-	backwards_range_check = 0x80, 
-	if_else_same_check = 0x100, 
-	constructor_check = 0x200, 
-	unused_variable_check = 0x400, 
-	compare_check = 0x800, 
-	size_t_check = 0x1000, 
-	unused_check = 0x2000, 
-	name_clash_check = 0x4000, 
-	check_string_format = 0x8000, 
+	style_check = 0x1,
+	enum_array_literal_check = 0x2,
+	exception_check = 0x4,
+	delete_check = 0x8,
+	float_operator_check = 0x10,
+	number_style_check = 0x20,
+	object_const_check = 0x40,
+	backwards_range_check = 0x80,
+	if_else_same_check = 0x100,
+	constructor_check = 0x200,
+	unused_variable_check = 0x400,
+	compare_check = 0x800,
+	size_t_check = 0x1000,
+	unused_check = 0x2000,
+	name_clash_check = 0x4000,
+	check_string_format = 0x8000,
 	all = 0xFFFF
 }
 
@@ -68,22 +68,22 @@ void load_phobos_module_data() {
 	// Get all the phobos library files
 	string[] fileNames;
 	string phobosDir = "/usr/include/dmd/phobos/std/";
-	foreach(string fileName; dirEntries(phobosDir, SpanMode.shallow, true)) {
-		if(fileName.endsWith(".d"))
+	foreach (string fileName; dirEntries(phobosDir, SpanMode.shallow, true)) {
+		if (fileName.endsWith(".d"))
 			fileNames ~= fileName;
 	}
 	// FIXME: Hard coded to just a few modules for now ...
 	fileNames = [
-		"/usr/include/dmd/phobos/std/algorithm.d", 
-		"/usr/include/dmd/phobos/std/array.d", 
-		"/usr/include/dmd/phobos/std/ascii.d", 
-		"/usr/include/dmd/phobos/std/base64.d", 
+		"/usr/include/dmd/phobos/std/algorithm.d",
+		"/usr/include/dmd/phobos/std/array.d",
+		"/usr/include/dmd/phobos/std/ascii.d",
+		"/usr/include/dmd/phobos/std/base64.d",
 		"/usr/include/dmd/phobos/std/bigint.d"
 	];
 	fileNames = [];
 
 	// Load each file as a module
-	foreach(fileName; fileNames) {
+	foreach (fileName; fileNames) {
 		stderr.writefln("!!!!!!!!!!!!!! loading phobos file: %s", fileName);
 		analysis.helpers.load_module(fileName);
 	}
@@ -156,7 +156,7 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	}
 
 	MessageSet set = new MessageSet;
-	foreach(check; checks)
+	foreach (check; checks)
 		foreach (message; check.messages)
 			set.insert(message);
 

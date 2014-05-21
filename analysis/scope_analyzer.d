@@ -104,7 +104,7 @@ class ScopeAnalyzer : BaseAnalyzer {
 
 	override void visitStart(const FunctionDeclaration node) {
 		// Only declare if NOT a struct/class method
-		if(parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
+		if (parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
 			declare_function(node);
 		}
 
@@ -139,23 +139,23 @@ class ScopeAnalyzer : BaseAnalyzer {
 		// Declare the global functions and variables
 		// This is a special case, because global functions do NOT have to 
 		// be declared in order.
-		foreach(decl; node.declarations) {
-			if(!decl) continue;
+		foreach (decl; node.declarations) {
+			if (!decl) continue;
 
 			// Add decorations such as properties, auto, ref, et cetera
 			Decoration decoration = get_declaration_decorations(decl);
 			decorations.push(decoration);
 
 			// Add the import
-			if(decl.importDeclaration && decl.importDeclaration.singleImports) {
-				foreach(singleImport; decl.importDeclaration.singleImports) {
+			if (decl.importDeclaration && decl.importDeclaration.singleImports) {
+				foreach (singleImport; decl.importDeclaration.singleImports) {
 					declare_import(singleImport);
 				}
 			// Declare the function
-			} else if(decl.functionDeclaration) {
+			} else if (decl.functionDeclaration) {
 				declare_function(decl.functionDeclaration);
 			// Declare the variable
-			} else if(decl.variableDeclaration) {
+			} else if (decl.variableDeclaration) {
 				declare_variable(decl.variableDeclaration);
 			}
 
@@ -224,7 +224,7 @@ class ScopeAnalyzer : BaseAnalyzer {
 
 	override void visitStart(const VariableDeclaration node) {
 		// Only declare if NOT a struct/class field
-		if(parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
+		if (parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
 			declare_variable(node);
 		}
 	}

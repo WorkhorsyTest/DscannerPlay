@@ -220,7 +220,7 @@ class CheckStringFormat : ScopeAnalyzer {
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_write() {
 			import std.stdio;
 

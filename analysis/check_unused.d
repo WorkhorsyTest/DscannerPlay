@@ -69,7 +69,7 @@ class UnusedCheck : ScopeAnalyzer {
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void ignore(T)(T thing) {
 			writefln("thing: %s", thing);
 		}
