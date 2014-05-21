@@ -1308,14 +1308,14 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 		if (type2.type)
 			return getExpressionReturnToken(type2.type, indent);
 
-		if (type2.builtinType.str != "!ERROR!")
+		if (type2.builtinType !is IdType.init)
 		{
 			return Token(
 				tok!"identifier", type2.builtinType.str,
 				// FIXME: Get the real line and column
 				0, 0, 0);
 		}
-		//if (type2.typeConstructor.str != "!ERROR!")
+		//if (type2.typeConstructor !is IdType.init)
 		//	return type2.typeConstructor.str;
 	}
 	else if (auto typeidExp = cast(const TypeidExpression) node)
@@ -1527,7 +1527,7 @@ TokenData getTokenData(const Token token)
 	}
 
 	// Token is empty
-	if (token is Token.init || token.type.str == "!ERROR!")
+	if (token is Token.init)
 	{
 		return TokenData.init;
 	}
