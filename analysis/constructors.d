@@ -89,7 +89,7 @@ private:
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		class Cat { // [warn]: This class has a zero-argument constructor as well as a constructor with one default argument. This can be confusing
 			this() {}
 			this(string name = "kittie") {}

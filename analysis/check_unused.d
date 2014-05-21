@@ -40,17 +40,17 @@ class UnusedCheck : ScopeAnalyzer {
 
 	void check_function_params_unused(const FunctionDeclaration funcDec) {
 		// Just return if any args are null
-		if(!funcDec) {
+		if (!funcDec) {
 			return;
 		}
 
 		// FIXME: Rename all args to params
 		string func_name = funcDec.name.text;
-		string[] fun_arg_names = get_function_arg_names(funcDec);
+		string[] fun_arg_names = getFunctionArgNames(funcDec);
 
-		foreach(arg_name; fun_arg_names) {
-			auto data = get_variable_data_by_name(arg_name);
-			if(data != VariableData.init && !data.is_used) {
+		foreach (arg_name; fun_arg_names) {
+			auto data = getVariableDataByName(arg_name);
+			if (data != VariableData.init && !data.isUsed) {
 				string message = "Parameter \"%s\" of function \"%s\" is not used.".format(arg_name, func_name);
 				addErrorMessage(funcDec.name.line, funcDec.name.column, message);
 			}
@@ -59,8 +59,8 @@ class UnusedCheck : ScopeAnalyzer {
 
 	void check_variables_unused() {
 		// Before the variables in the current scope frame are destroyed, look to see if they were used.
-		foreach(name, data; get_current_scope_frame_variables()) {
-			if(data != VariableData.init && !data.is_used) {
+		foreach (name, data; getCurrentScopeFrameVariables()) {
+			if (data != VariableData.init && !data.isUsed) {
 				string message = "Variable \"%s\" is not used.".format(name);
 				addErrorMessage(data.line, data.column, message);
 			}
@@ -87,32 +87,32 @@ unittest {
 
 			// Unused loop variables
 			int[5] data = [1, 2, 3, 4, 5];
-			for(size_t i=0; i<data.length; ++i) {
+			for (size_t i=0; i<data.length; ++i) {
 				int zebra; // [warn]: Variable "zebra" is not used.
 			}
 
-			foreach(i; 0 .. data.length) { // i is unused
+			foreach (i; 0 .. data.length) { // i is unused
 				int rhino; // [warn]: Variable "rhino" is not used.
 			}
 
-			foreach(i, d; data) { // FIXME: i and d are unused
+			foreach (i, d; data) { // FIXME: i and d are unused
 				int velociraptor; // [warn]: Variable "velociraptor" is not used.
 			}
 
-			while(false) {
+			while (false) {
 				int platypus; // [warn]: Variable "platypus" is not used.
 			}
 
 			do {
 				int human; // [warn]: Variable "human" is not used.
-			} while(false);
+			} while (false);
 
 			// Unused condition variables
-			if(true) {
+			if (true) {
 				int puma; // [warn]: Variable "puma" is not used.
 			}
 
-			if(auto ape = 3) { // unused FIXME
+			if (auto ape = 3) { // unused FIXME
 			}
 
 			switch(false) {

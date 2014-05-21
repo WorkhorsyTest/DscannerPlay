@@ -30,12 +30,12 @@ class CompareCheck : ScopeAnalyzer {
 	// a is a
 	// a !is a
 	override void visit(const IdentityExpression idenExp) {
-		TokenData left = get_expression_return_token_data(idenExp.left);
-		TokenData right = get_expression_return_token_data(idenExp.right);
+		TokenData left = getExpressionReturnTokenData(idenExp.left);
+		TokenData right = getExpressionReturnTokenData(idenExp.right);
 
 		const string operator = idenExp.negated ? "!is" : "is";
 
-		if(is_same_token_variable(left, right)) {
+		if (isSameTokenVariable(left, right)) {
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" identified(%s) with itself.".format(type, left.name, operator);
 			addErrorMessage(left.line, left.column, message);
@@ -51,10 +51,10 @@ class CompareCheck : ScopeAnalyzer {
 			eqlExp.operator == tok!"=="
 		);
 
-		TokenData left = get_expression_return_token_data(eqlExp.left);
-		TokenData right = get_expression_return_token_data(eqlExp.right);
+		TokenData left = getExpressionReturnTokenData(eqlExp.left);
+		TokenData right = getExpressionReturnTokenData(eqlExp.right);
 
-		if(is_same_token_variable(left, right) && is_operator) {
+		if (isSameTokenVariable(left, right) && is_operator) {
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" equaled(%s) with itself.".format(type, left.name, eqlExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
@@ -74,10 +74,10 @@ class CompareCheck : ScopeAnalyzer {
 			relExp.operator == tok!"<="
 		);
 
-		TokenData left = get_expression_return_token_data(relExp.left);
-		TokenData right = get_expression_return_token_data(relExp.right);
+		TokenData left = getExpressionReturnTokenData(relExp.left);
+		TokenData right = getExpressionReturnTokenData(relExp.right);
 
-		if(is_same_token_variable(left, right) && is_operator) {
+		if (isSameTokenVariable(left, right) && is_operator) {
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" relationed(%s) with itself.".format(type, left.name, relExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
@@ -116,20 +116,20 @@ class CompareCheck : ScopeAnalyzer {
 		TokenData left, right;
 		Token operator;
 
-		if(auto orOrExp = cast(const OrOrExpression) exp) {
-			left = get_expression_return_token_data(orOrExp.left);
-			right = get_expression_return_token_data(orOrExp.right);
+		if (auto orOrExp = cast(const OrOrExpression) exp) {
+			left = getExpressionReturnTokenData(orOrExp.left);
+			right = getExpressionReturnTokenData(orOrExp.right);
 			operator = cast(Token) tok!"||";
-		} else if(auto andAndExp = cast(const AndAndExpression) exp) {
-			left = get_expression_return_token_data(andAndExp.left);
-			right = get_expression_return_token_data(andAndExp.right);
+		} else if (auto andAndExp = cast(const AndAndExpression) exp) {
+			left = getExpressionReturnTokenData(andAndExp.left);
+			right = getExpressionReturnTokenData(andAndExp.right);
 			operator = cast(Token) tok!"&&";
 		}
 
-		if(is_same_token_variable(left, right)) {
+		if (isSameTokenVariable(left, right)) {
 			string type = left.tokenType.capitalize();
 			string message = null;
-			if(operator == tok!"||") {
+			if (operator == tok!"||") {
 				message = "%s \"%s\" logical ored(||) with itself.".format(type, left.name);
 			} else {
 				message = "%s \"%s\" logical anded(&&) with itself.".format(type, left.name);
@@ -145,28 +145,28 @@ class CompareCheck : ScopeAnalyzer {
 		TokenData left, right;
 		Token operator;
 
-		if(auto andExp = cast(const AndExpression) exp) {
-			left = get_expression_return_token_data(andExp.left);
-			right = get_expression_return_token_data(andExp.right);
+		if (auto andExp = cast(const AndExpression) exp) {
+			left = getExpressionReturnTokenData(andExp.left);
+			right = getExpressionReturnTokenData(andExp.right);
 			operator = cast(Token) tok!"&";
-		} else if(auto orExp = cast(const OrExpression) exp) {
-			left = get_expression_return_token_data(orExp.left);
-			right = get_expression_return_token_data(orExp.right);
+		} else if (auto orExp = cast(const OrExpression) exp) {
+			left = getExpressionReturnTokenData(orExp.left);
+			right = getExpressionReturnTokenData(orExp.right);
 			operator = cast(Token) tok!"|";
-		} else if(auto xorExp = cast(const XorExpression) exp) {
-			left = get_expression_return_token_data(xorExp.left);
-			right = get_expression_return_token_data(xorExp.right);
+		} else if (auto xorExp = cast(const XorExpression) exp) {
+			left = getExpressionReturnTokenData(xorExp.left);
+			right = getExpressionReturnTokenData(xorExp.right);
 			operator = cast(Token) tok!"^";
 		}
 
-		if(is_same_token_variable(left, right)) {
+		if (isSameTokenVariable(left, right)) {
 			string type = left.tokenType.capitalize();
 			string message = null;
-			if(operator == tok!"&") {
+			if (operator == tok!"&") {
 				message = "%s \"%s\" bitwise anded(&) with itself.".format(type, left.name);
-			} else if(operator == tok!"|") {
+			} else if (operator == tok!"|") {
 				message = "%s \"%s\" bitwise ored(|) with itself.".format(type, left.name);
-			} else if(operator == tok!"^") {
+			} else if (operator == tok!"^") {
 				message = "%s \"%s\" bitwise xored(^) with itself.".format(type, left.name);
 			}
 			addErrorMessage(left.line, left.column, message);

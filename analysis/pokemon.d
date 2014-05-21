@@ -58,7 +58,7 @@ class PokemonExceptionCheck : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_catch() {
 			try {
 				// ...

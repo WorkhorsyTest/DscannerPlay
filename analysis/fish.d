@@ -41,7 +41,7 @@ class FloatOperatorCheck : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_fish() {
 			float z = 1.5f;
 			bool a;

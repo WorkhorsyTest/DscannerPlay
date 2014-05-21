@@ -1404,7 +1404,7 @@ class ClassFour(A, B) if (someTest()) : Super {}}c;
         trueDeclarations ~= dec;
         node.trueDeclarations = ownArray(trueDeclarations);
 
-        if(currentIs(tok!"else"))
+        if (currentIs(tok!"else"))
             advance();
         else
             return node;
@@ -1483,7 +1483,7 @@ class ClassFour(A, B) if (someTest()) : Super {}}c;
         if (node.parameters is null) return null;
 
         MemberFunctionAttribute[] memberFunctionAttributes;
-        while(moreTokens() && currentIsMemberFunctionAttribute())
+        while (moreTokens() && currentIsMemberFunctionAttribute())
             memberFunctionAttributes ~= parseMemberFunctionAttribute();
         node.memberFunctionAttributes = ownArray(memberFunctionAttributes);
 
@@ -1987,7 +1987,7 @@ class ClassFour(A, B) if (someTest()) : Super {}}c;
         else
         {
             MemberFunctionAttribute[] memberFunctionAttributes;
-            while(moreTokens() && currentIsMemberFunctionAttribute())
+            while (moreTokens() && currentIsMemberFunctionAttribute())
                 memberFunctionAttributes ~= parseMemberFunctionAttribute();
             node.memberFunctionAttributes = ownArray(memberFunctionAttributes);
             node.functionBody = parseFunctionBody();
@@ -2531,7 +2531,7 @@ body {} // six
         if (isAuto)
             goto functionName;
 
-        while(moreTokens() && currentIsMemberFunctionAttribute())
+        while (moreTokens() && currentIsMemberFunctionAttribute())
             memberFunctionAttributes ~= parseMemberFunctionAttribute();
 
         node.returnType = type is null ? parseType() : type;
@@ -2558,7 +2558,7 @@ body {} // six
         node.parameters = parseParameters();
         if (node.parameters is null) return null;
 
-        while(moreTokens() && currentIsMemberFunctionAttribute())
+        while (moreTokens() && currentIsMemberFunctionAttribute())
             memberFunctionAttributes ~= parseMemberFunctionAttribute();
 
         if (isTemplate && currentIs(tok!"if"))
@@ -3418,7 +3418,7 @@ invariant() foo();
         {
             advance();
             node.hasPlusPlus = true;
-            version(DIP61) if (currentIs(tok!","))
+            version (DIP61) if (currentIs(tok!","))
             {
                 advance();
                 node.identifierChain = parseIdentifierChain();
@@ -5170,7 +5170,7 @@ q{(int a, ...)
             node.templateAliasParameter = parseTemplateAliasParameter();
             break;
         case tok!"identifier":
-            if(peekIs(tok!"..."))
+            if (peekIs(tok!"..."))
                 node.templateTupleParameter = parseTemplateTupleParameter();
             else if (peekIsOneOf(tok!":", tok!"=", tok!",", tok!")"))
                 node.templateTypeParameter = parseTemplateTypeParameter();
@@ -6031,7 +6031,7 @@ q{doStuff(5)}c;
         node.type = type is null ? parseType() : type;
 
         Declarator[] declarators;
-        while(true)
+        while (true)
         {
             auto declarator = parseDeclarator();
             if (declarator is null) return null;
@@ -6275,7 +6275,7 @@ protected:
         mixin(traceEnterAndExit!(__FUNCTION__));
         auto i = index;
         scope(exit) index = i;
-        assert(currentIs(L));
+        assert (currentIs(L));
         advance();
         while (moreTokens()) switch (current.type)
         {
@@ -6581,7 +6581,7 @@ protected:
 
     void skip(alias O, alias C)()
     {
-        assert(currentIs(O), current().text);
+        assert (currentIs(O), current().text);
         advance();
         int depth = 1;
         while (moreTokens())

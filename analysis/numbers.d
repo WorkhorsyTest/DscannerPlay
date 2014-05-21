@@ -41,7 +41,7 @@ class NumberStyleCheck : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_numbers() {
 			int a;
 			a = 1; // ok

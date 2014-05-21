@@ -34,54 +34,54 @@ class ScopeAnalyzer : BaseAnalyzer {
 	}
 
 	override void visitStart(const AddExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const AndAndExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const AndExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const AssertExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const AssignExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const BlockStatement node) {
 		info("start frame by %s", typeid(node));
-		scope_frame_start();
+		scopeFrameStart();
 	}
 
 	override void visitEnd(const BlockStatement node) {
 		info("exit frame by %s", typeid(node));
-		scope_frame_exit();
+		scopeFrameExit();
 	}
 
 	override void visitStart(const ClassDeclaration node) {
 		parents.push(IdentifierType.class_);
-		this_pointers.push(node.name.text);
+		thisPointers.push(node.name.text);
 
-		declare_class(node);
+		declareClass(node);
 	}
 
 	override void visitEnd(const ClassDeclaration node) {
-		this_pointers.pop();
+		thisPointers.pop();
 		parents.pop();
 	}
 
 	override void visitStart(const CmpExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const Declaration node) {
 		// Add decorations such as properties, auto, ref, et cetera
-		Decoration decoration = get_declaration_decorations(node);
+		Decoration decoration = getDeclarationDecorations(node);
 		decorations.push(decoration);
 	}
 
@@ -91,7 +91,7 @@ class ScopeAnalyzer : BaseAnalyzer {
 
 	override void visitStart(const EnumDeclaration node) {
 		parents.push(IdentifierType.enum_);
-		declare_enum(node);
+		declareEnum(node);
 	}
 
 	override void visitEnd(const EnumDeclaration node) {
@@ -99,30 +99,30 @@ class ScopeAnalyzer : BaseAnalyzer {
 	}
 
 	override void visitStart(const EqualExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const FunctionDeclaration node) {
 		// Only declare if NOT a struct/class method
 		if (parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
-			declare_function(node);
+			declareFunction(node);
 		}
 
 		parents.push(IdentifierType.function_);
-		scope_frame_start();
+		scopeFrameStart();
 	}
 
 	override void visitEnd(const FunctionDeclaration node) {
-		scope_frame_exit();
+		scopeFrameExit();
 		parents.pop();
 	}
 
 	override void visitStart(const IdentityExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const InExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const Module node) {
@@ -131,10 +131,10 @@ class ScopeAnalyzer : BaseAnalyzer {
 		g_log_info = _log_info;
 
 		info("start frame by %s", typeid(node));
-		scope_frame_start();
+		scopeFrameStart();
 
 		parents.push(IdentifierType.module_);
-		declare_module(node);
+		declareModule(node);
 
 		// Declare the global functions and variables
 		// This is a special case, because global functions do NOT have to 
@@ -143,20 +143,20 @@ class ScopeAnalyzer : BaseAnalyzer {
 			if (!decl) continue;
 
 			// Add decorations such as properties, auto, ref, et cetera
-			Decoration decoration = get_declaration_decorations(decl);
+			Decoration decoration = getDeclarationDecorations(decl);
 			decorations.push(decoration);
 
 			// Add the import
 			if (decl.importDeclaration && decl.importDeclaration.singleImports) {
 				foreach (singleImport; decl.importDeclaration.singleImports) {
-					declare_import(singleImport);
+					declareImport(singleImport);
 				}
 			// Declare the function
 			} else if (decl.functionDeclaration) {
-				declare_function(decl.functionDeclaration);
+				declareFunction(decl.functionDeclaration);
 			// Declare the variable
 			} else if (decl.variableDeclaration) {
-				declare_variable(decl.variableDeclaration);
+				declareVariable(decl.variableDeclaration);
 			}
 
 			// Remove decorations
@@ -168,69 +168,69 @@ class ScopeAnalyzer : BaseAnalyzer {
 		parents.pop();
 
 		info("exit frame by %s", typeid(node));
-		scope_frame_exit();
+		scopeFrameExit();
 
 		// Return to previous logging mode
 		g_log_info = prev_log;
 	}
 
 	override void visitStart(const MulExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const OrOrExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const OrExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const Parameter node) {
-		declare_parameter(node);
+		declareParameter(node);
 	}
 
 	override void visitStart(const PowExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const RelExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const ShiftExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 
 	override void visitStart(const SingleImport node) {
-		declare_import(node);
+		declareImport(node);
 	}
 
 	override void visitStart(const StructDeclaration node) {
 		parents.push(IdentifierType.struct_);
-		this_pointers.push(node.name.text);
+		thisPointers.push(node.name.text);
 
-		declare_struct(node);
+		declareStruct(node);
 	}
 
 	override void visitEnd(const StructDeclaration node) {
-		this_pointers.pop();
+		thisPointers.pop();
 		parents.pop();
 	}
 
 	override void visitStart(const TemplateParameters node) {
-		declare_templates(node);
+		declareTemplates(node);
 	}
 
 	override void visitStart(const VariableDeclaration node) {
 		// Only declare if NOT a struct/class field
 		if (parents.peak != IdentifierType.struct_ && parents.peak != IdentifierType.class_) {
-			declare_variable(node);
+			declareVariable(node);
 		}
 	}
 
 	override void visitStart(const XorExpression node) {
-		mark_used_variables(node);
+		markUsedVariables(node);
 	}
 }
 

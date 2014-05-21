@@ -636,9 +636,9 @@ public:
     void callVisit(T)(const T thing)
     {
         // Visit Token and IdType
-        static if(is(T == Token) || is(T == IdType))
+        static if (is(T == Token) || is(T == IdType))
         {
-            if(thing !is T.init)
+            if (thing !is T.init)
             {
                 this.visitStart(thing);
                 this.visit(thing);
@@ -646,7 +646,7 @@ public:
             }
         }
         // Visit anything else that is not null
-        else static if(!is(T == typeof(null)))
+        else static if (!is(T == typeof(null)))
         {
             //stderr.writefln("!!! callVisit is ignoring the type %s.", typeid(T));
         }
@@ -654,15 +654,15 @@ public:
 
     void callVisit(const ASTNode[] unknowns)
     {
-        if(unknowns is null) return;
+        if (unknowns is null) return;
 
-        foreach(unknown; unknowns)
+        foreach (unknown; unknowns)
             callVisit(unknown);
     }
 
     void callVisit(const ASTNode unknown)
     {
-        if(unknown is null) return;
+        if (unknown is null) return;
 
         mixin(std.d.codegen.callOnActualType!(
             "this.visitStart(actual);\nthis.visit(actual);\nthis.visitEnd(actual);", 

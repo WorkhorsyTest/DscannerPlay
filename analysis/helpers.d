@@ -110,27 +110,27 @@ struct ModuleFunctionSet
 // Returns true if a ModuleFunctionSet has a function.
 bool hasFunction(const ModuleFunctionSet funcSet, string funcName)
 {
-	return getFunctionFullName(func_set, funcName) !is null;
+	return getFunctionFullName(funcSet, funcName) !is null;
 }
 
-string getFunctionFullName(const ModuleFunctionSet func_set, string func_name)
+string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
 {
-	bool is_imported = analysis.scope_frame.is_already_imported(func_set.import_name);
+	bool isImported = analysis.scope_frame.isAlreadyImported(funcSet.importName);
 
-	foreach (func; func_set.functions)
+	foreach (func; funcSet.functions)
 	{
-		string full_func_name = "%s.%s".format(func_set.import_name, func);
+		string fullFuncName = "%s.%s".format(funcSet.importName, func);
 
 		// If the module is imported the short function name may be used
-		if (is_imported && func_name == func)
+		if (isImported && funcName == func)
 		{
-			return full_func_name;
+			return fullFuncName;
 		}
 
 		// If the module is not imported, the full function name must be used
-		if (func_name == full_func_name)
+		if (funcName == fullFuncName)
 		{
-			return full_func_name;
+			return fullFuncName;
 		}
 	}
 
@@ -142,121 +142,125 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 	import analysis.run;
 
 	// Reset everything
-	scope_frame_clear_everything();
+	scopeFrameClearEverything();
 
 	// Run the code and get any warnings
-	string[] raw_warnings = analyze("test", cast(ubyte[]) code, analyzers);
-	string[] code_lines = code.split("\n");
+	string[] rawWarnings = analyze("test", cast(ubyte[]) code, analyzers);
+	string[] codeLines = code.split("\n");
 
 	// Get the warnings ordered by line
 	string[size_t] warnings;
-	for (size_t i=0; i<raw_warnings.length; ++i)
+	for (size_t i=0; i<rawWarnings.length; ++i)
 	{
-		size_t warn_line = line - 1 + std.conv.to!size_t(raw_warnings[i].between("test(", ":"));
-		warnings[warn_line] = raw_warnings[i].after(")");
+		size_t warn_line = line - 1 + std.conv.to!size_t(rawWarnings[i].between("test(", ":"));
+		warnings[warn_line] = rawWarnings[i].after(")");
 //		stderr.writefln("!!! warnings[%d] = \"%s\"", warn_line, warnings[warn_line]);
 	}
 
 	// Get all the messages from the comments in the code
 	string[size_t] messages;
-	foreach (i, code_line; code_lines)
+	foreach (i, codeLine; codeLines)
 	{
 		// Skip if no [warn] comment
-		if (code_line.indexOf("// [warn]:") == -1)
+		if (codeLine.indexOf("// [warn]:") == -1)
 			continue;
 
 		// Skip if there is no comment or code
-		string code_part = code_line.before("// ");
-		string comment_part = code_line.after("// ");
-		if (!code_part.length || !comment_part.length)
+		string codePart = codeLine.before("// ");
+		string commentPart = codeLine.after("// ");
+		if (!codePart.length || !commentPart.length)
 			continue;
 
 		// Get the line of this code line
-		size_t line_no = i + line;
+		size_t lineNo = i + line;
 
 		// Get the message
-//		stderr.writefln("!!! message[%d] = \"%s\"", line_no, comment_part);
-		messages[line_no] = comment_part;
+//		stderr.writefln("!!! message[%d] = \"%s\"", lineNo, commentPart);
+		messages[lineNo] = commentPart;
 	}
 
 	// Throw an assert error if any messages are not listed in the warnings
-	foreach (line_no, message; messages)
+	foreach (lineNo, message; messages)
 	{
-//		stderr.writefln("!!!!!! messages[%d] : %s", line_no, messages[line_no]);
+//		stderr.writefln("!!!!!! messages[%d] : %s", lineNo, messages[lineNo]);
 		// No warning
-		if (line_no !in warnings)
+		if (lineNo !in warnings)
 		{
 			string errors = "Expected warning:\n%s\nFrom source code at (%s:?):\n%s".format(
-				messages[line_no], 
-				line_no, 
-				code_lines[line_no - line]
+				messages[lineNo], 
+				lineNo, 
+				codeLines[lineNo - line]
 			);
-			throw new core.exception.AssertError(errors, file, line_no);
+			throw new core.exception.AssertError(errors, file, lineNo);
 		// Different warning
 		}
-		else if (warnings[line_no] != messages[line_no])
+		else if (warnings[lineNo] != messages[lineNo])
 		{
 			string errors = "Expected warning:\n%s\nBut was:\n%s\nFrom source code at (%s:?):\n%s".format(
-				messages[line_no], 
-				warnings[line_no], 
-				line_no, 
-				code_lines[line_no - line]
+				messages[lineNo], 
+				warnings[lineNo], 
+				lineNo, 
+				codeLines[lineNo - line]
 			);
-			throw new core.exception.AssertError(errors, file, line_no);
+			throw new core.exception.AssertError(errors, file, lineNo);
 		}
 	}
 
 	// Throw an assert error if there were any warnings that were not expected
-	string[] unexpected_warnings;
-	foreach (line_no, warning; warnings)
+	string[] unexpectedWarnings;
+	foreach (lineNo, warning; warnings)
 	{
-//		stderr.writefln("!!!!!! warnings[%d] : %s", line_no, warning);
+//		stderr.writefln("!!!!!! warnings[%d] : %s", lineNo, warning);
 		// Unexpected warning
-		if (line_no !in messages)
+		if (lineNo !in messages)
 		{
-			unexpected_warnings ~= "%s\nFrom source code at (%s:?):\n%s".format(
+			unexpectedWarnings ~= "%s\nFrom source code at (%s:?):\n%s".format(
 				warning, 
-				line_no, 
-				code_lines[line_no - line]
+				lineNo, 
+				codeLines[lineNo - line]
 			);
 		}
 	}
-	if (unexpected_warnings.length)
+	if (unexpectedWarnings.length)
 	{
-		string message = "Unexpected warnings:\n" ~ unexpected_warnings.join("\n");
+		string message = "Unexpected warnings:\n" ~ unexpectedWarnings.join("\n");
 		throw new core.exception.AssertError(message, file, line);
 	}
 }
 
-void declare_import(const SingleImport singImpo) {
-	info("declare_import");
+void declareImport(const SingleImport singImpo)
+{
+	info("declareImport");
 
 	// Just return if anything is null
-	if (!singImpo && !singImpo.identifierChain) {
+	if (!singImpo && !singImpo.identifierChain)
+	{
 		return;
 	}
 
 	// Get the whole name from each identifier chunk
 	string[] chunks;
-	foreach (identifier; singImpo.identifierChain.identifiers) {
+	foreach (identifier; singImpo.identifierChain.identifiers)
+	{
 		chunks ~= identifier.text;
 	}
-	string import_name = chunks.join(".");
+	string importName = chunks.join(".");
 
 	// Just return if already imported
-	if (is_already_imported(import_name))
+	if (isAlreadyImported(importName))
 		return;
 
 	// Add the import
-	stderr.writefln("!!! importing: %s", import_name);
-	add_import(import_name);
+	stderr.writefln("!!! importing: %s", importName);
+	addImport(importName);
 
 	// Add the module
-	string file_name = "%s.d".format(import_name);
-	load_module(file_name);
+	string file_name = "%s.d".format(importName);
+	loadModule(file_name);
 }
 
-void load_module(string file_name) {
+void loadModule(string file_name)
+{
 	// Just return if the file does not exist
 	if (!std.file.exists(file_name) || !std.file.isFile(file_name))
 		return;
@@ -269,7 +273,8 @@ void load_module(string file_name) {
 	// Lex the code
 	auto lexer = byToken(code);
 	auto app = appender!(typeof(lexer.front)[])();
-	while (!lexer.empty) {
+	while (!lexer.empty)
+	{
 		app.put(lexer.front);
 		lexer.popFront();
 	}
@@ -279,77 +284,81 @@ void load_module(string file_name) {
 	Module mod = std.d.parser.parseModule(app.data, file_name, p, null);
 
 	// Get data from the module
-	ModuleData module_data = get_module_data(mod); // FIXME: This splodes
-	add_module(module_data);
+	ModuleData module_data = getModuleData(mod); // FIXME: This splodes
+	addModule(module_data);
 }
 
-void declare_function(const FunctionDeclaration funcDec) {
-	info("declare_function");
+void declareFunction(const FunctionDeclaration funcDec)
+{
+	info("declareFunction");
 
-	FunctionData data = get_function_data(funcDec);
-	add_function(data);
+	FunctionData data = getFunctionData(funcDec);
+	addFunction(data);
 }
 
-void declare_variable(const VariableDeclaration varDec) {
-	info("declare_variable");
+void declareVariable(const VariableDeclaration varDec)
+{
+	info("declareVariable");
 
-	foreach (var_data; get_variable_datas(varDec)) {
-		add_variable(var_data);
+	foreach (var_data; getVariableDatas(varDec))
+	{
+		addVariable(var_data);
 	}
 }
 
-void declare_parameter(const Parameter param) {
-	info("declare_parameter");
+void declareParameter(const Parameter param)
+{
+	info("declareParameter");
 
 	VariableData var_data;
 	var_data.name = param.name.text;
-	var_data.type = get_type_data(param.type);
-	var_data.is_parameter = true;
+	var_data.type = getTypeData(param.type);
+	var_data.isParameter = true;
 	var_data.line = param.name.line;
 	var_data.column = param.name.column;
 
-	add_variable(var_data);
+	addVariable(var_data);
 }
 
-void declare_templates(const TemplateParameters tempParams) {
-	info("declare_templates");
+void declareTemplates(const TemplateParameters tempParams) {
+	info("declareTemplates");
 
-	TemplateData[] temp_datas = get_template_datas(tempParams);
+	TemplateData[] temp_datas = getTemplateDatas(tempParams);
 	foreach (temp_data; temp_datas) {
-		add_template_parameter(temp_data);
+		addTemplateParameter(temp_data);
 	}
 }
 
-void declare_struct(const StructDeclaration structDec) {
-	info("declare_struct");
+void declareStruct(const StructDeclaration structDec) {
+	info("declareStruct");
 
-	StructData struct_data = get_struct_data(structDec);
-	add_struct(struct_data);
+	StructData struct_data = getStructData(structDec);
+	addStruct(struct_data);
 }
 
-void declare_class(const ClassDeclaration classDec) {
-	info("declare_class");
+void declareClass(const ClassDeclaration classDec) {
+	info("declareClass");
 
-	ClassData class_data = get_class_data(classDec);
-	add_class(class_data);
+	ClassData class_data = getClassData(classDec);
+	addClass(class_data);
 }
 
-void declare_enum(const EnumDeclaration enumDec) {
-	info("declare_enum");
+void declareEnum(const EnumDeclaration enumDec) {
+	info("declareEnum");
 
-	EnumData enum_data = get_enum_data(enumDec);
-	add_enum(enum_data);
+	EnumData enum_data = getEnumData(enumDec);
+	addEnum(enum_data);
 }
 
-void declare_module(const Module mod) {
-	info("declare_module");
+void declareModule(const Module mod) {
+	info("declareModule");
 
-	ModuleData module_data = get_module_data(mod);
-	add_module(module_data);
+	ModuleData module_data = getModuleData(mod);
+	addModule(module_data);
 }
 
 // FIXME: For some reason this never sets decoration.is_property to true
-Decoration get_declaration_decorations(const Declaration decl) {
+Decoration getDeclarationDecorations(const Declaration decl) {
 	Decoration decoration;
 	foreach (attr; decl.attributes) {
 		// Skip if no storage class
@@ -358,10 +367,10 @@ Decoration get_declaration_decorations(const Declaration decl) {
 
 		// Reference
 		if (attr.storageClass.token.type.str == "ref") {
-			decoration.is_ref = true;
+			decoration.isRef = true;
 		// Auto
 		} else if (attr.storageClass.token.type.str == "auto") {
-			decoration.is_auto = true;
+			decoration.isAuto = true;
 		}
 
 		// Skip if no at attribute
@@ -371,20 +380,20 @@ Decoration get_declaration_decorations(const Declaration decl) {
 		// Property
 		Token iden = attr.storageClass.atAttribute.identifier;
 		if (iden.type.str == "identifier" && iden.text == "property") {
-			decoration.is_property = true;
+			decoration.isProperty = true;
 		}
 	}
 
 	return decoration;
 }
 
-VariableData[] get_variable_datas(const VariableDeclaration varDec) {
+VariableData[] getVariableDatas(const VariableDeclaration varDec) {
 	VariableData[] datas;
 
 	// Using auto
 	if (varDec.autoDeclaration) {
-		string[] names = get_variable_names(varDec);
-		TokenData token_data = get_expression_return_token_data(varDec.autoDeclaration);
+		string[] names = getVariableNames(varDec);
+		TokenData token_data = getExpressionReturnTokenData(varDec.autoDeclaration);
 
 		if (token_data is TokenData.init) {
 			throw new Exception("Failed to get valid token from auto variable declaration.");
@@ -393,22 +402,22 @@ VariableData[] get_variable_datas(const VariableDeclaration varDec) {
 		foreach (name; names) {
 			VariableData data;
 			data.name = name;
-			data.type = token_data.type_data;
-			data.is_parameter = false;
+			data.type = token_data.typeData;
+			data.isParameter = false;
 			data.line = token_data.line;
 			data.column = token_data.column;
 			datas ~= data;
 		}
 	// Normal variable
 	} else {
-		string[] names = get_variable_names(varDec);
-		TypeData type = get_type_data(varDec.type);
+		string[] names = getVariableNames(varDec);
+		TypeData type = getTypeData(varDec.type);
 		foreach (name; names) {
 			VariableData data;
 			data.name = name;
 			data.type = type;
-			data.is_parameter = false;
-			get_variable_line_column(varDec, name, data.line, data.column);
+			data.isParameter = false;
+			getVariableLineColumn(varDec, name, data.line, data.column);
 			datas ~= data;
 		}
 	}
@@ -416,7 +425,7 @@ VariableData[] get_variable_datas(const VariableDeclaration varDec) {
 	return datas;
 }
 
-TemplateData[] get_template_datas(const TemplateParameters templateParameters) {
+TemplateData[] getTemplateDatas(const TemplateParameters templateParameters) {
 	TemplateData[] datas;
 	if (templateParameters && templateParameters.templateParameterList) {
 		foreach (item; templateParameters.templateParameterList.items) {
@@ -435,18 +444,18 @@ TemplateData[] get_template_datas(const TemplateParameters templateParameters) {
 	return datas;
 }
 
-FunctionData get_function_data(const FunctionDeclaration funcDec) {
+FunctionData getFunctionData(const FunctionDeclaration funcDec) {
 	FunctionData data;
 	data.name = funcDec.name.text;
-	data.templates = get_template_datas(funcDec.templateParameters);
-	data.return_type = get_function_return_type_data(funcDec);
-	data.arg_types = get_function_arg_type_datas(funcDec);
+	data.templates = getTemplateDatas(funcDec.templateParameters);
+	data.returnType = getFunctionReturnTypeData(funcDec);
+	data.argTypes = getFunctionArgTypeDatas(funcDec);
 	data.line = funcDec.name.line;
 	data.column = funcDec.name.column;
 	return data;
 }
 
-StructData get_struct_data(const StructDeclaration structDec) {
+StructData getStructData(const StructDeclaration structDec) {
 	StructData data;
 	data.name = structDec.name.text;
 	data.line = structDec.name.line;
@@ -454,11 +463,11 @@ StructData get_struct_data(const StructDeclaration structDec) {
 
 	foreach (decl; structDec.structBody.declarations) {
 		if (decl.variableDeclaration) {
-			foreach (var_data; get_variable_datas(decl.variableDeclaration)) {
+			foreach (var_data; getVariableDatas(decl.variableDeclaration)) {
 				data.fields[var_data.name] = var_data;
 			}
 		} else if (decl.functionDeclaration) {
-			FunctionData func_data = get_function_data(decl.functionDeclaration);
+			FunctionData func_data = getFunctionData(decl.functionDeclaration);
 			data.methods[func_data.name] = func_data;
 		}
 	}
@@ -466,7 +475,7 @@ StructData get_struct_data(const StructDeclaration structDec) {
 	return data;
 }
 
-ClassData get_class_data(const ClassDeclaration classDec) {
+ClassData getClassData(const ClassDeclaration classDec) {
 	ClassData data;
 	data.name = classDec.name.text;
 	data.line = classDec.name.line;
@@ -474,25 +483,25 @@ ClassData get_class_data(const ClassDeclaration classDec) {
 
 	foreach (decl; classDec.structBody.declarations) {
 		if (decl.variableDeclaration) {
-			foreach (var_data; get_variable_datas(decl.variableDeclaration)) {
+			foreach (var_data; getVariableDatas(decl.variableDeclaration)) {
 				data.fields[var_data.name] = var_data;
 			}
 		} else if (decl.functionDeclaration) {
-			FunctionData func_data = get_function_data(decl.functionDeclaration);
+			FunctionData func_data = getFunctionData(decl.functionDeclaration);
 			data.methods[func_data.name] = func_data;
 		}
 	}
 	return data;
 }
 
-EnumData get_enum_data(const EnumDeclaration enumDec) {
+EnumData getEnumData(const EnumDeclaration enumDec) {
 	EnumData data;
 	data.name = enumDec.name.text;
 	data.line = enumDec.name.line;
 	data.column = enumDec.name.column;
 	data.type = TypeData("int");
 	try {
-		data.type = get_type_data(enumDec.type);
+		data.type = getTypeData(enumDec.type);
 	} catch(Exception ex) {
 		//
 	}
@@ -510,7 +519,7 @@ EnumData get_enum_data(const EnumDeclaration enumDec) {
 	return data;
 }
 
-ModuleData get_module_data(const Module mod) {
+ModuleData getModuleData(const Module mod) {
 	ModuleData data;
 
 	// FIXME: What do we do when a module has no name?
@@ -531,24 +540,24 @@ ModuleData get_module_data(const Module mod) {
 	foreach (decl; mod.declarations) {
 
 		// Add decorations such as properties, auto, ref, et cetera
-		Decoration decoration = get_declaration_decorations(decl);
+		Decoration decoration = getDeclarationDecorations(decl);
 		decorations.push(decoration);
 
 		if (decl.functionDeclaration) {
-			FunctionData func_data = get_function_data(decl.functionDeclaration);
+			FunctionData func_data = getFunctionData(decl.functionDeclaration);
 			data.functions[func_data.name] = func_data;
 		} else if (decl.variableDeclaration) {
-			foreach (var_data; get_variable_datas(decl.variableDeclaration)) {
+			foreach (var_data; getVariableDatas(decl.variableDeclaration)) {
 				data.variables[var_data.name] = var_data;
 			}
 		} else if (decl.structDeclaration) {
-			StructData struct_data = get_struct_data(decl.structDeclaration);
+			StructData struct_data = getStructData(decl.structDeclaration);
 			data.structs[struct_data.name] = struct_data;
 		} else if (decl.classDeclaration) {
-			ClassData class_data = get_class_data(decl.classDeclaration);
+			ClassData class_data = getClassData(decl.classDeclaration);
 			data.classes[class_data.name] = class_data;
 		} else if (decl.enumDeclaration) {
-			EnumData enum_data = get_enum_data(decl.enumDeclaration);
+			EnumData enum_data = getEnumData(decl.enumDeclaration);
 			data.enums[enum_data.name] = enum_data;
 		}
 
@@ -559,7 +568,7 @@ ModuleData get_module_data(const Module mod) {
 	return data;
 }
 
-TokenData[] get_function_call_arguments(const FunctionCallExpression funcCallExp) {
+TokenData[] getFunctionCallArguments(const FunctionCallExpression funcCallExp) {
 	TokenData[] args;
 
 	// Just return if there are no args
@@ -572,13 +581,13 @@ TokenData[] get_function_call_arguments(const FunctionCallExpression funcCallExp
 
 	// Get the token data for each arg
 	foreach (item; funcCallExp.arguments.argumentList.items) {
-		args ~= get_expression_return_token_data(item);
+		args ~= getExpressionReturnTokenData(item);
 	}
 
 	return args;
 }
 
-string get_function_call_name(const FunctionCallExpression funcExp) {
+string getFunctionCallName(const FunctionCallExpression funcExp) {
 	string[] chunks;
 	auto unaryExp = cast(UnaryExpression) funcExp.unaryExpression;
 	while (unaryExp) {
@@ -609,35 +618,35 @@ string get_function_call_name(const FunctionCallExpression funcExp) {
 	return chunks.reverse.join(".");
 }
 
-TypeData get_function_return_type_data(const FunctionDeclaration funcDec) {
+TypeData getFunctionReturnTypeData(const FunctionDeclaration funcDec) {
 	// Normal return type
 	if (funcDec.returnType) {
-		return get_type_data(funcDec.returnType);
+		return getTypeData(funcDec.returnType);
 	}
 
 	// Auto return type
 	auto decoration = analysis.scope_frame.decorations.peak;
-	if (decoration !is Decoration.init && decoration.is_auto) {
+	if (decoration !is Decoration.init && decoration.isAuto) {
 		return TypeData("auto");
 	}
 
 	return TypeData.init;
 }
 
-TypeData[] get_function_arg_type_datas(const FunctionDeclaration funcDec) {
+TypeData[] getFunctionArgTypeDatas(const FunctionDeclaration funcDec) {
 	if (funcDec && 
 		funcDec.parameters) {
-		TypeData[] arg_types;
+		TypeData[] argTypes;
 		foreach (param; funcDec.parameters.parameters) {
-			arg_types ~= get_type_data(param.type);
+			argTypes ~= getTypeData(param.type);
 		}
-		return arg_types;
+		return argTypes;
 	}
 
 	throw new Exception("Could not find function arg type names.");
 }
 
-string[] get_function_arg_names(const FunctionDeclaration funcDec) {
+string[] getFunctionArgNames(const FunctionDeclaration funcDec) {
 	if (funcDec && 
 		funcDec.parameters) {
 		string[] arg_names;
@@ -650,7 +659,7 @@ string[] get_function_arg_names(const FunctionDeclaration funcDec) {
 	throw new Exception("Could not find function arg names.");
 }
 
-string[] get_variable_names(const VariableDeclaration varDec) {
+string[] getVariableNames(const VariableDeclaration varDec) {
 	string[] retval;
 	if (varDec) {
 		if (varDec.autoDeclaration) {
@@ -670,7 +679,7 @@ string[] get_variable_names(const VariableDeclaration varDec) {
 	throw new Exception("Could not find variable names.");
 }
 
-void get_variable_line_column(const VariableDeclaration varDec, string name, ref size_t line, ref size_t column) {
+void getVariableLineColumn(const VariableDeclaration varDec, string name, ref size_t line, ref size_t column) {
 	if (varDec) {
 		if (varDec.autoDeclaration) {
 			foreach (iden; varDec.autoDeclaration.identifiers) {
@@ -694,92 +703,92 @@ void get_variable_line_column(const VariableDeclaration varDec, string name, ref
 	throw new Exception("Could not find variable line and column.");
 }
 
-void mark_used_variables(const ASTNode node) {
+void markUsedVariables(const ASTNode node) {
 	auto unaryExp = cast(const UnaryExpression) node;
 	auto ternaryExp = cast(const TernaryExpression) node;
 	if (unaryExp || ternaryExp) {
 		TokenData data;
 		if (unaryExp)
-			data = get_expression_return_token_data(unaryExp);
+			data = getExpressionReturnTokenData(unaryExp);
 		else
-			data = get_expression_return_token_data(ternaryExp);
-		//stderr.writefln("!!! token_data token_type:%s, data_type:%s, name:%s", data.token_type, data.type_data, data.name);
+			data = getExpressionReturnTokenData(ternaryExp);
+		//stderr.writefln("!!! token_data tokenType:%s, data_type:%s, name:%s", data.tokenType, data.typeData, data.name);
 		if (data !is TokenData.init && data.name && 
-			(data.token_type == TokenType.variable || data.token_type == TokenType.field || data.token_type == TokenType.method)) {
+			(data.tokenType == TokenType.variable || data.tokenType == TokenType.field || data.tokenType == TokenType.method)) {
 			string name = data.name.before(".");
-			set_variable_is_used_by_name(name);
+			setVariableIsUsedByName(name);
 		}
 	} else if (auto exp = cast(const AssignExpression) node) {
-		mark_used_variables(exp.ternaryExpression);
+		markUsedVariables(exp.ternaryExpression);
 	} else if (auto exp = cast(const AssertExpression) node) {
-		mark_used_variables(exp.assertion);
+		markUsedVariables(exp.assertion);
 	} else if (auto exp = cast(const CmpExpression) node) {
-		mark_used_variables(exp.shiftExpression);
-		mark_used_variables(exp.equalExpression);
-		mark_used_variables(exp.identityExpression);
-		mark_used_variables(exp.relExpression);
-		mark_used_variables(exp.inExpression);
+		markUsedVariables(exp.shiftExpression);
+		markUsedVariables(exp.equalExpression);
+		markUsedVariables(exp.identityExpression);
+		markUsedVariables(exp.relExpression);
+		markUsedVariables(exp.inExpression);
 	} else if (auto exp = cast(AddExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(AndAndExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(AndExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(EqualExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(IdentityExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(InExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(MulExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(OrExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(OrOrExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(PowExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(RelExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(ShiftExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (auto exp = cast(XorExpression) node) {
-		mark_used_variables(exp.left);
-		mark_used_variables(exp.right);
+		markUsedVariables(exp.left);
+		markUsedVariables(exp.right);
 	} else if (node) {
-		throw new Exception("!!! mark_used_variables() override needed for: %s".format(typeid(node)));
+		throw new Exception("!!! markUsedVariables() override needed for: %s".format(typeid(node)));
 	}
 }
 
-TypeData get_type_data(const Type type) {
-	TypeData type_data;
+TypeData getTypeData(const Type type) {
+	TypeData typeData;
 	if (type && type.type2) {
 		// Check for a nested type
 		if (type.type2.type)
-			return get_type_data(type.type2.type);
+			return getTypeData(type.type2.type);
 
 		// Check if it is an array
 		foreach (suffix; type.typeSuffixes) {
 			if (suffix.array)
-				type_data.is_array = true;
+				typeData.isArray = true;
 		}
 
 		// Get type from builtinType
 		if (type.type2.builtinType) {
-			type_data.name = type.type2.builtinType.str;
-			return type_data;
+			typeData.name = type.type2.builtinType.str;
+			return typeData;
 		}
 
 		// Get type from symbol
@@ -791,222 +800,222 @@ TypeData get_type_data(const Type type) {
 			foreach (idenOrTemp; chain) {
 				identifiers ~= idenOrTemp.identifier.text;
 			}
-			type_data.name = identifiers.join(".");
-			return type_data;
+			typeData.name = identifiers.join(".");
+			return typeData;
 		}
 	}
 	//std.d.inspect.inspect(type, 0, "type");
 	throw new Exception("Could not find type name.");
 }
 
-bool is_same_token_variable(const TokenData a, const TokenData b) {
+bool isSameTokenVariable(const TokenData a, const TokenData b) {
 	return 
 		a !is TokenData.init && b !is TokenData.init && 
-		(a.token_type == TokenType.variable && b.token_type == TokenType.variable || 
-		a.token_type == TokenType.field && b.token_type == TokenType.field) && 
+		(a.tokenType == TokenType.variable && b.tokenType == TokenType.variable || 
+		a.tokenType == TokenType.field && b.tokenType == TokenType.field) && 
 		a.name && b.name && 
 		a.name == b.name;
 }
 
-TypeData get_expression_return_type(const ASTNode node, ref size_t line, ref size_t column) {
-	TokenData data = get_expression_return_token_data(node);
+TypeData getExpressionReturnType(const ASTNode node, ref size_t line, ref size_t column) {
+	TokenData data = getExpressionReturnTokenData(node);
 	line = data.line;
 	column = data.column;
-	return data.type_data;
+	return data.typeData;
 }
 
-TokenData get_expression_return_token_data(const ASTNode node) {
-	Token token = get_expression_return_token(node, 0);
-	TokenData data = get_token_data(token);
-	//stderr.writefln("!!!!!! %s, %s, %s, %s, %s", data.token_type, data.type_data, data.name, data.line, data.column);
+TokenData getExpressionReturnTokenData(const ASTNode node) {
+	Token token = getExpressionReturnToken(node, 0);
+	TokenData data = getTokenData(token);
+	//stderr.writefln("!!!!!! %s, %s, %s, %s, %s", data.tokenType, data.typeData, data.name, data.line, data.column);
 	return data;
 }
 
 // FIXME Update this so it prints an error and returns init when nothing found
-Token get_expression_return_token(const ASTNode node, size_t indent) {
-	//stderr.writefln("%s??? get_expression_return_token: %s", pad(indent++), typeid(node));
+Token getExpressionReturnToken(const ASTNode node, size_t indent) {
+	//stderr.writefln("%s??? getExpressionReturnToken: %s", pad(indent++), typeid(node));
 
 	if (auto addExp = cast(const AddExpression) node) {
-		auto l = get_expression_return_token(addExp.left, indent);
-		auto r = get_expression_return_token(addExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(addExp.left, indent);
+		auto r = getExpressionReturnToken(addExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto andAndExp = cast(const AndAndExpression) node) {
-		auto l = get_expression_return_token(andAndExp.left, indent);
-		auto r = get_expression_return_token(andAndExp.right, indent);
+		auto l = getExpressionReturnToken(andAndExp.left, indent);
+		auto r = getExpressionReturnToken(andAndExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto andExp = cast(const AndExpression) node) {
-		auto l = get_expression_return_token(andExp.left, indent);
-		auto r = get_expression_return_token(andExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(andExp.left, indent);
+		auto r = getExpressionReturnToken(andExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto arrayInit = cast(const ArrayInitializer) node) {
 		foreach (memberInit; arrayInit.arrayMemberInitializations) {
-			return get_expression_return_token(memberInit, indent);
+			return getExpressionReturnToken(memberInit, indent);
 		}
 	} else if (auto arrayLit = cast(const ArrayLiteral) node) {
-		return get_expression_return_token(arrayLit.argumentList, indent);
+		return getExpressionReturnToken(arrayLit.argumentList, indent);
 	} else if (auto arrayMemInit = cast(const ArrayMemberInitialization) node) {
 		if (arrayMemInit.assignExpression)
-			return get_expression_return_token(arrayMemInit.assignExpression, indent);
+			return getExpressionReturnToken(arrayMemInit.assignExpression, indent);
 		else if (arrayMemInit.nonVoidInitializer)
-			return get_expression_return_token(arrayMemInit.nonVoidInitializer, indent);
+			return getExpressionReturnToken(arrayMemInit.nonVoidInitializer, indent);
 	} else if (auto argList = cast(const ArgumentList) node) {
 		foreach (item; argList.items) {
-			return get_expression_return_token(item, indent);
+			return getExpressionReturnToken(item, indent);
 		}
 	} else if (auto asserExp = cast(const AssertExpression) node) {
-		return get_expression_return_token(asserExp.assertion, indent);
+		return getExpressionReturnToken(asserExp.assertion, indent);
 	} else if (auto assExp = cast(const AssignExpression) node) {
 		if (assExp.ternaryExpression) {
-			return get_expression_return_token(assExp.ternaryExpression, indent);
+			return getExpressionReturnToken(assExp.ternaryExpression, indent);
 		} else if (assExp.assignExpression) {
-			return get_expression_return_token(assExp.assignExpression, indent);
+			return getExpressionReturnToken(assExp.assignExpression, indent);
 		}
 	} else if (auto autoDec = cast(const AutoDeclaration) node) {
 //		foreach (iden; autoDec.identifiers)
 //			if (iden)
-//				return get_expression_return_token(iden, indent);
+//				return getExpressionReturnToken(iden, indent);
 
 		foreach (init; autoDec.initializers)
 			if (init)
-				return get_expression_return_token(init, indent);
+				return getExpressionReturnToken(init, indent);
 	} else if (auto castExp = cast(const CastExpression) node) {
 		if (castExp.type)
-			return get_expression_return_token(castExp.type, indent);
+			return getExpressionReturnToken(castExp.type, indent);
 		if (castExp.castQualifier)
-			return get_expression_return_token(castExp.castQualifier, indent);
+			return getExpressionReturnToken(castExp.castQualifier, indent);
 		if (castExp.unaryExpression)
-			return get_expression_return_token(castExp.unaryExpression, indent);
+			return getExpressionReturnToken(castExp.unaryExpression, indent);
 	} else if (auto cmpExp = cast(const CmpExpression) node) {
 		if (cmpExp.shiftExpression)
-			return get_expression_return_token(cmpExp.shiftExpression, indent);
+			return getExpressionReturnToken(cmpExp.shiftExpression, indent);
 		else if (cmpExp.equalExpression)
-			return get_expression_return_token(cmpExp.equalExpression, indent);
+			return getExpressionReturnToken(cmpExp.equalExpression, indent);
 		else if (cmpExp.identityExpression)
-			return get_expression_return_token(cmpExp.identityExpression, indent);
+			return getExpressionReturnToken(cmpExp.identityExpression, indent);
 		else if (cmpExp.relExpression)
-			return get_expression_return_token(cmpExp.relExpression, indent);
+			return getExpressionReturnToken(cmpExp.relExpression, indent);
 		else if (cmpExp.inExpression)
-			return get_expression_return_token(cmpExp.inExpression, indent);
+			return getExpressionReturnToken(cmpExp.inExpression, indent);
 	} else if (auto decl = cast(const Declarator) node) {
 		if (decl.initializer) {
-			return get_expression_return_token(decl.initializer, indent);
+			return getExpressionReturnToken(decl.initializer, indent);
 		} else {
 			return decl.name;
 		}
 	} else if (auto delExp = cast(const DeleteExpression) node) {
 		if (delExp.unaryExpression)
-			return get_expression_return_token(delExp.unaryExpression, indent);
+			return getExpressionReturnToken(delExp.unaryExpression, indent);
 	} else if (auto eqlExp = cast(const EqualExpression) node) {
-		auto l = get_expression_return_token(eqlExp.left, indent);
-		auto r = get_expression_return_token(eqlExp.right, indent);
+		auto l = getExpressionReturnToken(eqlExp.left, indent);
+		auto r = getExpressionReturnToken(eqlExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto expExp = cast(const Expression) node) {
 		foreach (item; expExp.items)
 			if (item)
-				return get_expression_return_token(item, indent);
+				return getExpressionReturnToken(item, indent);
 	} else if (auto funCallExp = cast(const FunctionCallExpression) node) {
 		// FIXME: This breaks with UFC
 		if (funCallExp.unaryExpression)
-			return get_expression_return_token(funCallExp.unaryExpression, indent);
+			return getExpressionReturnToken(funCallExp.unaryExpression, indent);
 	} else if (auto idenOrTemp = cast(const IdentifierOrTemplateChain) node) {
 		if (idenOrTemp)
 			foreach (inst; idenOrTemp.identifiersOrTemplateInstances)
-				return get_expression_return_token(inst, indent);
+				return getExpressionReturnToken(inst, indent);
 	} else if (auto idenOrTemp = cast(const IdentifierOrTemplateInstance) node) {
 		if (idenOrTemp.templateInstance) {
-			return get_expression_return_token(idenOrTemp.templateInstance, indent);
+			return getExpressionReturnToken(idenOrTemp.templateInstance, indent);
 		} else {
 			return idenOrTemp.identifier;
 		}
 	} else if (auto idenExp = cast(const IdentityExpression) node) {
-		auto l = get_expression_return_token(idenExp.left, indent);
-		auto r = get_expression_return_token(idenExp.right, indent);
+		auto l = getExpressionReturnToken(idenExp.left, indent);
+		auto r = getExpressionReturnToken(idenExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto impExp = cast(const ImportExpression) node) {
 		if (impExp.assignExpression)
-			return get_expression_return_token(impExp.assignExpression, indent);
+			return getExpressionReturnToken(impExp.assignExpression, indent);
 	} else if (auto indexExp = cast(const IndexExpression) node) {
 		if (indexExp.unaryExpression)
-			return get_expression_return_token(indexExp.unaryExpression, indent);
+			return getExpressionReturnToken(indexExp.unaryExpression, indent);
 	} else if (auto inExp = cast(const InExpression) node) {
-		auto l = get_expression_return_token(inExp.left, indent);
-		auto r = get_expression_return_token(inExp.right, indent);
+		auto l = getExpressionReturnToken(inExp.left, indent);
+		auto r = getExpressionReturnToken(inExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto intl = cast(const Initializer) node) {
 		if (intl.nonVoidInitializer)
-			return get_expression_return_token(intl.nonVoidInitializer, indent);
+			return getExpressionReturnToken(intl.nonVoidInitializer, indent);
 	} else if (auto mulExp = cast(const MulExpression) node) {
-		auto l = get_expression_return_token(mulExp.left, indent);
-		auto r = get_expression_return_token(mulExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(mulExp.left, indent);
+		auto r = getExpressionReturnToken(mulExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto newExp = cast(const NewExpression) node) {
 		if (newExp.type)
-			return get_expression_return_token(newExp.type, indent);
+			return getExpressionReturnToken(newExp.type, indent);
 		if (newExp.newAnonClassExpression)
-			return get_expression_return_token(newExp.newAnonClassExpression, indent);
+			return getExpressionReturnToken(newExp.newAnonClassExpression, indent);
 		//else if (newExp.arguments)
-		//	return get_expression_return_token(newExp.arguments, indent);
+		//	return getExpressionReturnToken(newExp.arguments, indent);
 		if (newExp.assignExpression)
-			return get_expression_return_token(newExp.assignExpression, indent);
+			return getExpressionReturnToken(newExp.assignExpression, indent);
 	} else if (auto nonVoidIntl = cast(const NonVoidInitializer) node) {
 		if (nonVoidIntl.assignExpression)
-			return get_expression_return_token(nonVoidIntl.assignExpression, indent);
+			return getExpressionReturnToken(nonVoidIntl.assignExpression, indent);
 		if (nonVoidIntl.arrayInitializer)
-			return get_expression_return_token(nonVoidIntl.arrayInitializer, indent);
+			return getExpressionReturnToken(nonVoidIntl.arrayInitializer, indent);
 		if (nonVoidIntl.structInitializer)
-			return get_expression_return_token(nonVoidIntl.structInitializer, indent);
+			return getExpressionReturnToken(nonVoidIntl.structInitializer, indent);
 	} else if (auto orExp = cast(const OrExpression) node) {
-		auto l = get_expression_return_token(orExp.left, indent);
-		auto r = get_expression_return_token(orExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(orExp.left, indent);
+		auto r = getExpressionReturnToken(orExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto orOrExp = cast(const OrOrExpression) node) {
-		auto l = get_expression_return_token(orOrExp.left, indent);
-		auto r = get_expression_return_token(orOrExp.right, indent);
+		auto l = getExpressionReturnToken(orOrExp.left, indent);
+		auto r = getExpressionReturnToken(orOrExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto postIncDecExp = cast(const PostIncDecExpression) node) {
 		if (postIncDecExp.unaryExpression)
-			return get_expression_return_token(postIncDecExp.unaryExpression, indent);
+			return getExpressionReturnToken(postIncDecExp.unaryExpression, indent);
 	} else if (auto powExp = cast(const PowExpression) node) {
-		auto l = get_expression_return_token(powExp.left, indent);
-		auto r = get_expression_return_token(powExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(powExp.left, indent);
+		auto r = getExpressionReturnToken(powExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto preIncDecExp = cast(const PreIncDecExpression) node) {
 		if (preIncDecExp.unaryExpression)
-			return get_expression_return_token(preIncDecExp.unaryExpression, indent);
+			return getExpressionReturnToken(preIncDecExp.unaryExpression, indent);
 	} else if (auto primaryExp = cast(const PrimaryExpression) node) {
 		if (primaryExp.identifierOrTemplateInstance)
-			return get_expression_return_token(primaryExp.identifierOrTemplateInstance, indent);
+			return getExpressionReturnToken(primaryExp.identifierOrTemplateInstance, indent);
 		if (primaryExp.typeofExpression)
-			return get_expression_return_token(primaryExp.typeofExpression, indent);
+			return getExpressionReturnToken(primaryExp.typeofExpression, indent);
 		if (primaryExp.typeidExpression)
-			return get_expression_return_token(primaryExp.typeidExpression, indent);
+			return getExpressionReturnToken(primaryExp.typeidExpression, indent);
 		if (primaryExp.arrayLiteral)
-			return get_expression_return_token(primaryExp.arrayLiteral, indent);
+			return getExpressionReturnToken(primaryExp.arrayLiteral, indent);
 		if (primaryExp.assocArrayLiteral)
-			return get_expression_return_token(primaryExp.assocArrayLiteral, indent);
+			return getExpressionReturnToken(primaryExp.assocArrayLiteral, indent);
 		if (primaryExp.expression)
-			return get_expression_return_token(primaryExp.expression, indent);
+			return getExpressionReturnToken(primaryExp.expression, indent);
 		if (primaryExp.isExpression)
-			return get_expression_return_token(primaryExp.isExpression, indent);
+			return getExpressionReturnToken(primaryExp.isExpression, indent);
 		if (primaryExp.lambdaExpression)
-			return get_expression_return_token(primaryExp.lambdaExpression, indent);
+			return getExpressionReturnToken(primaryExp.lambdaExpression, indent);
 		if (primaryExp.functionLiteralExpression)
-			return get_expression_return_token(primaryExp.functionLiteralExpression, indent);
+			return getExpressionReturnToken(primaryExp.functionLiteralExpression, indent);
 		if (primaryExp.traitsExpression)
-			return get_expression_return_token(primaryExp.traitsExpression, indent);
+			return getExpressionReturnToken(primaryExp.traitsExpression, indent);
 		if (primaryExp.mixinExpression)
-			return get_expression_return_token(primaryExp.mixinExpression, indent);
+			return getExpressionReturnToken(primaryExp.mixinExpression, indent);
 		if (primaryExp.importExpression)
-			return get_expression_return_token(primaryExp.importExpression, indent);
+			return getExpressionReturnToken(primaryExp.importExpression, indent);
 		if (primaryExp.vector)
-			return get_expression_return_token(primaryExp.vector, indent);
+			return getExpressionReturnToken(primaryExp.vector, indent);
 
 		// return type
-		if (get_token_data(primaryExp.dot) !is TokenData.init)
+		if (getTokenData(primaryExp.dot) !is TokenData.init)
 			return primaryExp.dot;
-		if (get_token_data(primaryExp.primary) !is TokenData.init)
+		if (getTokenData(primaryExp.primary) !is TokenData.init)
 			return primaryExp.primary;
-		if (get_token_data(primaryExp.basicType) !is TokenData.init)
+		if (getTokenData(primaryExp.basicType) !is TokenData.init)
 			return primaryExp.basicType;
 
 		string message = std.string.format(
@@ -1023,60 +1032,60 @@ Token get_expression_return_token(const ASTNode node, size_t indent) {
 		);
 		throw new Exception(message);
 	} else if (auto relExp = cast(const RelExpression) node) {
-		auto l = get_expression_return_token(relExp.left, indent);
-		auto r = get_expression_return_token(relExp.right, indent);
+		auto l = getExpressionReturnToken(relExp.left, indent);
+		auto r = getExpressionReturnToken(relExp.right, indent);
 		return Token(tok!"identifier", "bool", l.line, l.column, l.index);
 	} else if (auto shiftExp = cast(const ShiftExpression) node) {
-		auto l = get_expression_return_token(shiftExp.left, indent);
-		auto r = get_expression_return_token(shiftExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(shiftExp.left, indent);
+		auto r = getExpressionReturnToken(shiftExp.right, indent);
+		return getPromotedToken(l, r);
 	} else if (auto sliceExp = cast(const SliceExpression) node) {
 		if (sliceExp.unaryExpression)
-			return get_expression_return_token(sliceExp.unaryExpression, indent);
+			return getExpressionReturnToken(sliceExp.unaryExpression, indent);
 	} else if (auto symbol = cast(const Symbol) node) {
 		if (symbol.identifierOrTemplateChain)
-			return get_expression_return_token(symbol.identifierOrTemplateChain, indent);
+			return getExpressionReturnToken(symbol.identifierOrTemplateChain, indent);
 	} else if (auto tempArgList = cast(const TemplateArgumentList) node) {
 		foreach (item; tempArgList.items) {
-			return get_expression_return_token(item, indent);
+			return getExpressionReturnToken(item, indent);
 		}
 	} else if (auto tempArg = cast(const TemplateArgument) node) {
 		if (tempArg.type)
-			return get_expression_return_token(tempArg.type, indent);
+			return getExpressionReturnToken(tempArg.type, indent);
 		if (tempArg.assignExpression)
-			return get_expression_return_token(tempArg.assignExpression, indent);
+			return getExpressionReturnToken(tempArg.assignExpression, indent);
 	} else if (auto tempArgs = cast(const TemplateArguments) node) {
 		if (tempArgs.templateArgumentList)
-			return get_expression_return_token(tempArgs.templateArgumentList, indent);
+			return getExpressionReturnToken(tempArgs.templateArgumentList, indent);
 		if (tempArgs.templateSingleArgument)
-			return get_expression_return_token(tempArgs.templateSingleArgument, indent);
+			return getExpressionReturnToken(tempArgs.templateSingleArgument, indent);
 	} else if (auto tempIns = cast(const TemplateInstance) node) {
 		if (tempIns.templateArguments)
-			return get_expression_return_token(tempIns.templateArguments, indent);
+			return getExpressionReturnToken(tempIns.templateArguments, indent);
 		else
 			return tempIns.identifier;
 	} else if (auto ternaryExp = cast(const TernaryExpression) node) {
 		if (ternaryExp.orOrExpression)
-			return get_expression_return_token(ternaryExp.orOrExpression, indent);
+			return getExpressionReturnToken(ternaryExp.orOrExpression, indent);
 		if (ternaryExp.expression)
-			return get_expression_return_token(ternaryExp.expression, indent);
+			return getExpressionReturnToken(ternaryExp.expression, indent);
 		if (ternaryExp.ternaryExpression)
-			return get_expression_return_token(ternaryExp.ternaryExpression, indent);
+			return getExpressionReturnToken(ternaryExp.ternaryExpression, indent);
 	} else if (auto tempSingArg = cast(const TemplateSingleArgument) node) {
-		if (get_token_data(tempSingArg.token) !is TokenData.init)
+		if (getTokenData(tempSingArg.token) !is TokenData.init)
 			return tempSingArg.token;
 	} else if (auto type = cast(const Type) node) {
 		if (type.type2)
-			return get_expression_return_token(type.type2, indent);
+			return getExpressionReturnToken(type.type2, indent);
 	} else if (auto type2 = cast(const Type2) node) {
 		if (type2.symbol)
-			return get_expression_return_token(type2.symbol, indent);
+			return getExpressionReturnToken(type2.symbol, indent);
 		if (type2.typeofExpression)
-			return get_expression_return_token(type2.typeofExpression, indent);
+			return getExpressionReturnToken(type2.typeofExpression, indent);
 		if (type2.identifierOrTemplateChain)
-			return get_expression_return_token(type2.identifierOrTemplateChain, indent);
+			return getExpressionReturnToken(type2.identifierOrTemplateChain, indent);
 		if (type2.type)
-			return get_expression_return_token(type2.type, indent);
+			return getExpressionReturnToken(type2.type, indent);
 
 		if (type2.builtinType.str != "!ERROR!") {
 			return Token(
@@ -1088,71 +1097,71 @@ Token get_expression_return_token(const ASTNode node, size_t indent) {
 		//	return type2.typeConstructor.str;
 	} else if (auto typeidExp = cast(const TypeidExpression) node) {
 		if (typeidExp.expression)
-			return get_expression_return_token(typeidExp.expression, indent);
+			return getExpressionReturnToken(typeidExp.expression, indent);
 		if (typeidExp.type)
-			return get_expression_return_token(typeidExp.type, indent);
+			return getExpressionReturnToken(typeidExp.type, indent);
 	} else if (auto typeofExp = cast(const TypeofExpression) node) {
 		if (typeofExp.expression)
-			return get_expression_return_token(typeofExp.expression, indent);
+			return getExpressionReturnToken(typeofExp.expression, indent);
 		//if (typeofExp.return_)
-		//	return get_expression_return_token(typeofExp.return_, indent);
+		//	return getExpressionReturnToken(typeofExp.return_, indent);
 	} else if (auto unaryExp = cast(const UnaryExpression) node) {
 		// Get the prefix such as "this."
 		Token firstToken, secondToken;
 		if (unaryExp.unaryExpression) {
-			firstToken = get_expression_return_token(unaryExp.unaryExpression, indent);
+			firstToken = getExpressionReturnToken(unaryExp.unaryExpression, indent);
 		}
 
 		// Get the second token
 		if (unaryExp.type)
-			secondToken = get_expression_return_token(unaryExp.type, indent);
+			secondToken = getExpressionReturnToken(unaryExp.type, indent);
 		if (unaryExp.primaryExpression)
-			secondToken = get_expression_return_token(unaryExp.primaryExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.primaryExpression, indent);
 		//if (unaryExp.prefix)
-		//	secondToken = get_expression_return_token(unaryExp.prefix, indent);
+		//	secondToken = getExpressionReturnToken(unaryExp.prefix, indent);
 		//if (unaryExp.suffix)
-		//	secondToken = get_expression_return_token(unaryExp.suffix, indent);
+		//	secondToken = getExpressionReturnToken(unaryExp.suffix, indent);
 		if (unaryExp.newExpression)
-			secondToken = get_expression_return_token(unaryExp.newExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.newExpression, indent);
 		if (unaryExp.deleteExpression)
-			secondToken = get_expression_return_token(unaryExp.deleteExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.deleteExpression, indent);
 		if (unaryExp.castExpression)
-			secondToken = get_expression_return_token(unaryExp.castExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.castExpression, indent);
 		if (unaryExp.functionCallExpression)
-			secondToken = get_expression_return_token(unaryExp.functionCallExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.functionCallExpression, indent);
 		if (unaryExp.argumentList)
-			secondToken = get_expression_return_token(unaryExp.argumentList, indent);
+			secondToken = getExpressionReturnToken(unaryExp.argumentList, indent);
 		if (unaryExp.identifierOrTemplateInstance)
-			secondToken = get_expression_return_token(unaryExp.identifierOrTemplateInstance, indent);
+			secondToken = getExpressionReturnToken(unaryExp.identifierOrTemplateInstance, indent);
 		if (unaryExp.assertExpression)
-			secondToken = get_expression_return_token(unaryExp.assertExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.assertExpression, indent);
 		if (unaryExp.sliceExpression)
-			secondToken = get_expression_return_token(unaryExp.sliceExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.sliceExpression, indent);
 		if (unaryExp.indexExpression)
-			secondToken = get_expression_return_token(unaryExp.indexExpression, indent);
+			secondToken = getExpressionReturnToken(unaryExp.indexExpression, indent);
 
 		// Combine the tokens
-		//stderr.writefln("!!! get_expression_return_token firstToken type:%s, text:%s", firstToken.type.str, firstToken.text);
-		//stderr.writefln("!!! get_expression_return_token right type:%s, text:%s", secondToken.type.str, secondToken.text);
+		//stderr.writefln("!!! getExpressionReturnToken firstToken type:%s, text:%s", firstToken.type.str, firstToken.text);
+		//stderr.writefln("!!! getExpressionReturnToken right type:%s, text:%s", secondToken.type.str, secondToken.text);
 		// FIXME: UFC Boom
-		Token newToken = combine_tokens(firstToken, secondToken);
+		Token newToken = combineTokens(firstToken, secondToken);
 		//stderr.writefln("!!! t type:%s, text:%s", newToken.type.str, newToken.text);
 		return newToken;
 	} else if (auto xorExp = cast(const XorExpression) node) {
-		auto l = get_expression_return_token(xorExp.left, indent);
-		auto r = get_expression_return_token(xorExp.right, indent);
-		return get_promoted_token(l, r);
+		auto l = getExpressionReturnToken(xorExp.left, indent);
+		auto r = getExpressionReturnToken(xorExp.right, indent);
+		return getPromotedToken(l, r);
 	}
 
 	if (node !is null) {
-		stderr.writefln("!!! get_expression_return_token() failed on node: %s", typeid(node));
+		stderr.writefln("!!! getExpressionReturnToken() failed on node: %s", typeid(node));
 	}
 
 	return Token.init;
 }
 
 // FIXME: Much of this can be replaced with some isBlah functions
-const Token get_promoted_token(const Token left, const Token right) {
+const Token getPromotedToken(const Token left, const Token right) {
 	const int[string] sizes = [
 		"bool" : bool.sizeof, 
 		"char" : char.sizeof, 
@@ -1243,13 +1252,13 @@ const Token get_promoted_token(const Token left, const Token right) {
 		"uint_fast64_t" : "ulong", 
 	];
 
-	string a = get_token_data(left).type_data.name;
-	string b = get_token_data(right).type_data.name;
+	string a = getTokenData(left).typeData.name;
+	string b = getTokenData(right).typeData.name;
 
 	// throw an error if any type names are blank
 	if (a is null || b is null || a == "" || b == "") {
-		string message = "get_promoted_token() did not expect: \"%s\" or \"%s\".".format(
-			get_token_data(left), get_token_data(right));
+		string message = "getPromotedToken() did not expect: \"%s\" or \"%s\".".format(
+			getTokenData(left), getTokenData(right));
 		throw new Exception(message);
 	}
 
@@ -1257,7 +1266,7 @@ const Token get_promoted_token(const Token left, const Token right) {
 	if (a !in promotions || a !in sizes ||
 		b !in promotions || b !in sizes) {
 
-		string message = "get_promoted_token() did not expect the type name: \"%s\" or \"%s\".".format(a, b);
+		string message = "getPromotedToken() did not expect the type name: \"%s\" or \"%s\".".format(a, b);
 		throw new Exception(message);
 	}
 
@@ -1275,9 +1284,9 @@ const Token get_promoted_token(const Token left, const Token right) {
 }
 
 // FIXME: Make this work with UFC for variables and literals
-TokenData get_token_data(const Token token) {
+TokenData getTokenData(const Token token) {
 	TokenData data;
-	//stderr.writefln("!!! get_token_data type:%s text:%s", token.type.str, token.text);
+	//stderr.writefln("!!! getTokenData type:%s text:%s", token.type.str, token.text);
 
 	// Line and column
 	if (token.line && token.column) {
@@ -1292,9 +1301,9 @@ TokenData get_token_data(const Token token) {
 
 	// Token is null
 	if (token.type == tok!"null") {
-		data.token_type = TokenType.null_;
+		data.tokenType = TokenType.null_;
 		data.name = null;
-		data.type_data = TypeData.init;
+		data.typeData = TypeData.init;
 		return data;
 	}
 
@@ -1317,9 +1326,9 @@ TokenData get_token_data(const Token token) {
 
 	// Token is a literal
 	if (token.type in LITERAL_TYPE_TO_TYPE_MAP) {
-		string type_name = LITERAL_TYPE_TO_TYPE_MAP[token.type];
-		data.type_data = TypeData(type_name);
-		data.token_type = TokenType.literal;
+		string typeName = LITERAL_TYPE_TO_TYPE_MAP[token.type];
+		data.typeData = TypeData(typeName);
+		data.tokenType = TokenType.literal;
 		data.name = null;
 		data.value = token.text;
 		return data;
@@ -1327,8 +1336,8 @@ TokenData get_token_data(const Token token) {
 
 	// Token is a bool literal
 	if (token.type == tok!"true" || token.type == tok!"false") {
-		data.token_type = TokenType.literal;
-		data.type_data = TypeData("bool");
+		data.tokenType = TokenType.literal;
+		data.typeData = TypeData("bool");
 		data.name = null;
 		data.value = token.type.str;
 		return data;
@@ -1337,8 +1346,8 @@ TokenData get_token_data(const Token token) {
 	// Token is a basic type
 	if (token.type == tok!"identifier") {
 		if (!std.algorithm.find(BASIC_TYPES, token.text).empty) {
-			data.token_type = TokenType.basic_type;
-			data.type_data = TypeData(token.text);
+			data.tokenType = TokenType.basic_type;
+			data.typeData = TypeData(token.text);
 			data.name = null;
 			return data;
 		}
@@ -1346,81 +1355,81 @@ TokenData get_token_data(const Token token) {
 
 	// Token is an auto declaration
 	if (token.type ==  tok!"auto") {
-		data.token_type = TokenType.auto_declaration;
-		data.type_data = TypeData.init;
+		data.tokenType = TokenType.auto_declaration;
+		data.typeData = TypeData.init;
 		data.name = null;
 		return data;
 	}
 
 	// Token is an ref declaration
 	if (token.type ==  tok!"ref") {
-		data.token_type = TokenType.ref_declaration;
-		data.type_data = TypeData.init;
+		data.tokenType = TokenType.ref_declaration;
+		data.typeData = TypeData.init;
 		data.name = null;
 		return data;
 	}
 
 	// Token is __FILE__
 	if (token.type == tok!"__FILE__") {
-		data.token_type = TokenType.__file__;
+		data.tokenType = TokenType.__file__;
 		data.name = null;
-		data.type_data = TypeData("string");
+		data.typeData = TypeData("string");
 		return data;
 	}
 
 	// Token is __LINE__
 	if (token.type == tok!"__LINE__") {
-		data.token_type = TokenType.__line__;
+		data.tokenType = TokenType.__line__;
 		data.name = null;
-		data.type_data = TypeData("int");
+		data.typeData = TypeData("int");
 		return data;
 	}
 
 	// Token is super
 	if (token.type == tok!"super") {
-		data.token_type = TokenType.super_;
+		data.tokenType = TokenType.super_;
 		data.name = null;
-		data.type_data = TypeData.init;
+		data.typeData = TypeData.init;
 		return data;
 	}
 
 	// Token is identifier with "this pointer" prefix
 	// this.blah
-	if (token.type == tok!"this" && token.text && token.text.length && this_pointers.peak) {
+	if (token.type == tok!"this" && token.text && token.text.length && thisPointers.peak) {
 		string member = token.text;
 
 		// Figure out what "this" is
-		auto class_data = get_class_data_by_name(this_pointers.peak);
-		auto struct_data = get_struct_data_by_name(this_pointers.peak);
+		auto class_data = getClassDataByName(thisPointers.peak);
+		auto struct_data = getStructDataByName(thisPointers.peak);
 
 		// Class
 		if (class_data !is ClassData.init) {
 			// Token is a field
 			if (member in class_data.fields) {
-				data.token_type = TokenType.this_field;
+				data.tokenType = TokenType.this_field;
 				data.name = token.text;
-				data.type_data = class_data.fields[member].type;
+				data.typeData = class_data.fields[member].type;
 				return data;
 			// Token is a method
 			} else if (member in class_data.methods) {
-				data.token_type = TokenType.this_method;
+				data.tokenType = TokenType.this_method;
 				data.name = token.text;
-				data.type_data = class_data.methods[member].return_type;
+				data.typeData = class_data.methods[member].returnType;
 				return data;
 			}
 		// Struct
 		} else if (struct_data !is StructData.init) {
 			// Token is a field
 			if (member in struct_data.fields) {
-				data.token_type = TokenType.this_field;
+				data.tokenType = TokenType.this_field;
 				data.name = token.text;
-				data.type_data = struct_data.fields[member].type;
+				data.typeData = struct_data.fields[member].type;
 				return data;
 			// Token is a method
 			} else if (member in struct_data.methods) {
-				data.token_type = TokenType.this_method;
+				data.tokenType = TokenType.this_method;
 				data.name = token.text;
-				data.type_data = struct_data.methods[member].return_type;
+				data.typeData = struct_data.methods[member].returnType;
 				return data;
 			}
 		}
@@ -1428,10 +1437,10 @@ TokenData get_token_data(const Token token) {
 
 	// Token is just the "this pointer"
 	// this
-	if (token.type == tok!"this" && this_pointers.peak) {
-		data.token_type = TokenType.this_;
+	if (token.type == tok!"this" && thisPointers.peak) {
+		data.tokenType = TokenType.this_;
 		data.name = "this";
-		data.type_data = TypeData(this_pointers.peak);
+		data.typeData = TypeData(thisPointers.peak);
 		return data;
 	}
 
@@ -1448,40 +1457,40 @@ TokenData get_token_data(const Token token) {
 			identifier = token.text;
 		}
 
-		auto var_data = get_variable_data_by_name(identifier);
+		auto var_data = getVariableDataByName(identifier);
 
 		// Token is a struct/class instance
 		if (var_data !is VariableData.init) {
-			string type_name = var_data.type.name;
-			auto class_data = get_class_data_by_name(type_name);
-			auto struct_data = get_struct_data_by_name(type_name);
+			string typeName = var_data.type.name;
+			auto class_data = getClassDataByName(typeName);
+			auto struct_data = getStructDataByName(typeName);
 
 			// Class instance member
 			if (member && class_data !is ClassData.init) {
 				// Class instance field
 				if (member in class_data.fields) {
-					data.type_data = class_data.fields[member].type;
+					data.typeData = class_data.fields[member].type;
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 				// Class instance method
 				} else if (member in class_data.methods) {
-					data.type_data = class_data.methods[member].return_type;
+					data.typeData = class_data.methods[member].returnType;
 					data.name = token.text;
-					data.token_type = TokenType.method;
+					data.tokenType = TokenType.method;
 				}
 				return data;
 			// Struct instance member
 			} else if (member && struct_data !is StructData.init) {
 				// Struct instance field
 				if (member in struct_data.fields) {
-					data.type_data = struct_data.fields[member].type;
+					data.typeData = struct_data.fields[member].type;
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 				// Struct instance method
 				} else if (member in struct_data.methods) {
-					data.type_data = struct_data.methods[member].return_type;
+					data.typeData = struct_data.methods[member].returnType;
 					data.name = token.text;
-					data.token_type = TokenType.method;
+					data.tokenType = TokenType.method;
 				}
 				return data;
 			}
@@ -1492,50 +1501,50 @@ TokenData get_token_data(const Token token) {
 			// Is a standard property
 			switch(member) {
 				case "alignof":
-					data.type_data = TypeData("size_t");
+					data.typeData = TypeData("size_t");
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 					return data;
 				case "init":
-					data.type_data = var_data.type;
+					data.typeData = var_data.type;
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 					return data;
 				case "mangleof":
-					data.type_data = TypeData("string");
+					data.typeData = TypeData("string");
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 					return data;
 				case "sizeof":
-					data.type_data = TypeData("size_t");
+					data.typeData = TypeData("size_t");
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 					return data;
 				case "stringof":
-					data.type_data = TypeData("string");
+					data.typeData = TypeData("string");
 					data.name = token.text;
-					data.token_type = TokenType.field;
+					data.tokenType = TokenType.field;
 					return data;
 				default:
 					break;
 			}
 
 			// Is an array
-			if (var_data.type.is_array) {
+			if (var_data.type.isArray) {
 				switch(member) {
 					case "length":
-						data.type_data = TypeData("size_t");
+						data.typeData = TypeData("size_t");
 						data.name = token.text;
-						data.token_type = TokenType.field;
+						data.tokenType = TokenType.field;
 						return data;
 					// FIXME: case "ptr":
 					case "dup":
 					case "idup":
 					case "reverse":
 					case "sort":
-						data.type_data = var_data.type;
+						data.typeData = var_data.type;
 						data.name = token.text;
-						data.token_type = TokenType.field;
+						data.tokenType = TokenType.field;
 						return data;
 					default:
 						break;
@@ -1544,14 +1553,14 @@ TokenData get_token_data(const Token token) {
 			} else if (!std.algorithm.find(INTEGER_TYPES, identifier).empty) {
 				switch(member) {
 					case "max":
-						data.type_data = TypeData("size_t");
+						data.typeData = TypeData("size_t");
 						data.name = token.text;
-						data.token_type = TokenType.field;
+						data.tokenType = TokenType.field;
 						return data;
 					case "min":
-						data.type_data = TypeData("size_t");
+						data.typeData = TypeData("size_t");
 						data.name = token.text;
-						data.token_type = TokenType.field;
+						data.tokenType = TokenType.field;
 						return data;
 					default:
 						break;
@@ -1572,9 +1581,9 @@ TokenData get_token_data(const Token token) {
 					case "min_normal":
 					case "re":
 					case "im":
-						data.type_data = var_data.type;
+						data.typeData = var_data.type;
 						data.name = token.text;
-						data.token_type = TokenType.field;
+						data.tokenType = TokenType.field;
 						return data;
 					default:
 						break;
@@ -1585,61 +1594,61 @@ TokenData get_token_data(const Token token) {
 
 		// Token is a variable
 		if (var_data !is VariableData.init && identifier) {
-			data.type_data = var_data.type;
+			data.typeData = var_data.type;
 			data.name = token.text;
-			data.token_type = TokenType.variable;
+			data.tokenType = TokenType.variable;
 			return data;
 		}
 
 		// Token is a template parameter
-		auto temp_data = get_template_data_by_name(identifier);
+		auto temp_data = getTemplateDataByName(identifier);
 		if (temp_data !is TemplateData.init) {
-			data.token_type = TokenType.template_;
-			data.type_data = TypeData(identifier);
+			data.tokenType = TokenType.template_;
+			data.typeData = TypeData(identifier);
 			data.name = null;
 			stderr.writefln("!!! template data: %s", data);
 			return data;
 		}
 
 		// Token is a function name
-		auto func_data = get_function_data_by_name(identifier);
+		auto func_data = getFunctionDataByName(identifier);
 		if (func_data !is FunctionData.init) {
-			data.token_type = TokenType.function_;
-			data.type_data = func_data.return_type;
+			data.tokenType = TokenType.function_;
+			data.typeData = func_data.returnType;
 			data.name = token.text;
 			return data;
 		}
 
 		// Token is a class name
-		auto class_data = get_class_data_by_name(identifier);
+		auto class_data = getClassDataByName(identifier);
 		if (class_data !is ClassData.init) {
-			data.token_type = TokenType.class_;
-			data.type_data = TypeData(token.text);
+			data.tokenType = TokenType.class_;
+			data.typeData = TypeData(token.text);
 			data.name = null;
 			return data;
 		}
 
 		// Token is a struct name
-		auto struct_data = get_struct_data_by_name(identifier);
+		auto struct_data = getStructDataByName(identifier);
 		if (struct_data !is StructData.init) {
-			data.token_type = TokenType.struct_;
-			data.type_data = TypeData(token.text);
+			data.tokenType = TokenType.struct_;
+			data.typeData = TypeData(token.text);
 			data.name = null;
 			return data;
 		}
 
 		// Token is an enum
-		auto enum_data = get_enum_data_by_name(identifier);
+		auto enum_data = getEnumDataByName(identifier);
 		if (enum_data !is EnumData.init) {
 			data.name = token.text;
 			// Enum field
 			if (member in enum_data.fields) {
-				data.token_type = TokenType.enum_;
-				data.type_data = TypeData(identifier);
+				data.tokenType = TokenType.enum_;
+				data.typeData = TypeData(identifier);
 			// Enum
 			} else {
-				data.token_type = TokenType.enum_;
-				data.type_data = enum_data.type;
+				data.tokenType = TokenType.enum_;
+				data.typeData = enum_data.type;
 			}
 			return data;
 		}
@@ -1647,25 +1656,25 @@ TokenData get_token_data(const Token token) {
 
 	// Token is an identifier that should have used a this pointer
 	// blah instead of this.blah
-	if (token.type == tok!"identifier" && this_pointers.peak) {
+	if (token.type == tok!"identifier" && thisPointers.peak) {
 		// Token may be a field/method without the this pointer
 		// Figure out what "this" should be
-		auto class_data = get_class_data_by_name(this_pointers.peak);
-		auto struct_data = get_struct_data_by_name(this_pointers.peak);
+		auto class_data = getClassDataByName(thisPointers.peak);
+		auto struct_data = getStructDataByName(thisPointers.peak);
 		string identifier = token.text;
 
 		// Class
 		if (class_data !is ClassData.init) {
 			// Token is a field
 			if (identifier in class_data.fields) {
-				data.token_type = TokenType.this_field;
-				data.type_data = class_data.fields[identifier].type;
+				data.tokenType = TokenType.this_field;
+				data.typeData = class_data.fields[identifier].type;
 				data.name = token.text;
 				return data;
 			// Token is a method
 			} else if (identifier in class_data.methods) {
-				data.token_type = TokenType.this_method;
-				data.type_data = class_data.methods[identifier].return_type;
+				data.tokenType = TokenType.this_method;
+				data.typeData = class_data.methods[identifier].returnType;
 				data.name = token.text;
 				return data;
 			}
@@ -1673,14 +1682,14 @@ TokenData get_token_data(const Token token) {
 		} else if (struct_data !is StructData.init) {
 			// Token is a field
 			if (identifier in struct_data.fields) {
-				data.token_type = TokenType.this_field;
-				data.type_data = struct_data.fields[identifier].type;
+				data.tokenType = TokenType.this_field;
+				data.typeData = struct_data.fields[identifier].type;
 				data.name = token.text;
 				return data;
 			// Token is a method
 			} else if (identifier in struct_data.methods) {
-				data.token_type = TokenType.this_method;
-				data.type_data = struct_data.methods[identifier].return_type;
+				data.tokenType = TokenType.this_method;
+				data.typeData = struct_data.methods[identifier].returnType;
 				data.name = token.text;
 				return data;
 			}
@@ -1705,9 +1714,9 @@ TokenData get_token_data(const Token token) {
 
 		// Match partial module name using imports
 		foreach (frame; std.range.retro(analysis.scope_frame.frames)) {
-			foreach (import_name; frame.imports) {
-				if (import_name in analysis.scope_frame.modules) {
-					auto candidate_module = analysis.scope_frame.modules[import_name];
+			foreach (importName; frame.imports) {
+				if (importName in analysis.scope_frame.modules) {
+					auto candidate_module = analysis.scope_frame.modules[importName];
 
 					// FIXME: Make it work with enum fields, static methods, and properties
 					if (full_identifier in candidate_module.variables || 
@@ -1730,37 +1739,37 @@ TokenData get_token_data(const Token token) {
 		// Variable match
 		if (method in module_data.variables) {
 			auto var_data = module_data.variables[method];
-			data.type_data = var_data.type;
+			data.typeData = var_data.type;
 			data.name = method;
-			data.token_type = TokenType.variable;
+			data.tokenType = TokenType.variable;
 			return data;
 		// Function match
 		} else if (method in module_data.functions) {
 			auto func_data = module_data.functions[method];
-			data.token_type = TokenType.function_;
-			data.type_data = func_data.return_type;
+			data.tokenType = TokenType.function_;
+			data.typeData = func_data.returnType;
 			data.name = method;
 			return data;
 		// Class match
 		} else if (method in module_data.classes) {
 			auto class_data = module_data.classes[method];
-			data.token_type = TokenType.class_;
-			data.type_data = TypeData(method);
+			data.tokenType = TokenType.class_;
+			data.typeData = TypeData(method);
 			data.name = null;
 			return data;
 		// Struct match
 		} else if (method in module_data.structs) {
 			auto struct_data = module_data.structs[method];
-			data.token_type = TokenType.struct_;
-			data.type_data = TypeData(method);
+			data.tokenType = TokenType.struct_;
+			data.typeData = TypeData(method);
 			data.name = null;
 			return data;
 		// Enum match
 		} else if (method in module_data.enums) {
 			auto enum_data = module_data.enums[method];
 			data.name = method;
-			data.token_type = TokenType.enum_;
-			data.type_data = enum_data.type;
+			data.tokenType = TokenType.enum_;
+			data.typeData = enum_data.type;
 			return data;
 		}
 	}
@@ -1768,14 +1777,14 @@ TokenData get_token_data(const Token token) {
 	// Token is an attribute
 	if (token.type ==  tok!"identifier") {
 		if (token.text == "property") {
-			data.token_type = TokenType.property_attribute;
-			data.type_data = TypeData(token.text);
+			data.tokenType = TokenType.property_attribute;
+			data.typeData = TypeData(token.text);
 			data.name = null;
 			return data;
 		}
 	}
 
-	string fail = "!!! get_token_data() failed on token: type:%s, text:%s, line:%s, column:%s".format(
+	string fail = "!!! getTokenData() failed on token: type:%s, text:%s, line:%s, column:%s".format(
 		token.type.str, token.text, data.line, data.column);
 	//throw new Exception(fail);
 	stderr.writeln(fail);
@@ -1789,9 +1798,9 @@ string tokenStr(const Token token)
 	return "Token(type:%s, text:%s, line:%s, column:%s)".format(token.type.str, token.text, token.line, token.column);
 }
 
-Token combine_tokens(const Token a, const Token b)
+Token combineTokens(const Token a, const Token b)
 {
-	writefln("!!! combineTokens left:%s, right:%s", tokenStr(a), tokenStr(b));
+	//writefln("!!! combineTokens left:%s, right:%s", tokenStr(a), tokenStr(b));
 	Token token;
 
 	if (a is Token.init)

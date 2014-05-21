@@ -167,7 +167,7 @@ struct Position
 /*private*/ Position[][string] nameClashes;
 /*private*/ ScopeFrame[] frames;
 /*private*/ ModuleData[string] modules;
-Queue!string this_pointers;
+Queue!string thisPointers;
 Queue!Decoration decorations;
 Queue!IdentifierType parents;
 
@@ -187,7 +187,7 @@ void scopeFrameStart()
 	ScopeFrame frame;
 	frames ~= frame;
 
-	info("scope_frame_start #%s", frames.length-1);
+	info("scopeFrameStart #%s", frames.length-1);
 }
 
 void scopeFrameExit()
@@ -860,7 +860,7 @@ void checkNameClashes(string name, size_t line, size_t column, IdentifierType ty
 				// Each field
 				foreach (fieldName, fieldData; classData.fields)
 				{
-					if (field_name == name)
+					if (fieldName == name)
 					{
 						oldLine = fieldData.line;
 						oldColumn = fieldData.column;

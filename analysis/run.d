@@ -85,7 +85,7 @@ void load_phobos_module_data() {
 	// Load each file as a module
 	foreach (fileName; fileNames) {
 		stderr.writefln("!!!!!!!!!!!!!! loading phobos file: %s", fileName);
-		analysis.helpers.load_module(fileName);
+		analysis.helpers.loadModule(fileName);
 	}
 */
 }

@@ -31,20 +31,20 @@ class NameClashCheck : ScopeAnalyzer {
 	override void visit(const Module mod) {
 		mod.accept(this);
 
-		foreach(name, positions; getNameClashes()) {
+		foreach (name, positions; getNameClashes()) {
 			// Skip if there are less than two
-			if(positions.length < 2)
+			if (positions.length < 2)
 				continue;
 
 			// Get the original position
 			auto orig = positions[0];
 
 			// Add an error for each clashing name
-			foreach(pos; positions[1 .. $]) {
+			foreach (pos; positions[1 .. $]) {
 				string message = "The %s '%s' clashes with the %s at (%s:%s).".format(
-					pos.type_name(), 
+					pos.typeName(), 
 					name, 
-					orig.type_name(), 
+					orig.typeName(), 
 					orig.line, 
 					orig.column
 				);

@@ -64,15 +64,15 @@ class SizeTCheck : ScopeAnalyzer
 		// Get the types
 		auto varDeclarator = varDec.declarators[0];
 		size_t line, column;
-		TypeData toType = get_type_data(varDec.type);
-		TypeData fromType = get_expression_return_type(varDeclarator, line, column);
+		TypeData toType = getTypeData(varDec.type);
+		TypeData fromType = getExpressionReturnType(varDeclarator, line, column);
 		if (line == 0 || column == 0)
 		{
-			get_variable_line_column(varDec, varDeclarator.name.text, line, column);
+			getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
 		}
 version (none)
 {
-		string[] toNames = get_variable_names(varDec);
+		string[] toNames = getVariableNames(varDec);
 
 		stderr.writefln("??? VariableDeclaration - toNames: %s, toType: %s, fromType: %s, line: %d, column: %d", 
 			toNames, 
@@ -100,9 +100,9 @@ version (none)
 		}
 
 		// Get the name and args of the function to call
-		string name = get_function_call_name(funcExp);
+		string name = getFunctionCallName(funcExp);
 		auto funcData = getFunctionDataByName(name);
-		TypeData[] argTypes = funcData.arg_types;
+		TypeData[] argTypes = funcData.argTypes;
 
 		// Just return if the args length does not match
 		if (!argTypes || argTypes.length != funcExp.arguments.argumentList.items.length)
@@ -114,7 +114,7 @@ version (none)
 			size_t line, column;
 
 			TypeData toType = argTypes[i];
-			TypeData fromType = get_expression_return_type(assExp, line, column);
+			TypeData fromType = getExpressionReturnType(assExp, line, column);
 version (none)
 {
 			stderr.writefln("??? FunctionCallExpression - toType: %s, fromType: %s, line: %d, column: %d", 
@@ -168,12 +168,12 @@ version (none)
 
 		// Get the expression return types
 		size_t line, column;
-		TypeData toType = get_expression_return_type(assExp.ternaryExpression, line, column);
-		TypeData fromType = get_expression_return_type(assExp.assignExpression, line, column);
+		TypeData toType = getExpressionReturnType(assExp.ternaryExpression, line, column);
+		TypeData fromType = getExpressionReturnType(assExp.assignExpression, line, column);
 version (none)
 {
-		TokenData toName = get_expression_return_token_data(assExp.ternaryExpression);
-		TokenData fromName = get_expression_return_token_data(assExp.assignExpression);
+		TokenData toName = getExpressionReturnTokenData(assExp.ternaryExpression);
+		TokenData fromName = getExpressionReturnTokenData(assExp.assignExpression);
 
 		stderr.writefln("??? AssignExpression - toName: %s, fromName: %s, toType: %s, fromType: %s, op: %s, line: %d, column: %d", 
 			toName, 

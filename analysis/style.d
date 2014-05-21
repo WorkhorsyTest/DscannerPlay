@@ -92,7 +92,7 @@ class StyleChecker : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		module AMODULE; // [warn]: Module/package name 'AMODULE' does not match style guidelines
 
 		bool A_VARIABLE; // FIXME:

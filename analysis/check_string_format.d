@@ -70,9 +70,9 @@ string get_full_function_name(string func_name) {
 		FORMAT_FUNCTIONS
 	];
 
-	foreach(func_set; func_sets) {
-		string full_name = get_function_full_name(func_set, func_name);
-		if(full_name) {
+	foreach (func_set; func_sets) {
+		string full_name = getFunctionFullName(func_set, func_name);
+		if (full_name) {
 			return full_name;
 		}
 	}
@@ -117,41 +117,41 @@ class CheckStringFormat : ScopeAnalyzer {
 		funcCallExp.accept(this);
 
 		// Get the function name and args
-		string func_name = get_function_call_name(funcCallExp);
+		string func_name = getFunctionCallName(funcCallExp);
 
 		// Just return if not one of the functions to test
 		string full_func_name = get_full_function_name(func_name);
-		if(full_func_name is null)
+		if (full_func_name is null)
 			return;
 
 		// Get all the arguments passed to the function
-		TokenData[] token_args = get_function_call_arguments(funcCallExp);
+		TokenData[] token_args = getFunctionCallArguments(funcCallExp);
 
 		// Get the format string and arguments
 		size_t arg_offset = 0;
-		if(full_func_name == "std.string.sformat" || full_func_name == "std.format.formattedWrite") {
+		if (full_func_name == "std.string.sformat" || full_func_name == "std.format.formattedWrite") {
 			arg_offset = 1;
 		}
 		// Just return if there are not enough args, or the format arg is not a string
-		if(token_args.length < arg_offset+1 || token_args[arg_offset].type_data.name != "string")
+		if (token_args.length < arg_offset+1 || token_args[arg_offset].typeData.name != "string")
 			return;
 		string string_with_formats = token_args[arg_offset].value;
 		size_t line = token_args[arg_offset].line;
 		size_t column = token_args[arg_offset].column;
 		TokenData[] args = [];
-		if(token_args.length > arg_offset+1)
+		if (token_args.length > arg_offset+1)
 			args = token_args[arg_offset+1 .. $];
 
 		// Get all the format strings
 		auto any_format = regex(r"\%\w");
 		auto matches = std.regex.matchAll(string_with_formats, any_format);
 		size_t matches_length = 0;
-		foreach(match; matches)
+		foreach (match; matches)
 			matches_length++; // FIXME: There has to be a better way to get the length
 
 		// Check for wrong function EG: write instead of writef
-		if(WRITE_FUNCTIONS.has_function(func_name)) {
-			if(matches_length && args.length) {
+		if (WRITE_FUNCTIONS.hasFunction(func_name)) {
+			if (matches_length && args.length) {
 				string message = "Function '%s' does not expect format strings.".format(func_name);
 				addErrorMessage(line, column, message);
 			}
@@ -159,7 +159,7 @@ class CheckStringFormat : ScopeAnalyzer {
 		}
 
 		// Make sure the number of format strings matches the number of arguments
-		if(matches_length != args.length) {
+		if (matches_length != args.length) {
 			string message = "Found %d format strings, but there were %d arguments.".format(
 				matches_length, args.length);
 			addErrorMessage(line, column, message);
@@ -168,9 +168,9 @@ class CheckStringFormat : ScopeAnalyzer {
 
 		// Make sure the format strings will work with the data types
 		size_t n = 0;
-		foreach(match; matches) {
+		foreach (match; matches) {
 			string format_pattern = match[0];
-			string arg_type = args[n].type_data.name;
+			string arg_type = args[n].typeData.name;
 			string message = null;
 
 			switch(format_pattern) {
@@ -178,7 +178,7 @@ class CheckStringFormat : ScopeAnalyzer {
 					// Everything work with string
 					break;
 				case "%c": // character
-					if(CHAR_TYPES.find(arg_type).empty) {
+					if (CHAR_TYPES.find(arg_type).empty) {
 						message = "Format '%s' expects an char type, not '%s'.".format(format_pattern, arg_type);
 					}
 					break;
@@ -187,7 +187,7 @@ class CheckStringFormat : ScopeAnalyzer {
 				case "%x": // hexadecimal
 				case "%X": // hexadecimal upper case
 				case "%o": // octal
-					if(INTEGER_TYPES.find(arg_type).empty && 
+					if (INTEGER_TYPES.find(arg_type).empty && 
 						BOOL_TYPES.find(arg_type).empty && 
 						CHAR_TYPES.find(arg_type).empty) {
 						message = "Format '%s' expects an integer/bool/char type, not '%s'.".format(format_pattern, arg_type);
@@ -201,7 +201,7 @@ class CheckStringFormat : ScopeAnalyzer {
 				case "%G": // float but no superfluous . and zeros uppper case
 				case "%a": // floating point hexadecimal
 				case "%A": // floating point hexadecimal upper case
-					if(FLOAT_TYPES.find(arg_type).empty) {
+					if (FLOAT_TYPES.find(arg_type).empty) {
 						message = "Format '%s' expects a float type, not '%s'.".format(format_pattern, arg_type);
 					}
 					break;
@@ -210,7 +210,7 @@ class CheckStringFormat : ScopeAnalyzer {
 			}
 
 			// There was an error, so print it and return
-			if(message) {
+			if (message) {
 				addErrorMessage(line, column, message);
 				return;
 			}

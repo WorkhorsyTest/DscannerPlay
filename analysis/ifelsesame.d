@@ -47,16 +47,16 @@ class IfElseSameCheck : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_size_t() {
 			string person = "unknown";
-			if(person == "unknown") { // [warn]: "Else" branch is identical to "Then" branch.
+			if (person == "unknown") { // [warn]: "Else" branch is identical to "Then" branch.
 				person = "bobrick"; // same
 			} else {
 				person = "bobrick"; // same
 			}
 
-			if(person == "unknown") { // ok
+			if (person == "unknown") { // ok
 				person = "ricky"; // not same
 			} else {
 				person = "bobby"; // not same

@@ -70,7 +70,7 @@ class ObjectConstCheck : BaseAnalyzer
 }
 
 unittest {
-	should_warn(q{
+	assertAnalyzerWarnings(q{
 		void test_consts() {
 			// Will be ok because all are declared const/immutable
 			class Cat {
