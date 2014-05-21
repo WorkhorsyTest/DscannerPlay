@@ -152,9 +152,16 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 	string[size_t] warnings;
 	for (size_t i=0; i<rawWarnings.length; ++i)
 	{
-		size_t warn_line = line - 1 + std.conv.to!size_t(rawWarnings[i].between("test(", ":"));
-		warnings[warn_line] = rawWarnings[i].after(")");
-//		stderr.writefln("!!! warnings[%d] = \"%s\"", warn_line, warnings[warn_line]);
+		// Skip the warning if it is on line zero
+		size_t rawLine = std.conv.to!size_t(rawWarnings[i].between("test(", ":"));
+		if (rawLine == 0)
+		{
+			stderr.writefln("!!! Skipping warning because it is on line zero:\n%s", rawWarnings[i]);
+			continue;
+		}
+
+		size_t warnLine = line - 1 + rawLine;
+		warnings[warnLine] = rawWarnings[i].after(")");
 	}
 
 	// Get all the messages from the comments in the code
