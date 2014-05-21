@@ -121,9 +121,11 @@ class BackwardsRangeCheck : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_range() {
+		void testRange()
+		{
 			int[] data = [1, 2, 3, 4, 5];
 
 			data = data[1 .. 3]; // ok

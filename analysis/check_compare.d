@@ -20,22 +20,26 @@ import analysis.scope_analyzer;
 /**
  * Checks for comparing a variable with itself.
  */
-class CompareCheck : ScopeAnalyzer {
+class CompareCheck : ScopeAnalyzer
+{
 	alias visit = ScopeAnalyzer.visit;
 
-	this(string fileName) {
+	this(string fileName)
+	{
 		super(fileName, false);
 	}
 
 	// a is a
 	// a !is a
-	override void visit(const IdentityExpression idenExp) {
+	override void visit(const IdentityExpression idenExp)
+	{
 		TokenData left = getExpressionReturnTokenData(idenExp.left);
 		TokenData right = getExpressionReturnTokenData(idenExp.right);
 
 		const string operator = idenExp.negated ? "!is" : "is";
 
-		if (isSameTokenVariable(left, right)) {
+		if (isSameTokenVariable(left, right))
+		{
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" identified(%s) with itself.".format(type, left.name, operator);
 			addErrorMessage(left.line, left.column, message);
@@ -45,16 +49,18 @@ class CompareCheck : ScopeAnalyzer {
 
 	// a == a
 	// a != a
-	override void visit(const EqualExpression eqlExp) {
-		bool is_operator = (
-			eqlExp.operator == tok!"!=" || 
-			eqlExp.operator == tok!"=="
+	override void visit(const EqualExpression eqlExp)
+	{
+		bool isOperator = (
+			eqlExp.operator == tok!"!="
+			|| eqlExp.operator == tok!"=="
 		);
 
 		TokenData left = getExpressionReturnTokenData(eqlExp.left);
 		TokenData right = getExpressionReturnTokenData(eqlExp.right);
 
-		if (isSameTokenVariable(left, right) && is_operator) {
+		if (isSameTokenVariable(left, right) && isOperator)
+		{
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" equaled(%s) with itself.".format(type, left.name, eqlExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
@@ -66,18 +72,20 @@ class CompareCheck : ScopeAnalyzer {
 	// a < a
 	// a >= a
 	// a <= a
-	override void visit(const RelExpression relExp) {
-		bool is_operator = (
-			relExp.operator == tok!">" || 
-			relExp.operator == tok!"<" || 
-			relExp.operator == tok!">=" || 
-			relExp.operator == tok!"<="
+	override void visit(const RelExpression relExp)
+	{
+		bool isOperator = (
+			relExp.operator == tok!">"
+			|| relExp.operator == tok!"<"
+			|| relExp.operator == tok!">="
+			|| relExp.operator == tok!"<="
 		);
 
 		TokenData left = getExpressionReturnTokenData(relExp.left);
 		TokenData right = getExpressionReturnTokenData(relExp.right);
 
-		if (isSameTokenVariable(left, right) && is_operator) {
+		if (isSameTokenVariable(left, right) && isOperator)
+		{
 			string type = left.tokenType.capitalize();
 			string message = "%s \"%s\" relationed(%s) with itself.".format(type, left.name, relExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
@@ -85,53 +93,66 @@ class CompareCheck : ScopeAnalyzer {
 		relExp.accept(this);
 	}
 
-	override void visit(const AndAndExpression exp) {
-		check_logical(exp);
+	override void visit(const AndAndExpression exp)
+	{
+		checkLogical(exp);
 		exp.accept(this);
 	}
 
-	override void visit(const OrOrExpression exp) {
-		check_logical(exp);
+	override void visit(const OrOrExpression exp)
+	{
+		checkLogical(exp);
 		exp.accept(this);
 	}
 
-	override void visit(const AndExpression exp) {
-		check_bitwise(exp);
+	override void visit(const AndExpression exp)
+	{
+		checkBitwise(exp);
 		exp.accept(this);
 	}
 
-	override void visit(const OrExpression exp) {
-		check_bitwise(exp);
+	override void visit(const OrExpression exp)
+	{
+		checkBitwise(exp);
 		exp.accept(this);
 	}
 
-	override void visit(const XorExpression exp) {
-		check_bitwise(exp);
+	override void visit(const XorExpression exp)
+	{
+		checkBitwise(exp);
 		exp.accept(this);
 	}
 
 	// a && a
 	// a || a
-	void check_logical(const ExpressionNode exp) {
+	void checkLogical(const ExpressionNode exp)
+	{
 		TokenData left, right;
 		Token operator;
 
-		if (auto orOrExp = cast(const OrOrExpression) exp) {
+		if (auto orOrExp = cast(const OrOrExpression) exp)
+		{
 			left = getExpressionReturnTokenData(orOrExp.left);
 			right = getExpressionReturnTokenData(orOrExp.right);
 			operator = cast(Token) tok!"||";
-		} else if (auto andAndExp = cast(const AndAndExpression) exp) {
+		}
+		else if (auto andAndExp = cast(const AndAndExpression) exp)
+		{
 			left = getExpressionReturnTokenData(andAndExp.left);
 			right = getExpressionReturnTokenData(andAndExp.right);
 			operator = cast(Token) tok!"&&";
 		}
 
-		if (isSameTokenVariable(left, right)) {
+		if (isSameTokenVariable(left, right))
+		{
 			string type = left.tokenType.capitalize();
 			string message = null;
-			if (operator == tok!"||") {
+			if (operator == tok!"||")
+			{
 				message = "%s \"%s\" logical ored(||) with itself.".format(type, left.name);
-			} else {
+			}
+			else
+			{
 				message = "%s \"%s\" logical anded(&&) with itself.".format(type, left.name);
 			}
 			addErrorMessage(left.line, left.column, message);
@@ -141,42 +162,51 @@ class CompareCheck : ScopeAnalyzer {
 	// a & a
 	// a | a
 	// a ^ a
-	void check_bitwise(const ExpressionNode exp) {
+	void checkBitwise(const ExpressionNode exp)
+	{
 		TokenData left, right;
 		Token operator;
 
-		if (auto andExp = cast(const AndExpression) exp) {
+		if (auto andExp = cast(const AndExpression) exp)
+		{
 			left = getExpressionReturnTokenData(andExp.left);
 			right = getExpressionReturnTokenData(andExp.right);
 			operator = cast(Token) tok!"&";
-		} else if (auto orExp = cast(const OrExpression) exp) {
+		}
+		else if (auto orExp = cast(const OrExpression) exp)
+		{
 			left = getExpressionReturnTokenData(orExp.left);
 			right = getExpressionReturnTokenData(orExp.right);
 			operator = cast(Token) tok!"|";
-		} else if (auto xorExp = cast(const XorExpression) exp) {
+		}
+		else if (auto xorExp = cast(const XorExpression) exp)
+		{
 			left = getExpressionReturnTokenData(xorExp.left);
 			right = getExpressionReturnTokenData(xorExp.right);
 			operator = cast(Token) tok!"^";
 		}
 
-		if (isSameTokenVariable(left, right)) {
+		if (isSameTokenVariable(left, right))
+		{
 			string type = left.tokenType.capitalize();
 			string message = null;
-			if (operator == tok!"&") {
+			if (operator == tok!"&")
 				message = "%s \"%s\" bitwise anded(&) with itself.".format(type, left.name);
-			} else if (operator == tok!"|") {
+			else if (operator == tok!"|")
 				message = "%s \"%s\" bitwise ored(|) with itself.".format(type, left.name);
-			} else if (operator == tok!"^") {
+			else if (operator == tok!"^")
 				message = "%s \"%s\" bitwise xored(^) with itself.".format(type, left.name);
-			}
+
 			addErrorMessage(left.line, left.column, message);
 		}
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_compare() {
+		void testCompare()
+		{
 			int a;
 			bool b;
 
@@ -200,15 +230,17 @@ unittest {
 			a = a ^ a; // [warn]: Variable "a" bitwise xored(^) with itself.
 
 			// Check for comparisons of an object field and itself
-			struct Dog {
+			struct Dog
+			{
 				int weight;
-				int get_weight() {
+				int getWeight()
+				{
 					return this.weight;
 				}
 			}
 			Dog dog;
 
-			b = dog.get_weight() == dog.get_weight(); // ok
+			b = dog.getWeight() == dog.getWeight(); // ok
 			b = dog.weight == dog.weight; // [warn]: Field "dog.weight" equaled(==) with itself.
 			b = dog.weight is dog.weight; // [warn]: Field "dog.weight" identified(is) with itself.
 			b = dog.weight !is dog.weight; // [warn]: Field "dog.weight" identified(!is) with itself.

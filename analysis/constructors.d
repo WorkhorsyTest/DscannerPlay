@@ -88,14 +88,17 @@ private:
 	bool hasDefaultArgConstructor;
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		class Cat { // [warn]: This class has a zero-argument constructor as well as a constructor with one default argument. This can be confusing
+		class Cat // [warn]: This class has a zero-argument constructor as well as a constructor with one default argument. This can be confusing
+		{
 			this() {}
 			this(string name = "kittie") {}
 		}
 
-		struct Dog {
+		struct Dog
+		{
 			this() {}
 			this(string name = "doggie") {} // [warn]: This struct constructor can never be called with its default argument.
 		}

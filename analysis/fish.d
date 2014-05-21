@@ -40,9 +40,11 @@ class FloatOperatorCheck : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_fish() {
+		void testFish()
+		{
 			float z = 1.5f;
 			bool a;
 			a = z !<>= z; // [warn]: Avoid using the deprecated floating-point operators

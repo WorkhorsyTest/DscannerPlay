@@ -63,7 +63,7 @@ void syntaxCheck(File output, string[] fileNames)
 	analyze(output, fileNames, AnalyzerCheck.all, false);
 }
 
-void load_phobos_module_data() {
+void loadPhobosModuleData() {
 /*
 	// Get all the phobos library files
 	string[] fileNames;
@@ -109,7 +109,7 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 {
 	import std.parallelism;
 
-	load_phobos_module_data();
+	loadPhobosModuleData();
 
 	auto lexer = byToken(code);
 	auto app = appender!(typeof(lexer.front)[])();

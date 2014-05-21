@@ -41,19 +41,19 @@ const string[] FORMAT_STRINGS = [
 
 const auto WRITE_F_FUNCTIONS = 
 ModuleFunctionSet("std.stdio", [
-	"writef", 
+	"writef",
 	"writefln"
 ]);
 
 const auto WRITE_FUNCTIONS = 
 ModuleFunctionSet("std.stdio", [
-	"write", 
+	"write",
 	"writeln"
 ]);
 
 const auto STRING_FUNCTIONS = 
 ModuleFunctionSet("std.string", [
-	"format", 
+	"format",
 	"sformat"
 ]);
 
@@ -62,18 +62,21 @@ ModuleFunctionSet("std.format", [
 	"formattedWrite"
 ]);
 
-string get_full_function_name(string func_name) {
-	auto func_sets = [
-		WRITE_F_FUNCTIONS, 
-		WRITE_FUNCTIONS, 
-		STRING_FUNCTIONS, 
+string getFullFunctionName(string funcName)
+{
+	auto funcSets = [
+		WRITE_F_FUNCTIONS,
+		WRITE_FUNCTIONS,
+		STRING_FUNCTIONS,
 		FORMAT_FUNCTIONS
 	];
 
-	foreach (func_set; func_sets) {
-		string full_name = getFunctionFullName(func_set, func_name);
-		if (full_name) {
-			return full_name;
+	foreach (funcSet; funcSets)
+	{
+		string fullName = getFunctionFullName(funcSet, funcName);
+		if (fullName)
+		{
+			return fullName;
 		}
 	}
 
@@ -106,80 +109,90 @@ string get_full_function_name(string func_name) {
  * std.format.formatValue
  * std.format.unformatValue
  **/
-class CheckStringFormat : ScopeAnalyzer {
+class CheckStringFormat : ScopeAnalyzer
+{
 	alias visit = ScopeAnalyzer.visit;
 
-	this(string fileName) {
+	this(string fileName)
+	{
 		super(fileName, false);
 	}
 
-	override void visit(const FunctionCallExpression funcCallExp) {
+	override void visit(const FunctionCallExpression funcCallExp)
+	{
 		funcCallExp.accept(this);
 
 		// Get the function name and args
-		string func_name = getFunctionCallName(funcCallExp);
+		string funcName = getFunctionCallName(funcCallExp);
 
 		// Just return if not one of the functions to test
-		string full_func_name = get_full_function_name(func_name);
-		if (full_func_name is null)
+		string fullFuncName = getFullFunctionName(funcName);
+		if (fullFuncName is null)
 			return;
 
 		// Get all the arguments passed to the function
-		TokenData[] token_args = getFunctionCallArguments(funcCallExp);
+		TokenData[] tokenArgs = getFunctionCallArguments(funcCallExp);
 
 		// Get the format string and arguments
-		size_t arg_offset = 0;
-		if (full_func_name == "std.string.sformat" || full_func_name == "std.format.formattedWrite") {
-			arg_offset = 1;
+		size_t argOffset = 0;
+		if (fullFuncName == "std.string.sformat" || fullFuncName == "std.format.formattedWrite")
+		{
+			argOffset = 1;
 		}
 		// Just return if there are not enough args, or the format arg is not a string
-		if (token_args.length < arg_offset+1 || token_args[arg_offset].typeData.name != "string")
+		if (tokenArgs.length < argOffset+1 || tokenArgs[argOffset].typeData.name != "string")
 			return;
-		string string_with_formats = token_args[arg_offset].value;
-		size_t line = token_args[arg_offset].line;
-		size_t column = token_args[arg_offset].column;
+		string stringWithFormats = tokenArgs[argOffset].value;
+		size_t line = tokenArgs[argOffset].line;
+		size_t column = tokenArgs[argOffset].column;
 		TokenData[] args = [];
-		if (token_args.length > arg_offset+1)
-			args = token_args[arg_offset+1 .. $];
+		if (tokenArgs.length > argOffset+1)
+			args = tokenArgs[argOffset+1 .. $];
 
 		// Get all the format strings
-		auto any_format = regex(r"\%\w");
-		auto matches = std.regex.matchAll(string_with_formats, any_format);
-		size_t matches_length = 0;
+		auto anyFormat = regex(r"\%\w");
+		auto matches = std.regex.matchAll(stringWithFormats, anyFormat);
+		size_t matchesLength = 0;
 		foreach (match; matches)
-			matches_length++; // FIXME: There has to be a better way to get the length
+			matchesLength++; // FIXME: There has to be a better way to get the length
 
 		// Check for wrong function EG: write instead of writef
-		if (WRITE_FUNCTIONS.hasFunction(func_name)) {
-			if (matches_length && args.length) {
-				string message = "Function '%s' does not expect format strings.".format(func_name);
+		if (WRITE_FUNCTIONS.hasFunction(funcName))
+		{
+			if (matchesLength && args.length)
+			{
+				string message = "Function '%s' does not expect format strings.".format(funcName);
 				addErrorMessage(line, column, message);
 			}
 			return;
 		}
 
 		// Make sure the number of format strings matches the number of arguments
-		if (matches_length != args.length) {
+		if (matchesLength != args.length)
+		{
 			string message = "Found %d format strings, but there were %d arguments.".format(
-				matches_length, args.length);
+				matchesLength, args.length);
 			addErrorMessage(line, column, message);
 			return;
 		}
 
 		// Make sure the format strings will work with the data types
 		size_t n = 0;
-		foreach (match; matches) {
-			string format_pattern = match[0];
-			string arg_type = args[n].typeData.name;
+		foreach (match; matches)
+		{
+			string formatPattern = match[0];
+			string argType = args[n].typeData.name;
 			string message = null;
 
-			switch(format_pattern) {
+			switch (formatPattern)
+			{
 				case "%s": // string
 					// Everything work with string
 					break;
 				case "%c": // character
-					if (CHAR_TYPES.find(arg_type).empty) {
-						message = "Format '%s' expects an char type, not '%s'.".format(format_pattern, arg_type);
+					if (CHAR_TYPES.find(argType).empty)
+					{
+						message = "Format '%s' expects an char type, not '%s'.".format(formatPattern, argType);
 					}
 					break;
 				case "%d": // integer
@@ -187,10 +200,11 @@ class CheckStringFormat : ScopeAnalyzer {
 				case "%x": // hexadecimal
 				case "%X": // hexadecimal upper case
 				case "%o": // octal
-					if (INTEGER_TYPES.find(arg_type).empty && 
-						BOOL_TYPES.find(arg_type).empty && 
-						CHAR_TYPES.find(arg_type).empty) {
-						message = "Format '%s' expects an integer/bool/char type, not '%s'.".format(format_pattern, arg_type);
+					if (INTEGER_TYPES.find(argType).empty
+						&& BOOL_TYPES.find(argType).empty
+						&& CHAR_TYPES.find(argType).empty)
+					{
+						message = "Format '%s' expects an integer/bool/char type, not '%s'.".format(formatPattern, argType);
 					}
 					break;
 				case "%f": // float
@@ -201,8 +215,9 @@ class CheckStringFormat : ScopeAnalyzer {
 				case "%G": // float but no superfluous . and zeros uppper case
 				case "%a": // floating point hexadecimal
 				case "%A": // floating point hexadecimal upper case
-					if (FLOAT_TYPES.find(arg_type).empty) {
-						message = "Format '%s' expects a float type, not '%s'.".format(format_pattern, arg_type);
+					if (FLOAT_TYPES.find(argType).empty)
+					{
+						message = "Format '%s' expects a float type, not '%s'.".format(formatPattern, argType);
 					}
 					break;
 				default:
@@ -210,7 +225,8 @@ class CheckStringFormat : ScopeAnalyzer {
 			}
 
 			// There was an error, so print it and return
-			if (message) {
+			if (message)
+			{
 				addErrorMessage(line, column, message);
 				return;
 			}
@@ -219,9 +235,11 @@ class CheckStringFormat : ScopeAnalyzer {
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_write() {
+		void testWrite()
+		{
 			import std.stdio;
 
 			// Control
@@ -256,7 +274,8 @@ unittest {
 			write("%s"); // ok
 		}
 
-		void test_format() {
+		void testFormat()
+		{
 			import std.string;
 
 			// Control
@@ -269,7 +288,8 @@ unittest {
 			std.string.format("%f", 3); // [warn]: Format '%f' expects a float type, not 'int'.
 		}
 
-		void test_sformat() {
+		void testSformat()
+		{
 			import std.string;
 			char[100] buf;
 			char[] output;
@@ -283,7 +303,8 @@ unittest {
 			output = std.string.sformat(buf, "", 88); // [warn]: Found 0 format strings, but there were 1 arguments.
 		}
 
-		void test_formatted_write() {
+		void testFormattedWrite()
+		{
 			import std.array;
 			import std.format;
 

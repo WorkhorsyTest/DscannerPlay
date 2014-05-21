@@ -75,3 +75,4 @@ void writeSpan(string cssClass, string value)
 	else
 		stdout.write(`<span class="`, cssClass, `">`, value.replace("&", "&amp;").replace("<", "&lt;"), `</span>`);
 }
+

@@ -21,17 +21,21 @@ import analysis.scope_analyzer;
 /**
  * Checks for name clashes in classes, structs, variables, parameters, enums, and members.
  */
-class NameClashCheck : ScopeAnalyzer {
+class NameClashCheck : ScopeAnalyzer
+{
 	alias visit = ScopeAnalyzer.visit;
 
-	this(string fileName) {
+	this(string fileName)
+	{
 		super(fileName, false);
 	}
 
-	override void visit(const Module mod) {
+	override void visit(const Module mod)
+	{
 		mod.accept(this);
 
-		foreach (name, positions; getNameClashes()) {
+		foreach (name, positions; getNameClashes())
+		{
 			// Skip if there are less than two
 			if (positions.length < 2)
 				continue;
@@ -40,12 +44,13 @@ class NameClashCheck : ScopeAnalyzer {
 			auto orig = positions[0];
 
 			// Add an error for each clashing name
-			foreach (pos; positions[1 .. $]) {
+			foreach (pos; positions[1 .. $])
+			{
 				string message = "The %s '%s' clashes with the %s at (%s:%s).".format(
-					pos.typeName(), 
-					name, 
-					orig.typeName(), 
-					orig.line, 
+					pos.typeName(),
+					name,
+					orig.typeName(),
+					orig.line,
 					orig.column
 				);
 				addErrorMessage(pos.line, pos.column, message);
@@ -54,7 +59,9 @@ class NameClashCheck : ScopeAnalyzer {
 	}
 }
 
-unittest {
+// FIXME: Make this so it does not need to have the line & column number in the comment
+unittest
+{
 	// FIXME: Make it work with class/struct static fields and methods.
 	// FIXME: Make it work with functions, and delegates too.
 	assertAnalyzerWarnings(q{

@@ -57,22 +57,30 @@ class PokemonExceptionCheck : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_catch() {
-			try {
+		void testCatch()
+		{
+			try
+			{
 				// ...
-			} catch(AssertError err) { //ok
-
-			} catch(Exception err) { // [warn]: Avoid catching Exception, Error, and Throwable
-
-			} catch(Error err) { // [warn]: Avoid catching Exception, Error, and Throwable
-
-			} catch(Throwable err) { // [warn]: Avoid catching Exception, Error, and Throwable
-
+			}
+			catch (AssertError err) //ok
+			{
+			}
+			catch (Exception err) // [warn]: Avoid catching Exception, Error, and Throwable
+			{
+			}
+			catch (Error err) // [warn]: Avoid catching Exception, Error, and Throwable
+			{
+			}
+			catch (Throwable err) // [warn]: Avoid catching Exception, Error, and Throwable
+			{
 			}
 		}
 	}c, analysis.run.AnalyzerCheck.exception_check);
 
 	stderr.writeln("Unittest for PokemonExceptionCheck passed.");
 }
+

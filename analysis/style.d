@@ -108,3 +108,4 @@ unittest {
 
 	stderr.writeln("Unittest for StyleChecker passed.");
 }
+

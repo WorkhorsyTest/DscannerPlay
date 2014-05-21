@@ -164,3 +164,4 @@ class Outliner : ASTVisitor
 
 	File output;
 }
+

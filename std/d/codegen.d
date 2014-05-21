@@ -9,11 +9,14 @@ import std.stdio;
 import std.string;
 import std.stdint;
 
-template typeNames(fields ...) {
-	private string getTypeNames() {
+template typeNames(fields ...)
+{
+	private string getTypeNames()
+	{
 		string[] result;
 		
-		foreach (field; fields) {
+		foreach (field; fields)
+		{
 			result ~= field.stringof;
 		}
 		return std.string.join(result, ".");
@@ -21,11 +24,14 @@ template typeNames(fields ...) {
 	immutable typeNames = getTypeNames();
 }
 
-template callOnActualType(string ifClause, string elseClause, string types) {
-	private string generateFunction() {
+template callOnActualType(string ifClause, string elseClause, string types)
+{
+	private string generateFunction()
+	{
 		string[] result;
 
-		foreach (n, type; std.string.split(types, ".")) {
+		foreach (n, type; std.string.split(types, "."))
+		{
 			string condition = n ? "else if" : "if";
 			result ~= condition ~ " (auto actual = cast(const " ~ type ~ ") unknown) {\n" ~ ifClause ~ "\n}";
 		}

@@ -62,3 +62,4 @@ protected:
 
 	MessageSet _messages;
 }
+

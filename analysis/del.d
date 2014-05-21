@@ -32,7 +32,8 @@ class DeleteCheck : BaseAnalyzer
 
 unittest {
 	assertAnalyzerWarnings(q{
-		void test_delete() {
+		void testDelete()
+		{
 			int[int] data = [1 : 2];
 			delete data[1]; // [warn]: Avoid using the delete keyword
 

@@ -69,43 +69,55 @@ class ObjectConstCheck : BaseAnalyzer
 
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_consts() {
+		void testConsts()
+		{
 			// Will be ok because all are declared const/immutable
-			class Cat {
-				const bool opEquals(Object a, Object b) { // ok
+			class Cat
+			{
+				const bool opEquals(Object a, Object b) // ok
+				{
 					return true;
 				}
 
-				const int opCmp(Object o) { // ok
+				const int opCmp(Object o) // ok
+				{
 					return 1;
 				}
 
-				const hash_t toHash() { // ok
+				const hash_t toHash() // ok
+				{
 					return 0;
 				}
 
-				const string toString() { // ok
+				const string toString() // ok
+				{
 					return "Cat";
 				}
 			}
 
 			// Will warn, because none are const
-			class Dog {
-				bool opEquals(Object a, Object b) { // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+			class Dog
+			{
+				bool opEquals(Object a, Object b) // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				{
 					return true;
 				}
 
-				int opCmp(Object o) { // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				int opCmp(Object o) // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				{
 					return 1;
 				}
 
-				hash_t toHash() { // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				hash_t toHash() // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				{
 					return 0;
 				}
 
-				string toString() { // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				string toString() // [warn]: opCmp, toHash, opEquals, and toString should be declared const
+				{
 					return "Dog";
 				}
 			}

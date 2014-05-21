@@ -74,11 +74,11 @@ version (none)
 {
 		string[] toNames = getVariableNames(varDec);
 
-		stderr.writefln("??? VariableDeclaration - toNames: %s, toType: %s, fromType: %s, line: %d, column: %d", 
-			toNames, 
-			toType, 
-			fromType, 
-			line, 
+		stderr.writefln("??? VariableDeclaration - toNames: %s, toType: %s, fromType: %s, line: %d, column: %d",
+			toNames,
+			toType,
+			fromType,
+			line,
 			column
 		);
 }
@@ -117,10 +117,10 @@ version (none)
 			TypeData fromType = getExpressionReturnType(assExp, line, column);
 version (none)
 {
-			stderr.writefln("??? FunctionCallExpression - toType: %s, fromType: %s, line: %d, column: %d", 
-				toType, 
-				fromType, 
-				line, 
+			stderr.writefln("??? FunctionCallExpression - toType: %s, fromType: %s, line: %d, column: %d",
+				toType,
+				fromType,
+				line,
 				column
 			);
 }
@@ -175,13 +175,13 @@ version (none)
 		TokenData toName = getExpressionReturnTokenData(assExp.ternaryExpression);
 		TokenData fromName = getExpressionReturnTokenData(assExp.assignExpression);
 
-		stderr.writefln("??? AssignExpression - toName: %s, fromName: %s, toType: %s, fromType: %s, op: %s, line: %d, column: %d", 
-			toName, 
-			fromName, 
-			toType, 
-			fromType, 
-			assExp.operator.str, 
-			line, 
+		stderr.writefln("??? AssignExpression - toName: %s, fromName: %s, toType: %s, fromType: %s, op: %s, line: %d, column: %d",
+			toName,
+			fromName,
+			toType,
+			fromType,
+			assExp.operator.str,
+			line,
 			column
 		);
 }

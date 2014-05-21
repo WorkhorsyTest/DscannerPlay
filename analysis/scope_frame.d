@@ -31,7 +31,7 @@ struct TypeData
 
 	this(string name)
 	{
-		if (name.ends_with("[]"))
+		if (name.endsWith("[]"))
 		{
 			this.isArray = true;
 		}

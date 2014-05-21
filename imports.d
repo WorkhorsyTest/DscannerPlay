@@ -44,3 +44,4 @@ class ImportPrinter : ASTVisitor
 
 	bool ignore = true;
 }
+

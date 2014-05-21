@@ -39,16 +39,16 @@ int main(string[] args)
 
 int run(string[] args)
 {
-	version(linux) {
 	// Make backtraces work in Linux
-	import backtrace.backtrace;
-	PrintOptions options;
-	options.detailedForN = 2;        //number of frames to show code for
-	options.numberOfLinesBefore = 3; //number of lines of code to show before the specific line
-	options.numberOfLinesAfter  = 3; //number of lines of code to show after the specific line
-	options.colored = false;          //enable colored output for the backtrace
-	options.stopAtDMain = true;     //show stack traces after the entry point of the D code
-	backtrace.backtrace.install(stderr, options);
+	version(linux) {
+		import backtrace.backtrace;
+		PrintOptions options;
+		options.detailedForN = 2;        //number of frames to show code for
+		options.numberOfLinesBefore = 3; //number of lines of code to show before the specific line
+		options.numberOfLinesAfter  = 3; //number of lines of code to show after the specific line
+		options.colored = false;          //enable colored output for the backtrace
+		options.stopAtDMain = true;     //show stack traces after the entry point of the D code
+		backtrace.backtrace.install(stderr, options);
 	}
 
 	bool sloc;
@@ -320,3 +320,4 @@ options:
 }
 
 void doNothing(string, size_t, size_t, string, bool) {}
+

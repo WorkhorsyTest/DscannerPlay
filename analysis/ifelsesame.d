@@ -46,22 +46,23 @@ class IfElseSameCheck : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_size_t() {
+		void testSizeT()
+		{
 			string person = "unknown";
-			if (person == "unknown") { // [warn]: "Else" branch is identical to "Then" branch.
+			if (person == "unknown") // [warn]: "Else" branch is identical to "Then" branch.
 				person = "bobrick"; // same
-			} else {
+			else
 				person = "bobrick"; // same
-			}
 
-			if (person == "unknown") { // ok
+			if (person == "unknown") // ok
 				person = "ricky"; // not same
-			} else {
+			else
 				person = "bobby"; // not same
-			}
 		}
 	}c, analysis.run.AnalyzerCheck.if_else_same_check);
 	stderr.writeln("Unittest for IfElseSameCheck passed.");
 }
+

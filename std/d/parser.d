@@ -5480,7 +5480,7 @@ q{(int a, ...)
     {
         mixin(traceEnterAndExit!(__FUNCTION__));
         auto node = allocate!Type;
-        switch(current.type)
+        switch (current.type)
         {
         case tok!"const":
         case tok!"immutable":
@@ -5696,7 +5696,7 @@ q{(int a, ...)
     {
         mixin(traceEnterAndExit!(__FUNCTION__));
         auto node = allocate!TypeSuffix;
-        switch(current.type)
+        switch (current.type)
         {
         case tok!"*":
             node.star = true;
@@ -6914,3 +6914,4 @@ protected:
     int _traceDepth;
     string comment;
 }
+

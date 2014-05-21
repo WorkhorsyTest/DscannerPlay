@@ -40,9 +40,11 @@ class NumberStyleCheck : BaseAnalyzer
 	auto badDecimalRegex = ctRegex!(`^\d{5,}`);
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
-		void test_numbers() {
+		void testNumbers()
+		{
 			int a;
 			a = 1; // ok
 			a = 10; // ok
@@ -56,3 +58,4 @@ unittest {
 
 	stderr.writeln("Unittest for NumberStyleCheck passed.");
 }
+
