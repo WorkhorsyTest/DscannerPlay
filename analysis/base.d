@@ -19,6 +19,7 @@ enum comparitor = q{ a.line < b.line || a.line < b.line };
 // then there can be multiple messages for each line. Many of the tests
 // will break if there can be duplicates.
 alias MessageSet = RedBlackTree!(Message, comparitor);
+//alias MessageSet = RedBlackTree!(Message, comparitor, true);
 
 abstract class BaseAnalyzer : ASTVisitor
 {

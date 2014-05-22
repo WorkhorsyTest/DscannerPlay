@@ -664,6 +664,17 @@ string getFunctionCallName(const FunctionCallExpression funcExp)
 {
 	string[] chunks;
 	auto unaryExp = cast(UnaryExpression) funcExp.unaryExpression;
+
+	// The name is in a token such as "super"
+	if (funcExp
+		&& funcExp.unaryExpression
+		&& funcExp.unaryExpression.primaryExpression
+		&& funcExp.unaryExpression.primaryExpression.primary !is Token.init)
+	{
+		return funcExp.unaryExpression.primaryExpression.primary.type.str;
+	}
+
+	// The name is in an identifier chain
 	while (unaryExp)
 	{
 		// Part of the name
