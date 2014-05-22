@@ -193,8 +193,6 @@ version (none)
 		//assert (line > 0, "Line needs to be greater than zero.");
 		//assert (column > 0, "Column needs to be greater than zero.");
 
-		//writefln("!!! actualCheck to:%s, from:%s", toType, fromType);
-
 		if (!message)
 			message = "";
 

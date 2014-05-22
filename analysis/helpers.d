@@ -255,7 +255,7 @@ void declareImport(const SingleImport singImpo)
 		return;
 
 	// Add the import
-	stderr.writefln("!!! importing: %s", importName);
+	stderr.writefln("??? importing: %s", importName);
 	addImport(importName);
 
 	// Add the module
@@ -816,7 +816,7 @@ void markUsedVariables(const ASTNode node)
 			data = getExpressionReturnTokenData(unaryExp);
 		else
 			data = getExpressionReturnTokenData(ternaryExp);
-		//stderr.writefln("!!! tokenData tokenType:%s, data_type:%s, name:%s", data.tokenType, data.typeData, data.name);
+
 		if (data !is TokenData.init && data.name && 
 			(data.tokenType == TokenType.variable || data.tokenType == TokenType.field || data.tokenType == TokenType.method))
 		{
@@ -974,7 +974,6 @@ TokenData getExpressionReturnTokenData(const ASTNode node)
 {
 	Token token = getExpressionReturnToken(node, 0);
 	TokenData data = getTokenData(token);
-	//stderr.writefln("!!!!!! %s, %s, %s, %s, %s", data.tokenType, data.typeData, data.name, data.line, data.column);
 	return data;
 }
 
@@ -1380,11 +1379,8 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 		//	secondToken = getExpressionReturnToken(unaryExp.suffix, indent);
 
 		// Combine the tokens
-		//stderr.writefln("!!! getExpressionReturnToken firstToken type:%s, text:%s", firstToken.type.str, firstToken.text);
-		//stderr.writefln("!!! getExpressionReturnToken right type:%s, text:%s", secondToken.type.str, secondToken.text);
 		// FIXME: UFC Boom
 		Token newToken = combineTokens(firstToken, secondToken);
-		//stderr.writefln("!!! t type:%s, text:%s", newToken.type.str, newToken.text);
 		return newToken;
 	}
 	else if (auto xorExp = cast(const XorExpression) node)
@@ -1500,7 +1496,7 @@ const Token getPromotedToken(const Token left, const Token right)
 	// throw an error if any type names are blank
 	if (a is null || b is null || a == "" || b == "")
 	{
-		string message = "!!! getPromotedToken() did not expect: \"%s\" or \"%s\".".format(
+		string message = "!!! getPromotedToken() failed on tokens: \"%s\" or \"%s\".".format(
 			getTokenData(left), getTokenData(right));
 		stderr.writeln(message);
 		return Token.init;
@@ -1511,7 +1507,7 @@ const Token getPromotedToken(const Token left, const Token right)
 		|| b !in promotions || b !in sizes)
 	{
 
-		string message = "!!! getPromotedToken() did not expect the type name: \"%s\" or \"%s\".".format(a, b);
+		string message = "!!! getPromotedToken() failed with the type name: \"%s\" or \"%s\".".format(a, b);
 		stderr.writeln(message);
 		return Token.init;
 	}
@@ -1531,7 +1527,6 @@ const Token getPromotedToken(const Token left, const Token right)
 TokenData getTokenData(const Token token)
 {
 	TokenData data;
-	//stderr.writefln("!!! getTokenData type:%s text:%s", token.type.str, token.text);
 
 	// Line and column
 	if (token.line && token.column)
@@ -1902,7 +1897,6 @@ TokenData getTokenData(const Token token)
 			data.tokenType = TokenType.template_;
 			data.typeData = TypeData(identifier);
 			data.name = null;
-			stderr.writefln("!!! template data: %s", data);
 			return data;
 		}
 
@@ -2130,7 +2124,6 @@ string tokenStr(const Token token)
 
 Token combineTokens(const Token a, const Token b)
 {
-	//writefln("!!! combineTokens left:%s, right:%s", tokenStr(a), tokenStr(b));
 	Token token;
 
 	if (a is Token.init)
@@ -2156,7 +2149,7 @@ Token combineTokens(const Token a, const Token b)
 	}
 	else
 	{
-		stderr.writefln("!!! Unexpected tokens to combine: '%s:%s', '%s:%s'",
+		stderr.writefln("!!! combineTokens() failed on tokens: '%s:%s', '%s:%s'",
 		a.type.str, a.text, b.type.str, b.text);
 		return Token.init;
 	}
