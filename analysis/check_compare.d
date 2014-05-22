@@ -41,7 +41,7 @@ class CompareCheck : ScopeAnalyzer
 		if (isSameTokenVariable(left, right))
 		{
 			string type = left.tokenType.capitalize();
-			string message = "%s \"%s\" identified(%s) with itself.".format(type, left.name, operator);
+			string message = "%s '%s' identified(%s) with itself.".format(type, left.name, operator);
 			addErrorMessage(left.line, left.column, message);
 		}
 		idenExp.accept(this);
@@ -62,7 +62,7 @@ class CompareCheck : ScopeAnalyzer
 		if (isSameTokenVariable(left, right) && isOperator)
 		{
 			string type = left.tokenType.capitalize();
-			string message = "%s \"%s\" equaled(%s) with itself.".format(type, left.name, eqlExp.operator.str);
+			string message = "%s '%s' equaled(%s) with itself.".format(type, left.name, eqlExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
 		}
 		eqlExp.accept(this);
@@ -87,7 +87,7 @@ class CompareCheck : ScopeAnalyzer
 		if (isSameTokenVariable(left, right) && isOperator)
 		{
 			string type = left.tokenType.capitalize();
-			string message = "%s \"%s\" relationed(%s) with itself.".format(type, left.name, relExp.operator.str);
+			string message = "%s '%s' relationed(%s) with itself.".format(type, left.name, relExp.operator.str);
 			addErrorMessage(left.line, left.column, message);
 		}
 		relExp.accept(this);
@@ -149,11 +149,11 @@ class CompareCheck : ScopeAnalyzer
 			string message = null;
 			if (operator == tok!"||")
 			{
-				message = "%s \"%s\" logical ored(||) with itself.".format(type, left.name);
+				message = "%s '%s' logical ored(||) with itself.".format(type, left.name);
 			}
 			else
 			{
-				message = "%s \"%s\" logical anded(&&) with itself.".format(type, left.name);
+				message = "%s '%s' logical anded(&&) with itself.".format(type, left.name);
 			}
 			addErrorMessage(left.line, left.column, message);
 		}
@@ -191,11 +191,11 @@ class CompareCheck : ScopeAnalyzer
 			string type = left.tokenType.capitalize();
 			string message = null;
 			if (operator == tok!"&")
-				message = "%s \"%s\" bitwise anded(&) with itself.".format(type, left.name);
+				message = "%s '%s' bitwise anded(&) with itself.".format(type, left.name);
 			else if (operator == tok!"|")
-				message = "%s \"%s\" bitwise ored(|) with itself.".format(type, left.name);
+				message = "%s '%s' bitwise ored(|) with itself.".format(type, left.name);
 			else if (operator == tok!"^")
-				message = "%s \"%s\" bitwise xored(^) with itself.".format(type, left.name);
+				message = "%s '%s' bitwise xored(^) with itself.".format(type, left.name);
 
 			addErrorMessage(left.line, left.column, message);
 		}
@@ -211,23 +211,23 @@ unittest
 			bool b;
 
 			// Check for comparisons of a variable and itself
-			b = a is a; // [warn]: Variable "a" identified(is) with itself.
-			b = a !is a; // [warn]: Variable "a" identified(!is) with itself.
+			b = a is a; // [warn]: Variable 'a' identified(is) with itself.
+			b = a !is a; // [warn]: Variable 'a' identified(!is) with itself.
 
-			b = a != a; // [warn]: Variable "a" equaled(!=) with itself.
-			b = a == a; // [warn]: Variable "a" equaled(==) with itself.
+			b = a != a; // [warn]: Variable 'a' equaled(!=) with itself.
+			b = a == a; // [warn]: Variable 'a' equaled(==) with itself.
 
-			b = a >= a; // [warn]: Variable "a" relationed(>=) with itself.
-			b = a <= a; // [warn]: Variable "a" relationed(<=) with itself.
-			b = a > a; // [warn]: Variable "a" relationed(>) with itself.
-			b = a < a; // [warn]: Variable "a" relationed(<) with itself.
+			b = a >= a; // [warn]: Variable 'a' relationed(>=) with itself.
+			b = a <= a; // [warn]: Variable 'a' relationed(<=) with itself.
+			b = a > a; // [warn]: Variable 'a' relationed(>) with itself.
+			b = a < a; // [warn]: Variable 'a' relationed(<) with itself.
 
-			b = a && a; // [warn]: Variable "a" logical anded(&&) with itself.
-			b = a || a; // [warn]: Variable "a" logical ored(||) with itself.
+			b = a && a; // [warn]: Variable 'a' logical anded(&&) with itself.
+			b = a || a; // [warn]: Variable 'a' logical ored(||) with itself.
 
-			a = a & a; // [warn]: Variable "a" bitwise anded(&) with itself.
-			a = a | a; // [warn]: Variable "a" bitwise ored(|) with itself.
-			a = a ^ a; // [warn]: Variable "a" bitwise xored(^) with itself.
+			a = a & a; // [warn]: Variable 'a' bitwise anded(&) with itself.
+			a = a | a; // [warn]: Variable 'a' bitwise ored(|) with itself.
+			a = a ^ a; // [warn]: Variable 'a' bitwise xored(^) with itself.
 
 			// Check for comparisons of an object field and itself
 			struct Dog
@@ -241,24 +241,24 @@ unittest
 			Dog dog;
 
 			b = dog.getWeight() == dog.getWeight(); // ok
-			b = dog.weight == dog.weight; // [warn]: Field "dog.weight" equaled(==) with itself.
-			b = dog.weight is dog.weight; // [warn]: Field "dog.weight" identified(is) with itself.
-			b = dog.weight !is dog.weight; // [warn]: Field "dog.weight" identified(!is) with itself.
+			b = dog.weight == dog.weight; // [warn]: Field 'dog.weight' equaled(==) with itself.
+			b = dog.weight is dog.weight; // [warn]: Field 'dog.weight' identified(is) with itself.
+			b = dog.weight !is dog.weight; // [warn]: Field 'dog.weight' identified(!is) with itself.
 
-			b = dog.weight != dog.weight; // [warn]: Field "dog.weight" equaled(!=) with itself.
-			b = dog.weight == dog.weight; // [warn]: Field "dog.weight" equaled(==) with itself.
+			b = dog.weight != dog.weight; // [warn]: Field 'dog.weight' equaled(!=) with itself.
+			b = dog.weight == dog.weight; // [warn]: Field 'dog.weight' equaled(==) with itself.
 
-			b = dog.weight >= dog.weight; // [warn]: Field "dog.weight" relationed(>=) with itself.
-			b = dog.weight <= dog.weight; // [warn]: Field "dog.weight" relationed(<=) with itself.
-			b = dog.weight > dog.weight; // [warn]: Field "dog.weight" relationed(>) with itself.
-			b = dog.weight < dog.weight; // [warn]: Field "dog.weight" relationed(<) with itself.
+			b = dog.weight >= dog.weight; // [warn]: Field 'dog.weight' relationed(>=) with itself.
+			b = dog.weight <= dog.weight; // [warn]: Field 'dog.weight' relationed(<=) with itself.
+			b = dog.weight > dog.weight; // [warn]: Field 'dog.weight' relationed(>) with itself.
+			b = dog.weight < dog.weight; // [warn]: Field 'dog.weight' relationed(<) with itself.
 
-			b = dog.weight && dog.weight; // [warn]: Field "dog.weight" logical anded(&&) with itself.
-			b = dog.weight || dog.weight; // [warn]: Field "dog.weight" logical ored(||) with itself.
+			b = dog.weight && dog.weight; // [warn]: Field 'dog.weight' logical anded(&&) with itself.
+			b = dog.weight || dog.weight; // [warn]: Field 'dog.weight' logical ored(||) with itself.
 
-			a = dog.weight & dog.weight; // [warn]: Field "dog.weight" bitwise anded(&) with itself.
-			a = dog.weight | dog.weight; // [warn]: Field "dog.weight" bitwise ored(|) with itself.
-			a = dog.weight ^ dog.weight; // [warn]: Field "dog.weight" bitwise xored(^) with itself.
+			a = dog.weight & dog.weight; // [warn]: Field 'dog.weight' bitwise anded(&) with itself.
+			a = dog.weight | dog.weight; // [warn]: Field 'dog.weight' bitwise ored(|) with itself.
+			a = dog.weight ^ dog.weight; // [warn]: Field 'dog.weight' bitwise xored(^) with itself.
 		}
 	}c, analysis.run.AnalyzerCheck.compare_check);
 

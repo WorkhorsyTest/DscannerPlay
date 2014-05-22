@@ -57,7 +57,7 @@ class UnusedCheck : ScopeAnalyzer
 			auto data = getVariableDataByName(argName);
 			if (data != VariableData.init && !data.isUsed)
 			{
-				string message = "Parameter \"%s\" of function \"%s\" is not used.".format(argName, funcName);
+				string message = "Parameter '%s' of function '%s' is not used.".format(argName, funcName);
 				addErrorMessage(funcDec.name.line, funcDec.name.column, message);
 			}
 		}
@@ -70,7 +70,7 @@ class UnusedCheck : ScopeAnalyzer
 		{
 			if (data != VariableData.init && !data.isUsed)
 			{
-				string message = "Variable \"%s\" is not used.".format(name);
+				string message = "Variable '%s' is not used.".format(name);
 				addErrorMessage(data.line, data.column, message);
 			}
 		}
@@ -88,46 +88,46 @@ unittest
 		void testUnused()
 		{
 			// Unused variables
-			int a; // [warn]: Variable "a" is not used.
-			int b = 8; // [warn]: Variable "b" is not used.
+			int a; // [warn]: Variable 'a' is not used.
+			int b = 8; // [warn]: Variable 'b' is not used.
 
 			// Unused in one declaration
-			size_t x, y, z; // [warn]: Variable "x" is not used.
+			size_t x, y, z; // [warn]: Variable 'x' is not used.
 
 			// Unused array
-			int[5] unusedData = [1, 2, 3, 4, 5]; // [warn]: Variable "unusedData" is not used.
+			int[5] unusedData = [1, 2, 3, 4, 5]; // [warn]: Variable 'unusedData' is not used.
 
 			// Unused loop variables
 			int[5] data = [1, 2, 3, 4, 5];
 			for (size_t i=0; i<data.length; ++i)
 			{
-				int zebra; // [warn]: Variable "zebra" is not used.
+				int zebra; // [warn]: Variable 'zebra' is not used.
 			}
 
 			foreach (i; 0 .. data.length) // i is unused
 			{
-				int rhino; // [warn]: Variable "rhino" is not used.
+				int rhino; // [warn]: Variable 'rhino' is not used.
 			}
 
 			foreach (i, d; data) // FIXME: i and d are unused
 			{
-				int velociraptor; // [warn]: Variable "velociraptor" is not used.
+				int velociraptor; // [warn]: Variable 'velociraptor' is not used.
 			}
 
 			while (false)
 			{
-				int platypus; // [warn]: Variable "platypus" is not used.
+				int platypus; // [warn]: Variable 'platypus' is not used.
 			}
 
 			do
 			{
-				int human; // [warn]: Variable "human" is not used.
+				int human; // [warn]: Variable 'human' is not used.
 			} while (false);
 
 			// Unused condition variables
 			if (true)
 			{
-				int puma; // [warn]: Variable "puma" is not used.
+				int puma; // [warn]: Variable 'puma' is not used.
 			}
 
 			if (auto ape = 3) // unused FIXME
@@ -137,7 +137,7 @@ unittest
 			switch (false)
 			{
 				case true:
-					int wolf = 1; // [warn]: Variable "wolf" is not used.
+					int wolf = 1; // [warn]: Variable 'wolf' is not used.
 					break;
 				default:
 					break;
@@ -146,23 +146,23 @@ unittest
 			// Unused try/catch/finally variables
 			try
 			{
-				int la; // [warn]: Variable "la" is not used.
+				int la; // [warn]: Variable 'la' is not used.
 			}
 			catch (Exception ex)
 			{
-				int le; // [warn]: Variable "le" is not used.
+				int le; // [warn]: Variable 'le' is not used.
 			}
 			catch (Error err)
 			{
-				int lu; // [warn]: Variable "lu" is not used.
+				int lu; // [warn]: Variable 'lu' is not used.
 			}
 			catch (Throwable thr)
 			{
-				int le; // [warn]: Variable "le" is not used.
+				int le; // [warn]: Variable 'le' is not used.
 			}
 			finally
 			{
-				int lo; // [warn]: Variable "lo" is not used.
+				int lo; // [warn]: Variable 'lo' is not used.
 			}
 
 			// ok
@@ -172,7 +172,7 @@ unittest
 			}
 
 			// Unused function parameters
-			void yoWorld(int unusedParam, string name) // [warn]: Parameter "unusedParam" of function "yoWorld" is not used.
+			void yoWorld(int unusedParam, string name) // [warn]: Parameter 'unusedParam' of function 'yoWorld' is not used.
 			{
 				writefln("Howdy %s!", name);
 			}
@@ -191,7 +191,7 @@ unittest
 				string dogName; // ok
 				void bark()
 				{
-					int volume = 11; // [warn]: Variable "volume" is not used.
+					int volume = 11; // [warn]: Variable 'volume' is not used.
 				}
 			}
 
@@ -201,14 +201,14 @@ unittest
 				string catName; // ok
 				void meow()
 				{
-					int volume = 11; // [warn]: Variable "volume" is not used.
+					int volume = 11; // [warn]: Variable 'volume' is not used.
 				}
 			}
 
 			// Unused class method parameter
 			class Pig
 			{
-				void attack(string name) // [warn]: Parameter "name" of function "attack" is not used.
+				void attack(string name) // [warn]: Parameter 'name' of function 'attack' is not used.
 				{
 				}
 			}
