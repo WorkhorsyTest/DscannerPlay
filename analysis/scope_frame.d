@@ -581,8 +581,22 @@ void addVariable(VariableData varData)
 	assert (varData.name, "variable name was null");
 	assert (varData.name.length, "variable name was blank");
 	assert (varData.type !is TypeData.init, "variable type was null");
-	assert (varData.line, "variable line was 0");
-	assert (varData.column, "variable column was 0");
+	//assert (varData.line, "variable line was 0");
+	//assert (varData.column, "variable column was 0");
+
+	// Warn if the variable is on line or column zero
+	if (varData.line == 0 || varData.column == 0)
+	{
+		stderr.writefln(
+			"!!! addVariable() warning variable is on line or column zero: name:%s, type:%s, isUsed:%s, isParameter:%s, line:%s, column:%s", 
+			varData.name,
+			varData.type,
+			varData.isUsed,
+			varData.isParameter,
+			varData.line,
+			varData.column
+		);
+	}
 
 	// Skip if declaring same variable
 	foreach (frame; frames)

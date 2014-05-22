@@ -182,14 +182,12 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 		size_t lineNo = i + line;
 
 		// Get the message
-//		stderr.writefln("!!! message[%d] = \"%s\"", lineNo, commentPart);
 		messages[lineNo] = commentPart;
 	}
 
 	// Throw an assert error if any messages are not listed in the warnings
 	foreach (lineNo, message; messages)
 	{
-//		stderr.writefln("!!!!!! messages[%d] : %s", lineNo, messages[lineNo]);
 		// No warning
 		if (lineNo !in warnings)
 		{
@@ -217,7 +215,6 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 	string[] unexpectedWarnings;
 	foreach (lineNo, warning; warnings)
 	{
-//		stderr.writefln("!!!!!! warnings[%d] : %s", lineNo, warning);
 		// Unexpected warning
 		if (lineNo !in messages)
 		{
@@ -316,6 +313,13 @@ void declareVariable(const VariableDeclaration varDec)
 void declareParameter(const Parameter param)
 {
 	info("declareParameter");
+
+	// Just print a warning and return if the name is invalid
+	if (param.name is Token.init || param.name.text is null || param.name.text == "")
+	{
+		stderr.writeln("!!! declareParameter() failed because param.name was init or had no name.");
+		return;
+	}
 
 	VariableData varData;
 	varData.name = param.name.text;
@@ -418,7 +422,8 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 
 		if (tokenData is TokenData.init)
 		{
-			throw new Exception("Failed to get valid token from auto variable declaration.");
+			stderr.writeln("!!! getVariableDatas() failed to get valid token from auto variable declaration.");
+			return null;
 		}
 
 		foreach (name; names)
@@ -943,7 +948,7 @@ TypeData getTypeData(const Type type)
 			return typeData;
 		}
 	}
-	//std.d.inspect.inspect(type, 0, "type");
+
 	throw new Exception("Could not find type name.");
 }
 
@@ -976,7 +981,8 @@ TokenData getExpressionReturnTokenData(const ASTNode node)
 // FIXME Update this so it prints an error and returns init when nothing found
 Token getExpressionReturnToken(const ASTNode node, size_t indent)
 {
-	//stderr.writefln("%s??? getExpressionReturnToken: %s", pad(indent++), typeid(node));
+	//if (node !is null)
+	//	stderr.writefln("%s??? getExpressionReturnToken: %s", pad(indent++), typeid(node));
 
 	if (auto addExp = cast(const AddExpression) node)
 	{
@@ -999,7 +1005,8 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	else if (auto arrayInit = cast(const ArrayInitializer) node)
 	{
 		foreach (memberInit; arrayInit.arrayMemberInitializations)
-			return getExpressionReturnToken(memberInit, indent);
+			if (memberInit)
+				return getExpressionReturnToken(memberInit, indent);
 	}
 	else if (auto arrayLit = cast(const ArrayLiteral) node)
 	{
@@ -1009,13 +1016,14 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (arrayMemInit.assignExpression)
 			return getExpressionReturnToken(arrayMemInit.assignExpression, indent);
-		else if (arrayMemInit.nonVoidInitializer)
+		if (arrayMemInit.nonVoidInitializer)
 			return getExpressionReturnToken(arrayMemInit.nonVoidInitializer, indent);
 	}
 	else if (auto argList = cast(const ArgumentList) node)
 	{
 		foreach (item; argList.items)
-			return getExpressionReturnToken(item, indent);
+			if (item)
+				return getExpressionReturnToken(item, indent);
 	}
 	else if (auto asserExp = cast(const AssertExpression) node)
 	{
@@ -1025,18 +1033,18 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (assExp.ternaryExpression)
 			return getExpressionReturnToken(assExp.ternaryExpression, indent);
-		else if (assExp.assignExpression)
+		if (assExp.assignExpression)
 			return getExpressionReturnToken(assExp.assignExpression, indent);
 	}
 	else if (auto autoDec = cast(const AutoDeclaration) node)
 	{
-//		foreach (iden; autoDec.identifiers)
-//			if (iden)
-//				return getExpressionReturnToken(iden, indent);
-
 		foreach (init; autoDec.initializers)
 			if (init)
 				return getExpressionReturnToken(init, indent);
+
+		foreach (iden; autoDec.identifiers)
+			if (iden !is Token.init)
+				return iden;
 	}
 	else if (auto castExp = cast(const CastExpression) node)
 	{
@@ -1051,20 +1059,20 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (cmpExp.shiftExpression)
 			return getExpressionReturnToken(cmpExp.shiftExpression, indent);
-		else if (cmpExp.equalExpression)
+		if (cmpExp.equalExpression)
 			return getExpressionReturnToken(cmpExp.equalExpression, indent);
-		else if (cmpExp.identityExpression)
+		if (cmpExp.identityExpression)
 			return getExpressionReturnToken(cmpExp.identityExpression, indent);
-		else if (cmpExp.relExpression)
+		if (cmpExp.relExpression)
 			return getExpressionReturnToken(cmpExp.relExpression, indent);
-		else if (cmpExp.inExpression)
+		if (cmpExp.inExpression)
 			return getExpressionReturnToken(cmpExp.inExpression, indent);
 	}
 	else if (auto decl = cast(const Declarator) node)
 	{
 		if (decl.initializer)
 			return getExpressionReturnToken(decl.initializer, indent);
-		else
+		if (decl.name !is Token.init)
 			return decl.name;
 	}
 	else if (auto delExp = cast(const DeleteExpression) node)
@@ -1094,13 +1102,14 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (idenOrTemp)
 			foreach (inst; idenOrTemp.identifiersOrTemplateInstances)
-				return getExpressionReturnToken(inst, indent);
+				if (inst)
+					return getExpressionReturnToken(inst, indent);
 	}
 	else if (auto idenOrTemp = cast(const IdentifierOrTemplateInstance) node)
 	{
 		if (idenOrTemp.templateInstance)
 			return getExpressionReturnToken(idenOrTemp.templateInstance, indent);
-		else
+		if (idenOrTemp.identifier !is Token.init)
 			return idenOrTemp.identifier;
 	}
 	else if (auto idenExp = cast(const IdentityExpression) node)
@@ -1130,6 +1139,21 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 		if (intl.nonVoidInitializer)
 			return getExpressionReturnToken(intl.nonVoidInitializer, indent);
 	}
+	else if (auto lambdaExp = cast(const LambdaExpression) node)
+	{
+		if (lambdaExp.parameters)
+			return getExpressionReturnToken(lambdaExp.parameters, indent);
+		foreach (functionAttribute; lambdaExp.functionAttributes)
+			if (functionAttribute)
+				return getExpressionReturnToken(functionAttribute, indent);
+		if (lambdaExp.assignExpression)
+			return getExpressionReturnToken(lambdaExp.assignExpression, indent);
+		// FIXME: Get the real line and column
+		if (lambdaExp.functionType !is IdType.init)
+			return Token(tok!"identifier", lambdaExp.functionType.str, 0, 0, 0);
+		if (lambdaExp.identifier !is Token.init)
+			return lambdaExp.identifier;
+	}
 	else if (auto mulExp = cast(const MulExpression) node)
 	{
 		auto l = getExpressionReturnToken(mulExp.left, indent);
@@ -1142,8 +1166,8 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 			return getExpressionReturnToken(newExp.type, indent);
 		if (newExp.newAnonClassExpression)
 			return getExpressionReturnToken(newExp.newAnonClassExpression, indent);
-		//else if (newExp.arguments)
-		//	return getExpressionReturnToken(newExp.arguments, indent);
+		if (newExp.arguments)
+			return getExpressionReturnToken(newExp.arguments, indent);
 		if (newExp.assignExpression)
 			return getExpressionReturnToken(newExp.assignExpression, indent);
 	}
@@ -1186,8 +1210,6 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	}
 	else if (auto primaryExp = cast(const PrimaryExpression) node)
 	{
-		if (primaryExp.identifierOrTemplateInstance)
-			return getExpressionReturnToken(primaryExp.identifierOrTemplateInstance, indent);
 		if (primaryExp.typeofExpression)
 			return getExpressionReturnToken(primaryExp.typeofExpression, indent);
 		if (primaryExp.typeidExpression)
@@ -1212,28 +1234,16 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 			return getExpressionReturnToken(primaryExp.importExpression, indent);
 		if (primaryExp.vector)
 			return getExpressionReturnToken(primaryExp.vector, indent);
+		if (primaryExp.identifierOrTemplateInstance)
+			return getExpressionReturnToken(primaryExp.identifierOrTemplateInstance, indent);
 
 		// return type
-		if (getTokenData(primaryExp.dot) !is TokenData.init)
+		if (primaryExp.dot !is Token.init)
 			return primaryExp.dot;
-		if (getTokenData(primaryExp.primary) !is TokenData.init)
+		if (primaryExp.primary !is Token.init)
 			return primaryExp.primary;
-		if (getTokenData(primaryExp.basicType) !is TokenData.init)
+		if (primaryExp.basicType !is Token.init)
 			return primaryExp.basicType;
-
-		string message = std.string.format(
-			"!!! Unexpected token:\n"
-			"    dot:\"%s\": \"%s\"\n"
-			"    primary: \"%s\":\"%s\"\n"
-			"    basicType: \"%s\":\"%s\"\n",
-			primaryExp.dot.type.str,
-			primaryExp.dot.text,
-			primaryExp.primary.type.str,
-			primaryExp.primary.text,
-			primaryExp.basicType.type.str,
-			primaryExp.basicType.text,
-		);
-		throw new Exception(message);
 	}
 	else if (auto relExp = cast(const RelExpression) node)
 	{
@@ -1260,9 +1270,8 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	else if (auto tempArgList = cast(const TemplateArgumentList) node)
 	{
 		foreach (item; tempArgList.items)
-		{
-			return getExpressionReturnToken(item, indent);
-		}
+			if (item)
+				return getExpressionReturnToken(item, indent);
 	}
 	else if (auto tempArg = cast(const TemplateArgument) node)
 	{
@@ -1282,7 +1291,7 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (tempIns.templateArguments)
 			return getExpressionReturnToken(tempIns.templateArguments, indent);
-		else
+		if (tempIns.identifier !is Token.init)
 			return tempIns.identifier;
 	}
 	else if (auto ternaryExp = cast(const TernaryExpression) node)
@@ -1310,20 +1319,16 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 			return getExpressionReturnToken(type2.symbol, indent);
 		if (type2.typeofExpression)
 			return getExpressionReturnToken(type2.typeofExpression, indent);
-		if (type2.identifierOrTemplateChain)
-			return getExpressionReturnToken(type2.identifierOrTemplateChain, indent);
 		if (type2.type)
 			return getExpressionReturnToken(type2.type, indent);
-
+		if (type2.identifierOrTemplateChain)
+			return getExpressionReturnToken(type2.identifierOrTemplateChain, indent);
+		// FIXME: Get the real line and column
 		if (type2.builtinType !is IdType.init)
-		{
-			return Token(
-				tok!"identifier", type2.builtinType.str,
-				// FIXME: Get the real line and column
-				0, 0, 0);
-		}
-		//if (type2.typeConstructor !is IdType.init)
-		//	return type2.typeConstructor.str;
+			return Token(tok!"identifier", type2.builtinType.str, 0, 0, 0);
+		// FIXME: Get the real line and column
+		if (type2.typeConstructor !is IdType.init)
+			return Token(tok!"identifier", type2.typeConstructor.str, 0, 0, 0);
 	}
 	else if (auto typeidExp = cast(const TypeidExpression) node)
 	{
@@ -1336,8 +1341,8 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	{
 		if (typeofExp.expression)
 			return getExpressionReturnToken(typeofExp.expression, indent);
-		//if (typeofExp.return_)
-		//	return getExpressionReturnToken(typeofExp.return_, indent);
+		if (typeofExp.return_ !is Token.init)
+			return typeofExp.return_;
 	}
 	else if (auto unaryExp = cast(const UnaryExpression) node)
 	{
@@ -1351,10 +1356,6 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 			secondToken = getExpressionReturnToken(unaryExp.type, indent);
 		if (unaryExp.primaryExpression)
 			secondToken = getExpressionReturnToken(unaryExp.primaryExpression, indent);
-		//if (unaryExp.prefix)
-		//	secondToken = getExpressionReturnToken(unaryExp.prefix, indent);
-		//if (unaryExp.suffix)
-		//	secondToken = getExpressionReturnToken(unaryExp.suffix, indent);
 		if (unaryExp.newExpression)
 			secondToken = getExpressionReturnToken(unaryExp.newExpression, indent);
 		if (unaryExp.deleteExpression)
@@ -1365,14 +1366,18 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 			secondToken = getExpressionReturnToken(unaryExp.functionCallExpression, indent);
 		if (unaryExp.argumentList)
 			secondToken = getExpressionReturnToken(unaryExp.argumentList, indent);
-		if (unaryExp.identifierOrTemplateInstance)
-			secondToken = getExpressionReturnToken(unaryExp.identifierOrTemplateInstance, indent);
 		if (unaryExp.assertExpression)
 			secondToken = getExpressionReturnToken(unaryExp.assertExpression, indent);
 		if (unaryExp.sliceExpression)
 			secondToken = getExpressionReturnToken(unaryExp.sliceExpression, indent);
 		if (unaryExp.indexExpression)
 			secondToken = getExpressionReturnToken(unaryExp.indexExpression, indent);
+		if (unaryExp.identifierOrTemplateInstance)
+			secondToken = getExpressionReturnToken(unaryExp.identifierOrTemplateInstance, indent);
+		//if (unaryExp.prefix)
+		//	secondToken = getExpressionReturnToken(unaryExp.prefix, indent);
+		//if (unaryExp.suffix)
+		//	secondToken = getExpressionReturnToken(unaryExp.suffix, indent);
 
 		// Combine the tokens
 		//stderr.writefln("!!! getExpressionReturnToken firstToken type:%s, text:%s", firstToken.type.str, firstToken.text);
@@ -1495,9 +1500,10 @@ const Token getPromotedToken(const Token left, const Token right)
 	// throw an error if any type names are blank
 	if (a is null || b is null || a == "" || b == "")
 	{
-		string message = "getPromotedToken() did not expect: \"%s\" or \"%s\".".format(
+		string message = "!!! getPromotedToken() did not expect: \"%s\" or \"%s\".".format(
 			getTokenData(left), getTokenData(right));
-		throw new Exception(message);
+		stderr.writeln(message);
+		return Token.init;
 	}
 
 	// throw an error if any type names are unknown
@@ -1505,8 +1511,9 @@ const Token getPromotedToken(const Token left, const Token right)
 		|| b !in promotions || b !in sizes)
 	{
 
-		string message = "getPromotedToken() did not expect the type name: \"%s\" or \"%s\".".format(a, b);
-		throw new Exception(message);
+		string message = "!!! getPromotedToken() did not expect the type name: \"%s\" or \"%s\".".format(a, b);
+		stderr.writeln(message);
+		return Token.init;
 	}
 
 	// Types are the same, so return the promotion of one
@@ -1874,7 +1881,9 @@ TokenData getTokenData(const Token token)
 						break;
 				}
 			}
-			throw new Exception("!!! identifier:%s, member:%s, var:%s, type:%s".format(identifier, member, varData, varData.type));
+			string message = "!!! getTokenData() failed on identifier:%s, member:%s, var:%s, type:%s".format(identifier, member, varData, varData.type);
+			stderr.writeln(message);
+			return TokenData.init;
 		}
 
 		// Token is a variable
@@ -2108,7 +2117,6 @@ TokenData getTokenData(const Token token)
 
 	string fail = "!!! getTokenData() failed on token: type:%s, text:%s, line:%s, column:%s".format(
 		token.type.str, token.text, data.line, data.column);
-	//throw new Exception(fail);
 	stderr.writeln(fail);
 	return TokenData.init;
 }

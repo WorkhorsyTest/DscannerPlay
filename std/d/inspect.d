@@ -46,7 +46,7 @@ void extraInspect(T)(T thing, uint indent, string name)
 	}
 	else
 	{
-		writefln("%s!!! extraInspect(T) override needed for: %s", pad(indent), thing);
+		stderr.writefln("%s!!! extraInspect(T) override needed for: %s", pad(indent), thing);
 	}
 }
 
@@ -410,10 +410,11 @@ void inspect(const ASTNode node, size_t indent, string name)
 	else if (auto param = cast(const Parameter) node)
 	{
 		writefln("%s%s : %s", pad(indent++), name, typeid(param));
-		//param.parameterAttributes.inspect(indent, "parameterAttributes");
+		foreach (parameterAttribute; param.parameterAttributes)
+			parameterAttribute.extraInspect(indent, "parameterAttributes[]");
 		param.type.inspect(indent, "type");
-		//param.name.inspect(indent, "name");
-		//param.vararg.inspect(indent, "vararg");
+		param.name.extraInspect(indent, "name");
+		param.vararg.extraInspect(indent, "vararg");
 		param.default_.inspect(indent, "default_");
 	}
 	else if (auto params = cast(const Parameters) node)
