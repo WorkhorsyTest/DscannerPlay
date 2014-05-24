@@ -16,12 +16,14 @@
 
 module std.d.ast;
 
-import std.d.lexer;
 import std.traits;
 import std.algorithm;
 import std.array;
 import std.string;
 import std.stdio;
+
+import std.d.lexer;
+import std.d.codegen;
 
 // TODO: Many of these classes can be simplified by using std.variant.Algebraic
 

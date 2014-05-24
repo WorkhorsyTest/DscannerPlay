@@ -290,9 +290,10 @@ private struct Ternary
         r.value = b;
         return r;
     }
-
+version (none)
+{
     enum no = make(0), yes = make(2), unknown = make(6);
-
+}
     this(bool b) { value = b << 1; }
 
     void opAssign(bool b) { value = b << 1; }
@@ -318,7 +319,7 @@ private struct Ternary
     }
 }
 
-unittest
+version (none) unittest
 {
     alias f = Ternary.no, t = Ternary.yes, u = Ternary.unknown;
     auto truthTableAnd =

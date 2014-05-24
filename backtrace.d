@@ -1,7 +1,7 @@
 // From
 // https://github.com/yazd/backtrace-d
 
-module backtrace.backtrace;
+module backtrace;
 
 version(linux) {
   import core.sys.linux.execinfo;

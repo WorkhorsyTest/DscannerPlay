@@ -13,6 +13,7 @@ import std.conv;
 
 import std.d.ast;
 import std.d.lexer;
+import analysis.run;
 import analysis.scope_frame;
 import dlang_helper;
 
@@ -139,8 +140,6 @@ string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
 
 void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, string file=__FILE__, size_t line=__LINE__)
 {
-	import analysis.run;
-
 	// Reset everything
 	scopeFrameClearEverything();
 
