@@ -290,6 +290,7 @@ private struct Ternary
         r.value = b;
         return r;
     }
+// FIXME: Disabling this because the enum can't be generated from a DI file
 version (none)
 {
     enum no = make(0), yes = make(2), unknown = make(6);
@@ -318,7 +319,7 @@ version (none)
         return make(26504 >> value + rhs.value & 6);
     }
 }
-
+// FIXME: Disabling this because the enum can't be generated from a DI file
 version (none) unittest
 {
     alias f = Ternary.no, t = Ternary.yes, u = Ternary.unknown;
