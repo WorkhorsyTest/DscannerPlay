@@ -399,7 +399,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmAndExp parseAsmAndExp()
     {
-        auto node = allocate!AsmAndExp;
+//        auto node = allocate!AsmAndExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -413,7 +413,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmBrExp parseAsmBrExp()
     {
-        auto node = allocate!AsmBrExp;
+//        auto node = allocate!AsmBrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -426,7 +426,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmEqualExp parseAsmEqualExp()
     {
-        auto node = allocate!AsmEqualExp;
+//        auto node = allocate!AsmEqualExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -439,7 +439,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmExp parseAsmExp()
     {
-        auto node = allocate!AsmExp;
+//        auto node = allocate!AsmExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -457,7 +457,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmInstruction parseAsmInstruction()
     {
-        auto node = allocate!AsmInstruction;
+//        auto node = allocate!AsmInstruction;
         assert (false, "asm"); // TODO asm
     }
 
@@ -470,7 +470,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmLogAndExp parseAsmLogAndExp()
     {
-        auto node = allocate!AsmLogAndExp;
+//        auto node = allocate!AsmLogAndExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -483,7 +483,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmLogOrExp parseAsmLogOrExp()
     {
-        auto node = allocate!AsmLogOrExp;
+//        auto node = allocate!AsmLogOrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -496,7 +496,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmMulExp parseAsmMulExp()
     {
-        auto node = allocate!AsmMulExp;
+//        auto node = allocate!AsmMulExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -509,7 +509,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmOrExp parseAsmOrExp()
     {
-        auto node = allocate!AsmOrExp;
+//        auto node = allocate!AsmOrExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -526,7 +526,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmPrimaryExp parseAsmPrimaryExp()
     {
-        auto node = allocate!AsmPrimaryExp;
+//        auto node = allocate!AsmPrimaryExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -539,7 +539,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmRelExp parseAsmRelExp()
     {
-        auto node = allocate!AsmRelExp;
+//        auto node = allocate!AsmRelExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -552,7 +552,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmShiftExp parseAsmShiftExp()
     {
-        auto node = allocate!AsmShiftExp;
+//        auto node = allocate!AsmShiftExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -588,7 +588,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmTypePrefix parseAsmTypePrefix()
     {
-        auto node = allocate!AsmTypePrefix;
+//        auto node = allocate!AsmTypePrefix;
         assert (false, "asm"); // TODO asm
     }
 
@@ -607,7 +607,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmUnaExp parseAsmUnaExp()
     {
-        auto node = allocate!AsmUnaExp;
+//        auto node = allocate!AsmUnaExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -620,7 +620,7 @@ alias core.sys.posix.stdio.fileno fileno;
      */
     AsmXorExp parseAsmXorExp()
     {
-        auto node = allocate!AsmXorExp;
+//        auto node = allocate!AsmXorExp;
         assert (false, "asm"); // TODO asm
     }
 
@@ -1205,7 +1205,10 @@ incorrect;
      * Parses a ClassDeclaration
      *
      * $(GRAMMAR $(RULEDEF classDeclaration):
-     *     $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ';') | ($(RULE templateParameters) $(RULE constraint)?)? ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody))
+     *       $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ':') $(RULE baseClassList))? $(LITERAL ';')
+     *     | $(LITERAL 'class') $(LITERAL Identifier) ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody)
+     *     | $(LITERAL 'class') $(LITERAL Identifier) $(RULE templateParameters) $(RULE constraint)? ($(LITERAL ':') $(RULE baseClassList))? $(RULE structBody)
+     *     | $(LITERAL 'class') $(LITERAL Identifier) $(RULE templateParameters) ($(LITERAL ':') $(RULE baseClassList))? $(RULE constraint)? $(RULE structBody)
      *     ;)
      */
     ClassDeclaration parseClassDeclaration()
@@ -1223,19 +1226,27 @@ incorrect;
             advance();
             return node;
         }
-        if (currentIs(tok!"("))
+        templateStuff: if (currentIs(tok!"("))
         {
             node.templateParameters = parseTemplateParameters();
-            if (currentIs(tok!"if"))
-            {
+            constraint: if (currentIs(tok!"if"))
                 node.constraint = parseConstraint();
+            if (node.baseClassList !is null)
+                goto structBody;
+            if (currentIs(tok!":"))
+            {
+                advance();
+                node.baseClassList = parseBaseClassList();
             }
+            if (currentIs(tok!"if"))
+                goto constraint;
         }
         if (currentIs(tok!":"))
         {
             advance();
             node.baseClassList = parseBaseClassList();
         }
+    structBody:
         node.structBody = parseStructBody();
         return node;
     }
@@ -1243,12 +1254,18 @@ incorrect;
     unittest
     {
         string sourceCode =
-q{class ClassOne {}
+q{class ClassZero;
+class ClassOne {}
 class ClassTwo : Super {}
 class ClassThree(A, B) : Super {}
-class ClassFour(A, B) if (someTest()) : Super {}}c;
+class ClassFour(A, B) if (someTest()) : Super {}
+class ClassFive(A, B) : Super if (someTest()) {}}c;
 
         Parser p = getParserForUnittest(sourceCode, "parseClassDeclaration");
+
+        auto classZero = p.parseClassDeclaration();
+        assert (classZero.name.text == "ClassZero");
+        assert (classZero.structBody is null);
 
         auto classOne = p.parseClassDeclaration();
         assert (classOne.name.text == "ClassOne");
@@ -1274,14 +1291,14 @@ class ClassFour(A, B) if (someTest()) : Super {}}c;
         assert (classThree.structBody.declarations.length == 0,
             to!string(classThree.structBody.declarations.length));
 
-        //auto classFour = p.parseClassDeclaration();
-        //assert (classFour.name == "ClassFour", classFour.name.text);
-        //assert (classFour.templateParameters !is null);
-        //assert (classFour.baseClassList !is null);
-        //assert (classFour.constraint !is null);
-        //assert (classFour.baseClassList.items.length == 1);
-        //assert (classFour.structBody.declarationOrInvariants.length == 0,
-        //    to!string(classFour.structBody.declarationOrInvariants.length));
+        auto classFour = p.parseClassDeclaration();
+        assert (classFour.name.text == "ClassFour", classFour.name.text);
+        assert (classFour.templateParameters !is null);
+        assert (classFour.baseClassList !is null);
+        assert (classFour.constraint !is null);
+        assert (classFour.baseClassList.items.length == 1);
+        assert (classFour.structBody.declarations.length == 0,
+            to!string(classFour.structBody.declarations.length));
 
         stderr.writeln("Unittest for parseClassDeclaration() passed.");
     }
@@ -2487,13 +2504,18 @@ body {} // six
         case tok!"pure":
         case tok!"nothrow":
             node.type = parseType();
+            node.arguments = parseArguments();
             break;
         default:
-            node.unaryExpression = unary is null ? parseUnaryExpression() : unary;
+            if (unary !is null)
+                node.unaryExpression = unary;
+            else
+                node.unaryExpression = parseUnaryExpression();
             if (currentIs(tok!"!"))
                 node.templateArguments = parseTemplateArguments();
-    }
-        node.arguments = parseArguments();
+            if (unary !is null)
+                node.arguments = parseArguments();
+        }
         return node.arguments is null ? null : node;
     }
 
@@ -3561,15 +3583,17 @@ invariant() foo();
         mixin(traceEnterAndExit!(__FUNCTION__));
         Module m = allocate!Module;
         if (currentIs(tok!"scriptLine"))
-            advance();
+            m.scriptLine = advance();
         if (currentIs(tok!"module"))
             m.moduleDeclaration = parseModuleDeclaration();
+		Declaration[] declarations;
         while (moreTokens())
         {
             auto declaration = parseDeclaration();
             if (declaration !is null)
-                m.declarations ~= declaration;
+                declarations ~= declaration;
         }
+		m.declarations = ownArray(declarations);
         return m;
     }
 
@@ -3847,7 +3871,7 @@ invariant() foo();
      */
     Operands parseOperands()
     {
-        auto node = allocate!Operands;
+//        auto node = allocate!Operands;
         assert (false, "asm"); // TODO asm
     }
 
@@ -5969,13 +5993,11 @@ q{doStuff(5)}c;
         auto node = allocate!UnionDeclaration;
         // grab line number even if it's anonymous
         auto l = expect(tok!"union").line;
-        bool templated = false;
         if (currentIs(tok!"identifier"))
         {
             node.name = advance();
             if (currentIs(tok!"("))
             {
-                templated = true;
                 node.templateParameters = parseTemplateParameters();
                 if (currentIs(tok!"if"))
                     node.constraint = parseConstraint();

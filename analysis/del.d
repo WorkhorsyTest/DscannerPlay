@@ -30,7 +30,8 @@ class DeleteCheck : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
 		void testDelete()
 		{

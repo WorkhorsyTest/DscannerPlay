@@ -2653,8 +2653,8 @@ struct SharedFreelist(ParentAllocator,
     }
 }
 
-// FIXME: This test will break on weaker machines that can't do 1000 concurrent threads.
-// This deadlocks
+// FIXME: This test breaks on weaker machines that can't do 1000 concurrent threads.
+// If you change the number of threads from 1000 to 100 it works on 32bit x86 Atom under Linux
 version (none) unittest
 {
     import core.thread, std.concurrency;
@@ -2677,12 +2677,12 @@ version (none) unittest
     }
 
     Tid[] tids;
-    foreach (i; 0 .. 1000)
+    foreach (i; 0 .. 1000) // FIXME: Works with 100
     {
         tids ~= spawn(&fun, thisTid, i);
     }
 
-    foreach (i; 0 .. 1000)
+    foreach (i; 0 .. 1000) // FIXME: Works with 100
     {
         assert(receiveOnly!bool);
     }
@@ -3058,8 +3058,7 @@ unittest
 }
 
 // FIXME: Disabling this test because it is machine dependent
-/*
-unittest
+version (none) unittest
 {
     InSituRegion!(4096) r1;
     auto a = r1.allocate(2001);
@@ -3071,7 +3070,7 @@ unittest
     a = r2.allocate(2001);
     assert(a.length == 2001);
 }
-*/
+
 /**
 _Options for $(D AllocatorWithStats) defined below. Each enables during
 compilation one specific counter, statistic, or other piece of information.
@@ -4340,7 +4339,7 @@ class CAllocator
     throw an exception if it does allow setting the alignment but an invalid
     value is passed.
     */
-    bool alignment(uint) pure nothrow @property
+    @property bool alignment(uint) pure nothrow
     {
         return false;
     }

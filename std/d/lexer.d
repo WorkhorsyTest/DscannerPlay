@@ -415,9 +415,11 @@ public struct DLexer
 	mixin Lexer!(Token, lexIdentifier, isSeparating, operators, dynamicTokens,
 		keywords, pseudoTokenHandlers);
 
-	this(ubyte[] range, const LexerConfig config, shared(StringCache)* cache)
+	this(ubyte[] range, const LexerConfig config, StringCache* cache)
 	{
-		this.range = LexerRange(range);
+		auto r = (range.length >= 3 && range[0] == 0xef && range[1] == 0xbb && range[2] == 0xbf)
+			? range[3 .. $] : range;
+		this.range = LexerRange(r);
 		this.config = config;
 		this.cache = cache;
 		popFront();
@@ -1543,24 +1545,24 @@ public struct DLexer
 	}
 
 	Message[] messages;
-	shared(StringCache)* cache;
+	StringCache* cache;
 	LexerConfig config;
 }
 
 public auto byToken(ubyte[] range)
 {
 	LexerConfig config;
-	shared(StringCache)* cache = new shared StringCache(StringCache.defaultBucketCount);
+	StringCache* cache = new StringCache(StringCache.defaultBucketCount);
 	return DLexer(range, config, cache);
 }
 
-public auto byToken(ubyte[] range, shared(StringCache)* cache)
+public auto byToken(ubyte[] range, StringCache* cache)
 {
 	LexerConfig config;
 	return DLexer(range, config, cache);
 }
 
-public auto byToken(ubyte[] range, const LexerConfig config, shared(StringCache)* cache)
+public auto byToken(ubyte[] range, const LexerConfig config, StringCache* cache)
 {
 	return DLexer(range, config, cache);
 }

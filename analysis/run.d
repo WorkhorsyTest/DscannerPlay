@@ -6,9 +6,6 @@ import std.conv;
 import std.algorithm;
 import std.range;
 import std.array;
-import std.string;
-import std.file;
-
 import std.d.lexer;
 import std.d.parser;
 import std.d.ast;
@@ -22,6 +19,7 @@ import analysis.fish;
 import analysis.numbers;
 import analysis.objectconst;
 import analysis.range;
+import analysis.constructors;
 import analysis.ifelsesame;
 import analysis.unused;
 import analysis.constructors;
@@ -30,8 +28,10 @@ import analysis.check_name_clash;
 import analysis.check_size_t;
 import analysis.check_string_format;
 import analysis.check_unused;
+import analysis.duplicate_attribute;
 
-enum AnalyzerCheck : int {
+enum AnalyzerCheck : int
+{
 	style_check = 0x1,
 	enum_array_literal_check = 0x2,
 	exception_check = 0x4,
@@ -48,7 +48,8 @@ enum AnalyzerCheck : int {
 	unused_check = 0x2000,
 	name_clash_check = 0x4000,
 	check_string_format = 0x8000,
-	all = 0xFFFF
+	duplicate_attribute = 0x10000,
+	all = 0x1FFFF
 }
 
 void messageFunction(string fileName, size_t line, size_t column, string message,
@@ -93,6 +94,7 @@ void loadPhobosModuleData() {
 // For multiple files
 void analyze(File output, string[] fileNames, AnalyzerCheck analyzers, bool staticAnalyze = true)
 {
+	import std.parallelism;
 	foreach (fileName; fileNames)
 	{
 		File f = File(fileName);
@@ -100,7 +102,8 @@ void analyze(File output, string[] fileNames, AnalyzerCheck analyzers, bool stat
 		f.rawRead(code);
 
 		string[] results = analyze(fileName, code, analyzers, staticAnalyze);
-		output.writeln(results.join("\n"));
+		if (results.length > 0)
+			output.writeln(results.join("\n"));
 	}
 }
 
@@ -149,6 +152,7 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	if (analyzers & AnalyzerCheck.size_t_check) checks ~= new SizeTCheck(fileName);
 	if (analyzers & AnalyzerCheck.check_string_format) checks ~= new CheckStringFormat(fileName);
 	if (analyzers & AnalyzerCheck.unused_check) checks ~= new UnusedCheck(fileName);
+	if (analyzers & AnalyzerCheck.duplicate_attribute) checks ~= new DuplicateAttributeCheck(fileName);
 
 	foreach (check; checks)
 	{

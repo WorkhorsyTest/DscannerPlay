@@ -114,6 +114,9 @@ analysis/style.o: analysis/style.d
 analysis/unused.o: analysis/unused.d
 	$(DC) -c $(DFLAGS) analysis/unused.d -ofanalysis/unused.o -H -Hdanalysis/
 
+analysis/duplicate_attribute.o: analysis/duplicate_attribute.d
+	$(DC) -c $(DFLAGS) analysis/duplicate_attribute.d -ofanalysis/duplicate_attribute.o -H -Hdanalysis/
+
 stats.o: stats.d
 	$(DC) -c $(DFLAGS) stats.d -ofstats.o -H -Hd.
 
@@ -170,6 +173,7 @@ analysis/pokemon.o \
 analysis/range.o \
 analysis/style.o \
 analysis/unused.o \
+analysis/duplicate_attribute.o \
 stats.o \
 imports.o \
 highlighter.o \

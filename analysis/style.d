@@ -91,7 +91,8 @@ class StyleChecker : BaseAnalyzer
 	}
 }
 
-unittest {
+unittest
+{
 	assertAnalyzerWarnings(q{
 		module AMODULE; // [warn]: Module/package name 'AMODULE' does not match style guidelines
 

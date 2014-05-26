@@ -265,6 +265,7 @@ void declareImport(const SingleImport singImpo)
 void loadModule(string fileName)
 {
 	// Just return if the file does not exist
+	import std.file;
 	if (!std.file.exists(fileName) || !std.file.isFile(fileName))
 		return;
 

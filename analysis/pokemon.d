@@ -18,7 +18,7 @@ import analysis.helpers;
  * ---
  * try {
  *    choose(pikachu);
- * } catch (Exception e) {
+ * } catch (Throwable e) {
  *    ...
  * }
  * ---
@@ -45,13 +45,12 @@ class PokemonExceptionCheck : BaseAnalyzer
 			c.accept(this);
 			return;
 		}
-		if (identOrTemplate.identifier.text == "Exception"
-			|| identOrTemplate.identifier.text == "Throwable"
+		if (identOrTemplate.identifier.text == "Throwable"
 			|| identOrTemplate.identifier.text == "Error")
 		{
 			immutable column = identOrTemplate.identifier.column;
 			immutable line = identOrTemplate.identifier.line;
-			addErrorMessage(line, column, "Avoid catching Exception, Error, and Throwable");
+			addErrorMessage(line, column, "Catching Error or Throwable is a really bad idea.");
 		}
 		c.accept(this);
 	}
@@ -68,15 +67,19 @@ unittest
 			}
 			catch (AssertError err) //ok
 			{
+
 			}
-			catch (Exception err) // [warn]: Avoid catching Exception, Error, and Throwable
+			catch (Exception err) // ok
 			{
+
 			}
-			catch (Error err) // [warn]: Avoid catching Exception, Error, and Throwable
+			catch (Error err) // [warn]: Catching Error or Throwable is a really bad idea.
 			{
+
 			}
-			catch (Throwable err) // [warn]: Avoid catching Exception, Error, and Throwable
+			catch (Throwable err) // [warn]: Catching Error or Throwable is a really bad idea.
 			{
+
 			}
 		}
 	}c, analysis.run.AnalyzerCheck.exception_check);

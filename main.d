@@ -114,7 +114,7 @@ int run(string[] args)
 		return 1;
 	}
 
-	shared(StringCache)* cache = new shared StringCache(StringCache.defaultBucketCount);
+	StringCache* cache = new StringCache(StringCache.defaultBucketCount);
 
 	if (tokenDump || highlight)
 	{
@@ -133,11 +133,11 @@ int run(string[] args)
 		}
 		else if (tokenDump)
 		{
-			writeln("text                    blank\tindex\tline\tcolumn");
+			writeln("text                    blank\tindex\tline\tcolumn\ttype");
 			foreach (token; tokens)
 			{
-				writefln("<<%20s>>%b\t%d\t%d\t%d", token.text is null ? str(token.type) : token.text,
-					token.text !is null, token.index, token.line, token.column);
+				writefln("<<%20s>>%b\t%d\t%d\t%d\t%d", token.text is null ? str(token.type) : token.text,
+					token.text !is null, token.index, token.line, token.column, token.type);
 			}
 			return 0;
 		}
