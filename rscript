@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+
+import os
+import lib_raise_d as D
+import lib_raise_fs as FS
+import lib_raise_find as Find
+import lib_raise_users as Users
+import lib_raise_process as Process
+
+def clean():
+	"""Removes any files and directories generated when building."""
+	FS.remove_file('*.o', ignore_failure = True)
+	FS.remove_file('*.di', ignore_failure = True)
+
+	FS.remove_file('std/*.o', ignore_failure = True)
+	FS.remove_file('std/*.di', ignore_failure = True)
+
+	FS.remove_file('std/*.o', ignore_failure = True)
+	FS.remove_file('std/*.di', ignore_failure = True)
+
+	FS.remove_file('std/d/*.o', ignore_failure = True)
+	FS.remove_file('std/d/*.di', ignore_failure = True)
+
+	FS.remove_file('analysis/*.o', ignore_failure = True)
+	FS.remove_file('analysis/*.di', ignore_failure = True)
+
+	FS.remove_binaries('dscanner')
+	FS.remove_binaries('test')
+
+def _configure(is_test):
+	dc = D.get_default_compiler()
+	dc.debug = True
+	dc.optimize = False
+	dc.warnings_all = True
+
+	if is_test:
+		dc.unittest = True
+	else:
+		dc.optimize = True
+
+	return dc
+
+def test():
+	"""Builds the test suite and runs it."""
+	# Setup
+	Users.require_not_root()
+	#clean()
+	dc = _configure(is_test = True)
+
+	#Process.concurrent_start()
+
+	dc.build_object('backtrace.o', ['backtrace.d'], h_dir='.')
+	dc.build_object('dlang_helper.o', ['dlang_helper.d'], h_dir='.')
+	dc.build_object('std/allocator.o', ['std/allocator.d'], h_dir='std/')
+	dc.build_object('std/lexer.o', ['std/lexer.d'], h_dir='std/')
+	dc.build_object('std/d/codegen.o', ['std/d/codegen.d'], h_dir='std/d/')
+	dc.build_object('std/d/ast.o', ['std/d/ast.d', '-Istd/d/'], h_dir='std/d/')
+	dc.build_object('std/d/lexer.o', ['std/d/lexer.d'], h_dir='std/d/')
+	dc.build_object('std/d/parser.o', ['std/d/parser.d'], h_dir='std/d/')
+	dc.build_object('std/d/inspect.o', ['std/d/inspect.d'], h_dir='std/d/')
+	dc.build_object('analysis/base.o', ['analysis/base.d'], h_dir='analysis/')
+	dc.build_object('analysis/run.o', ['analysis/run.d'], h_dir='analysis/')
+	dc.build_object('analysis/helpers.o', ['analysis/helpers.d', '-Ianalysis/', '-Istd/d/', '-I.'], h_dir='analysis/')
+	dc.build_object('analysis/scope_frame.o', ['analysis/scope_frame.d'], h_dir='analysis/')
+	dc.build_object('analysis/scope_analyzer.o', ['analysis/scope_analyzer.d'], h_dir='analysis/')
+	dc.build_object('analysis/check_compare.o', ['analysis/check_compare.d'], h_dir='analysis/')
+	dc.build_object('analysis/check_string_format.o', ['analysis/check_string_format.d'], h_dir='analysis/')
+	dc.build_object('analysis/check_name_clash.o', ['analysis/check_name_clash.d'], h_dir='analysis/')
+	dc.build_object('analysis/check_unused.o', ['analysis/check_unused.d'], h_dir='analysis/')
+	dc.build_object('analysis/check_size_t.o', ['analysis/check_size_t.d'], h_dir='analysis/')
+	dc.build_object('analysis/constructors.o', ['analysis/constructors.d'], h_dir='analysis/')
+	dc.build_object('analysis/del.o', ['analysis/del.d'], h_dir='analysis/')
+	dc.build_object('analysis/enumarrayliteral.o', ['analysis/enumarrayliteral.d'], h_dir='analysis/')
+	dc.build_object('analysis/fish.o', ['analysis/fish.d'], h_dir='analysis/')
+	dc.build_object('analysis/ifelsesame.o', ['analysis/ifelsesame.d'], h_dir='analysis/')
+	dc.build_object('analysis/numbers.o', ['analysis/numbers.d'], h_dir='analysis/')
+	dc.build_object('analysis/objectconst.o', ['analysis/objectconst.d'], h_dir='analysis/')
+	dc.build_object('analysis/package.o', ['analysis/package.d'], h_dir='analysis/')
+	dc.build_object('analysis/pokemon.o', ['analysis/pokemon.d'], h_dir='analysis/')
+	dc.build_object('analysis/range.o', ['analysis/range.d'], h_dir='analysis/')
+	dc.build_object('analysis/style.o', ['analysis/style.d'], h_dir='analysis/')
+	dc.build_object('analysis/unused.o', ['analysis/unused.d'], h_dir='analysis/')
+	dc.build_object('analysis/duplicate_attribute.o', ['analysis/duplicate_attribute.d'], h_dir='analysis/')
+	dc.build_object('stats.o', ['stats.d'], h_dir='.')
+	dc.build_object('imports.o', ['imports.d'], h_dir='.')
+	dc.build_object('highlighter.o', ['highlighter.d'], h_dir='.')
+	dc.build_object('ctags.o', ['ctags.d'], h_dir='.')
+	dc.build_object('astprinter.o', ['astprinter.d'], h_dir='.')
+	dc.build_object('formatter.o', ['formatter.d'], h_dir='.')
+	dc.build_object('outliner.o', ['outliner.d'], h_dir='.')
+	dc.build_object('main.o', ['main.d', '-I.'], h_dir='.')
+
+	#Process.concurrent_end()
+
+	dc.build_program('test.exe', ['std/*.o', 'std/d/*.o', 'analysis/*.o', '*.o'])
+
+	# Run the tests
+	D.run_print('./test.exe')
+
+
+
+
+
