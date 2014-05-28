@@ -773,7 +773,7 @@ final class AliasDeclaration : ASTNode
 public:
     mixin acceptMembersIfNotNull;
     mixin OpEquals;
-    /** */ LinkageAttribute linkageAttribute;
+    /** */ StorageClass[] storageClasses;
     /** */ Type type;
     /** */ Token name;
     /** */ AliasInitializer[] initializers;
@@ -787,6 +787,8 @@ public:
     mixin acceptMembersIfNotNull;
     mixin OpEquals;
     /** */ Token name;
+    /** */ StorageClass[] storageClasses;
+    /** */ TemplateParameters templateParameters;
     /** */ Type type;
 }
 
@@ -1093,8 +1095,6 @@ final class Attribute : ASTNode
 {
 public:
     mixin acceptMembersIfNotNull;
-    /** */ LinkageAttribute linkageAttribute;
-    /** */ AlignAttribute alignAttribute;
     /** */ PragmaExpression pragmaExpression;
     /** */ StorageClass storageClass;
     /** */ IdType attribute;
@@ -1116,6 +1116,7 @@ public:
     mixin acceptMembersIfNotNull;
     /** */ Token[] identifiers;
     /** */ Initializer[] initializers;
+    /** */ string comment;
     mixin OpEquals;
 }
 
@@ -1531,6 +1532,7 @@ public:
     /** */ Token name;
     /** */ TemplateParameters templateParameters;
     /** */ AssignExpression assignExpression;
+    /** */ Type type;
     mixin OpEquals;
 }
 
@@ -2261,6 +2263,9 @@ public:
     /** */ MixinExpression mixinExpression;
     /** */ ImportExpression importExpression;
     /** */ Vector vector;
+    /** */ Type type;
+    /** */ Token typeConstructor;
+    /** */ Arguments arguments;
     mixin OpEquals;
 }
 
@@ -2425,6 +2430,8 @@ final class StorageClass : ASTNode
 {
 public:
     mixin acceptMembersIfNotNull;
+    /** */ AlignAttribute alignAttribute;
+    /** */ LinkageAttribute linkageAttribute;
     /** */ AtAttribute atAttribute;
     /** */ Deprecated deprecated_;
     /** */ Token token;

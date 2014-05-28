@@ -70,8 +70,6 @@ void inspect(const ASTNode node, size_t indent, string name)
 	else if (auto attr = cast(const Attribute) node)
 	{
 		writefln("%s%s : %s", pad(indent++), name, typeid(attr));
-		attr.linkageAttribute.inspect(indent, "linkageAttribute");
-		attr.alignAttribute.inspect(indent, "alignAttribute");
 		attr.pragmaExpression.inspect(indent, "pragmaExpression");
 		attr.storageClass.inspect(indent, "storageClass");
 		attr.attribute.extraInspect(indent, "attribute");
