@@ -42,15 +42,7 @@ def _configure(is_test):
 
 	return dc
 
-def test():
-	"""Builds the test suite and runs it."""
-	# Setup
-	Users.require_not_root()
-	#clean()
-	dc = _configure(is_test = True)
-
-	#Process.concurrent_start()
-
+def _actual_build(dc):
 	dc.build_object('backtrace.o', ['backtrace.d'], h_dir='.')
 	dc.build_object('dlang_helper.o', ['dlang_helper.d'], h_dir='.')
 	dc.build_object('std/allocator.o', ['std/allocator.d'], h_dir='std/')
@@ -92,6 +84,17 @@ def test():
 	dc.build_object('outliner.o', ['outliner.d'], h_dir='.')
 	dc.build_object('main.o', ['main.d', '-I.'], h_dir='.')
 
+def test():
+	"""Builds the test suite and runs it."""
+	# Setup
+	Users.require_not_root()
+	#clean()
+	dc = _configure(is_test = True)
+
+	#Process.concurrent_start()
+
+	_actual_build(dc)
+
 	#Process.concurrent_end()
 
 	dc.build_program('test.exe', ['std/*.o', 'std/d/*.o', 'analysis/*.o', '*.o'])
@@ -99,7 +102,20 @@ def test():
 	# Run the tests
 	D.run_print('./test.exe')
 
+def build():
+	"""Builds dscanner"""
+	# Setup
+	Users.require_not_root()
+	#clean()
+	dc = _configure(is_test = False)
 
+	#Process.concurrent_start()
+
+	_actual_build(dc)
+
+	#Process.concurrent_end()
+
+	dc.build_program('dscanner.exe', ['std/*.o', 'std/d/*.o', 'analysis/*.o', '*.o'])
 
 
 

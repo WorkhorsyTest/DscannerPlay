@@ -434,7 +434,8 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 			data.isParameter = false;
 			data.line = tokenData.line;
 			data.column = tokenData.column;
-			datas ~= data;
+			if (data.type !is TypeData.init)
+				datas ~= data;
 		}
 	}
 	// Normal variable
@@ -449,7 +450,8 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 			data.type = type;
 			data.isParameter = false;
 			getVariableLineColumn(varDec, name, data.line, data.column);
-			datas ~= data;
+			if (data.type !is TypeData.init)
+				datas ~= data;
 		}
 	}
 
@@ -644,9 +646,9 @@ TokenData[] getFunctionCallArguments(const FunctionCallExpression funcCallExp)
 
 	// Just return if there are no args
 	if (!funcCallExp
-		 || !funcCallExp.arguments
-		 || !funcCallExp.arguments.argumentList
-		 || !funcCallExp.arguments.argumentList.items)
+		|| !funcCallExp.arguments
+		|| !funcCallExp.arguments.argumentList
+		|| !funcCallExp.arguments.argumentList.items)
 	{
 		return args;
 	}
@@ -694,7 +696,7 @@ string getFunctionCallName(const FunctionCallExpression funcExp)
 
 		// The end of the name
 		if (unaryExp.primaryExpression
-			 && unaryExp.primaryExpression.identifierOrTemplateInstance)
+			&& unaryExp.primaryExpression.identifierOrTemplateInstance)
 		{
 			chunks ~= unaryExp.primaryExpression.identifierOrTemplateInstance.identifier.text;
 		}
@@ -918,7 +920,7 @@ void markUsedVariables(const ASTNode node)
 	}
 	else if (node)
 	{
-		throw new Exception("!!! markUsedVariables() override needed for: %s".format(typeid(node)));
+		throw new Exception("!!! markUsedVariables() override needed for: '%s'".format(typeid(node)));
 	}
 }
 
@@ -960,17 +962,18 @@ TypeData getTypeData(const Type type)
 		}
 	}
 
-	throw new Exception("Could not find type name.");
+	stderr.writeln("!!! getTypeData() failed");
+	return TypeData.init;
 }
 
 bool isSameTokenVariable(const TokenData a, const TokenData b)
 {
-	return 
+	return
 		a !is TokenData.init && b !is TokenData.init
-		 && (a.tokenType == TokenType.variable && b.tokenType == TokenType.variable
-		 || a.tokenType == TokenType.field && b.tokenType == TokenType.field)
-		 && a.name && b.name
-		 && a.name == b.name;
+		&& (a.tokenType == TokenType.variable && b.tokenType == TokenType.variable
+		|| a.tokenType == TokenType.field && b.tokenType == TokenType.field)
+		&& a.name && b.name
+		&& a.name == b.name;
 }
 
 TypeData getExpressionReturnType(const ASTNode node, ref size_t line, ref size_t column)
@@ -1507,7 +1510,7 @@ const Token getPromotedToken(const Token left, const Token right)
 	// throw an error if any type names are blank
 	if (a is null || b is null || a == "" || b == "")
 	{
-		string message = "!!! getPromotedToken() failed on tokens: \"%s\" or \"%s\".".format(
+		string message = "!!! getPromotedToken() failed on tokens: '%s' or '%s'.".format(
 			getTokenData(left), getTokenData(right));
 		stderr.writeln(message);
 		return Token.init;
@@ -1517,8 +1520,7 @@ const Token getPromotedToken(const Token left, const Token right)
 	if (a !in promotions || a !in sizes
 		|| b !in promotions || b !in sizes)
 	{
-
-		string message = "!!! getPromotedToken() failed with the type name: \"%s\" or \"%s\".".format(a, b);
+		string message = "!!! getPromotedToken() failed with the type name: '%s' or '%s'.".format(a, b);
 		stderr.writeln(message);
 		return Token.init;
 	}
@@ -2125,8 +2127,6 @@ TokenData getTokenData(const Token token)
 	stderr.writeln(fail);
 	return TokenData.init;
 }
-
-
 
 string tokenStr(const Token token)
 {

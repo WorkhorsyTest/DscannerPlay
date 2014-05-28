@@ -472,7 +472,7 @@ void setVariableIsUsedByName(string name)
 		}
 	}
 
-	throw new Exception("Could not find any declared variable named: %s".format(name));
+	stderr.writefln("!!! setVariableIsUsedByName() failed on variable '%s'.".format(name));
 }
 
 bool isAlreadyImported(string importName)
