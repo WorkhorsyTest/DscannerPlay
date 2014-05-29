@@ -14,6 +14,7 @@ import std.conv;
 import std.d.ast;
 import std.d.lexer;
 import analysis.run;
+import analysis.scope_analyzer;
 import analysis.scope_frame;
 import dlang_helper;
 
@@ -116,7 +117,7 @@ bool hasFunction(const ModuleFunctionSet funcSet, string funcName)
 
 string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
 {
-	bool isImported = analysis.scope_frame.isAlreadyImported(funcSet.importName);
+	bool isImported = gScope.isAlreadyImported(funcSet.importName);
 
 	foreach (func; funcSet.functions)
 	{
@@ -141,7 +142,8 @@ string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
 void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, string file=__FILE__, size_t line=__LINE__)
 {
 	// Reset everything
-	scopeFrameClearEverything();
+	if (gScope)
+		gScope.clear();
 
 	// Run the code and get any warnings
 	string[] rawWarnings = analyze("test", cast(ubyte[]) code, analyzers);
@@ -250,12 +252,12 @@ void declareImport(const SingleImport singImpo)
 	string importName = chunks.join(".");
 
 	// Just return if already imported
-	if (isAlreadyImported(importName))
+	if (gScope.isAlreadyImported(importName))
 		return;
 
 	// Add the import
 	stderr.writefln("??? importing: %s", importName);
-	addImport(importName);
+	gScope.addImport(importName);
 
 	// Add the module
 	string fileName = "%s.d".format(importName);
@@ -288,8 +290,8 @@ void loadModule(string fileName)
 	Module mod = std.d.parser.parseModule(app.data, fileName, p, null);
 
 	// Get data from the module
-	ModuleData moduleData = getModuleData(mod); // FIXME: This splodes
-	addModule(moduleData);
+	ModuleData moduleData = getModuleData(mod);
+	gScope.addModule(moduleData);
 }
 
 void declareFunction(const FunctionDeclaration funcDec)
@@ -297,7 +299,7 @@ void declareFunction(const FunctionDeclaration funcDec)
 	info("declareFunction");
 
 	FunctionData data = getFunctionData(funcDec);
-	addFunction(data);
+	gScope.addFunction(data);
 }
 
 void declareVariable(const VariableDeclaration varDec)
@@ -306,7 +308,7 @@ void declareVariable(const VariableDeclaration varDec)
 
 	foreach (varData; getVariableDatas(varDec))
 	{
-		addVariable(varData);
+		gScope.addVariable(varData);
 	}
 }
 
@@ -328,7 +330,7 @@ void declareParameter(const Parameter param)
 	varData.line = param.name.line;
 	varData.column = param.name.column;
 
-	addVariable(varData);
+	gScope.addVariable(varData);
 }
 
 void declareTemplates(const TemplateParameters tempParams)
@@ -338,7 +340,7 @@ void declareTemplates(const TemplateParameters tempParams)
 	TemplateData[] tempDatas = getTemplateDatas(tempParams);
 	foreach (tempData; tempDatas)
 	{
-		addTemplateParameter(tempData);
+		gScope.addTemplateParameter(tempData);
 	}
 }
 
@@ -347,7 +349,7 @@ void declareStruct(const StructDeclaration structDec)
 	info("declareStruct");
 
 	StructData structData = getStructData(structDec);
-	addStruct(structData);
+	gScope.addStruct(structData);
 }
 
 void declareClass(const ClassDeclaration classDec)
@@ -355,7 +357,7 @@ void declareClass(const ClassDeclaration classDec)
 	info("declareClass");
 
 	ClassData classData = getClassData(classDec);
-	addClass(classData);
+	gScope.addClass(classData);
 }
 
 void declareEnum(const EnumDeclaration enumDec)
@@ -363,7 +365,7 @@ void declareEnum(const EnumDeclaration enumDec)
 	info("declareEnum");
 
 	EnumData enumData = getEnumData(enumDec);
-	addEnum(enumData);
+	gScope.addEnum(enumData);
 }
 
 void declareModule(const Module mod)
@@ -371,7 +373,7 @@ void declareModule(const Module mod)
 	info("declareModule");
 
 	ModuleData moduleData = getModuleData(mod);
-	addModule(moduleData);
+	gScope.addModule(moduleData);
 }
 
 // FIXME: For some reason this never sets decoration.isProperty to true
@@ -603,7 +605,7 @@ ModuleData getModuleData(const Module mod)
 	{
 		// Add decorations such as properties, auto, ref, et cetera
 		Decoration decoration = getDeclarationDecorations(decl);
-		decorations.push(decoration);
+		gScope.decorations.push(decoration);
 
 		if (decl.functionDeclaration)
 		{
@@ -634,7 +636,7 @@ ModuleData getModuleData(const Module mod)
 		}
 
 		// Remove decorations
-		decorations.pop();
+		gScope.decorations.pop();
 	}
 
 	return data;
@@ -721,7 +723,7 @@ TypeData getFunctionReturnTypeData(const FunctionDeclaration funcDec)
 	}
 
 	// Auto return type
-	auto decoration = analysis.scope_frame.decorations.peak;
+	auto decoration = gScope.decorations.peak;
 	if (decoration !is Decoration.init && decoration.isAuto)
 	{
 		return TypeData("auto");
@@ -834,7 +836,7 @@ void markUsedVariables(const ASTNode node)
 			(data.tokenType == TokenType.variable || data.tokenType == TokenType.field || data.tokenType == TokenType.method))
 		{
 			string name = data.name.before(".");
-			setVariableIsUsedByName(name);
+			gScope.setVariableIsUsedByName(name);
 		}
 	}
 	else if (auto exp = cast(const AssignExpression) node)
@@ -1660,13 +1662,13 @@ TokenData getTokenData(const Token token)
 
 	// Token is identifier with "this pointer" prefix
 	// this.blah
-	if (token.type == tok!"this" && token.text && token.text.length && thisPointers.peak)
+	if (token.type == tok!"this" && token.text && token.text.length && gScope.thisPointers.peak)
 	{
 		string member = token.text;
 
 		// Figure out what "this" is
-		auto classData = getClassDataByName(thisPointers.peak);
-		auto structData = getStructDataByName(thisPointers.peak);
+		auto classData = gScope.getClassDataByName(gScope.thisPointers.peak);
+		auto structData = gScope.getStructDataByName(gScope.thisPointers.peak);
 
 		// Class
 		if (classData !is ClassData.init)
@@ -1712,11 +1714,11 @@ TokenData getTokenData(const Token token)
 
 	// Token is just the "this pointer"
 	// this
-	if (token.type == tok!"this" && thisPointers.peak)
+	if (token.type == tok!"this" && gScope.thisPointers.peak)
 	{
 		data.tokenType = TokenType.this_;
 		data.name = "this";
-		data.typeData = TypeData(thisPointers.peak);
+		data.typeData = TypeData(gScope.thisPointers.peak);
 		return data;
 	}
 
@@ -1737,14 +1739,14 @@ TokenData getTokenData(const Token token)
 			identifier = token.text;
 		}
 
-		auto varData = getVariableDataByName(identifier);
+		auto varData = gScope.getVariableDataByName(identifier);
 
 		// Token is a struct/class instance
 		if (varData !is VariableData.init)
 		{
 			string typeName = varData.type.name;
-			auto classData = getClassDataByName(typeName);
-			auto structData = getStructDataByName(typeName);
+			auto classData = gScope.getClassDataByName(typeName);
+			auto structData = gScope.getStructDataByName(typeName);
 
 			// Class instance member
 			if (member && classData !is ClassData.init)
@@ -1904,7 +1906,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a template parameter
-		auto tempData = getTemplateDataByName(identifier);
+		auto tempData = gScope.getTemplateDataByName(identifier);
 		if (tempData !is TemplateData.init)
 		{
 			data.tokenType = TokenType.template_;
@@ -1914,7 +1916,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a function name
-		auto funcData = getFunctionDataByName(identifier);
+		auto funcData = gScope.getFunctionDataByName(identifier);
 		if (funcData !is FunctionData.init)
 		{
 			data.tokenType = TokenType.function_;
@@ -1924,7 +1926,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a class name
-		auto classData = getClassDataByName(identifier);
+		auto classData = gScope.getClassDataByName(identifier);
 		if (classData !is ClassData.init)
 		{
 			data.tokenType = TokenType.class_;
@@ -1934,7 +1936,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a struct name
-		auto structData = getStructDataByName(identifier);
+		auto structData = gScope.getStructDataByName(identifier);
 		if (structData !is StructData.init)
 		{
 			data.tokenType = TokenType.struct_;
@@ -1944,7 +1946,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is an enum
-		auto enumData = getEnumDataByName(identifier);
+		auto enumData = gScope.getEnumDataByName(identifier);
 		if (enumData !is EnumData.init)
 		{
 			data.name = token.text;
@@ -1966,12 +1968,12 @@ TokenData getTokenData(const Token token)
 
 	// Token is an identifier that should have used a this pointer
 	// blah instead of this.blah
-	if (token.type == tok!"identifier" && thisPointers.peak)
+	if (token.type == tok!"identifier" && gScope.thisPointers.peak)
 	{
 		// Token may be a field/method without the this pointer
 		// Figure out what "this" should be
-		auto classData = getClassDataByName(thisPointers.peak);
-		auto structData = getStructDataByName(thisPointers.peak);
+		auto classData = gScope.getClassDataByName(gScope.thisPointers.peak);
+		auto structData = gScope.getStructDataByName(gScope.thisPointers.peak);
 		string identifier = token.text;
 
 		// Class
@@ -2024,7 +2026,7 @@ TokenData getTokenData(const Token token)
 		ModuleData moduleData;
 
 		// Match full module name
-		foreach (mod; analysis.scope_frame.modules)
+		foreach (mod; gScope.modules)
 		{
 			if (fullIdentifier.startsWith(mod.name) && fullIdentifier.length > mod.name.length)
 			{
@@ -2036,13 +2038,13 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Match partial module name using imports
-		foreach (frame; std.range.retro(analysis.scope_frame.frames))
+		foreach (frame; std.range.retro(gScope.frames))
 		{
 			foreach (importName; frame.imports)
 			{
-				if (importName in analysis.scope_frame.modules)
+				if (importName in gScope.modules)
 				{
-					auto candidateModule = analysis.scope_frame.modules[importName];
+					auto candidateModule = gScope.modules[importName];
 
 					// FIXME: Make it work with enum fields, static methods, and properties
 					if (fullIdentifier in candidateModule.variables

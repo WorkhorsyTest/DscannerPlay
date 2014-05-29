@@ -54,7 +54,7 @@ class UnusedCheck : ScopeAnalyzer
 
 		foreach (argName; funArgNames)
 		{
-			auto data = getVariableDataByName(argName);
+			auto data = gScope.getVariableDataByName(argName);
 			if (data != VariableData.init && !data.isUsed)
 			{
 				string message = "Parameter '%s' of function '%s' is not used.".format(argName, funcName);
@@ -66,7 +66,7 @@ class UnusedCheck : ScopeAnalyzer
 	void checkVariablesUnused()
 	{
 		// Before the variables in the current scope frame are destroyed, look to see if they were used.
-		foreach (name, data; getCurrentScopeFrameVariables())
+		foreach (name, data; gScope.getCurrentFrameVariables())
 		{
 			if (data != VariableData.init && !data.isUsed)
 			{

@@ -101,7 +101,7 @@ version (none)
 
 		// Get the name and args of the function to call
 		string name = getFunctionCallName(funcExp);
-		auto funcData = getFunctionDataByName(name);
+		auto funcData = gScope.getFunctionDataByName(name);
 		TypeData[] argTypes = funcData.argTypes;
 
 		// Just return if the args length does not match

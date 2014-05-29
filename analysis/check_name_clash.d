@@ -34,7 +34,7 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		mod.accept(this);
 
-		foreach (name, positions; getNameClashes())
+		foreach (name, positions; gScope.getNameClashes())
 		{
 			// Skip if there are less than two
 			if (positions.length < 2)
