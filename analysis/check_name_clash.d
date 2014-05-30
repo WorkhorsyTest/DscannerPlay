@@ -25,16 +25,128 @@ class NameClashCheck : ScopeAnalyzer
 {
 	alias visit = ScopeAnalyzer.visit;
 
+	Position[][string] nameClashes;
+
 	this(string fileName)
 	{
 		super(fileName, false);
 	}
 
-	override void visit(const Module mod)
+	override void visit(const VariableDeclaration node)
 	{
-		mod.accept(this);
+		node.accept(this);
 
-		foreach (name, positions; gScope.getNameClashes())
+		foreach (varData; getVariableDatas(node))
+		{
+			if (varData is VariableData.init)
+				continue;
+
+			// Check to see if the name is already used
+			IdentifierType identifier;
+			if (varData.isParameter)
+				identifier = IdentifierType.parameter_;
+			else
+				identifier = IdentifierType.variable_;
+
+			checkNameClashes(varData.name, varData.line, varData.column, identifier);
+		}
+	}
+
+	override void visit(const ClassDeclaration node)
+	{
+		node.accept(this);
+
+		auto classData = getClassData(node);
+		if (classData is ClassData.init)
+			return;
+
+		// Check to see if the name is already used
+		checkNameClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
+		// Check to see if the field names are already used
+		foreach (fieldName, field; classData.fields)
+		{
+			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
+		}
+		// Check to see if the method names are already used
+		foreach (methodName, method; classData.methods)
+		{
+			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
+		}
+	}
+
+	override void visit(const StructDeclaration node)
+	{
+		node.accept(this);
+
+		auto structData = getStructData(node);
+		if (structData is StructData.init)
+			return;
+
+		// Check to see if the name is already used
+		checkNameClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
+		// Check to see if the field names are already used
+		foreach (fieldName, field; structData.fields)
+		{
+			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
+		}
+		// Check to see if the method names are already used
+		foreach (methodName, method; structData.methods)
+		{
+			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
+		}
+	}
+
+	override void visit(const FunctionDeclaration node)
+	{
+		node.accept(this);
+
+		auto funcData = getFunctionData(node);
+		if (funcData is FunctionData.init)
+			return;
+
+		// Check to see if the name is already used
+		checkNameClashes(funcData.name, funcData.line, funcData.column, IdentifierType.function_);
+	}
+
+	override void visit(const TemplateParameters node)
+	{
+		node.accept(this);
+
+		foreach (tempData; getTemplateDatas(node))
+		{
+			if (tempData is TemplateData.init)
+				continue;
+
+			// Check to see if the name is already used
+			auto idenType = IdentifierType.template_;
+			checkNameClashes(tempData.name, tempData.line, tempData.column, idenType);
+		}
+	}
+
+	override void visit(const EnumDeclaration node)
+	{
+		node.accept(this);
+
+		auto enumData = getEnumData(node);
+		if (enumData is EnumData.init)
+			return;
+
+		// Check to see if the name is already used
+		checkNameClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
+		// Check to see if the field names are already used
+		foreach (fieldName, field; enumData.fields)
+		{
+			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
+		}
+	}
+
+	// FIXME: Make it so it instead of storing the errors and printing them here
+	// It just prints them when they happen.
+	override void visit(const Module node)
+	{
+		node.accept(this);
+
+		foreach (name, positions; this.nameClashes)
 		{
 			// Skip if there are less than two
 			if (positions.length < 2)
@@ -55,6 +167,167 @@ class NameClashCheck : ScopeAnalyzer
 				);
 				addErrorMessage(pos.line, pos.column, message);
 			}
+		}
+	}
+
+	void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
+	{
+		auto varData = gScope.getVariable(name);
+		auto funcData = gScope.getFunction(name);
+		auto structData = gScope.getStruct(name);
+		auto classData = gScope.getClass(name);
+		auto enumData = gScope.getEnum(name);
+		size_t oldLine, oldColumn;
+		IdentifierType oldType;
+
+		// A variable has that name
+		if (varData !is VariableData.init)
+		{
+			oldLine = varData.line;
+			oldColumn = varData.column;
+			oldType = IdentifierType.variable_;
+		// A function has that name
+		}
+		else if (funcData !is FunctionData.init)
+		{
+			oldLine = funcData.line;
+			oldColumn = funcData.column;
+			oldType = IdentifierType.function_;
+		// A struct has that name
+		}
+		else if (structData !is StructData.init)
+		{
+			oldLine = structData.line;
+			oldColumn = structData.column;
+			oldType = IdentifierType.struct_;
+		// A class has that name
+		}
+		else if (classData !is ClassData.init)
+		{
+			oldLine = classData.line;
+			oldColumn = classData.column;
+			oldType = IdentifierType.class_;
+		// An enum has that name
+		}
+		else if (enumData !is EnumData.init)
+		{
+			oldLine = enumData.line;
+			oldColumn = enumData.column;
+			oldType = IdentifierType.enum_;
+		}
+
+		// Check struct fields and methods
+		if (oldType == IdentifierType.invalid_)
+		{
+			// Each scope frame
+			foreach (frame; gScope.frames)
+			{
+				// Each struct
+				foreach (structName, structData; frame.structs)
+				{
+					// Each field
+					foreach (fieldName, fieldData; structData.fields)
+					{
+						if (fieldName == name)
+						{
+							oldLine = fieldData.line;
+							oldColumn = fieldData.column;
+							oldType = IdentifierType.field_;
+						}
+					}
+					// Each method
+					foreach (methodName, methodData; structData.methods)
+					{
+						if (methodName == name)
+						{
+							oldLine = methodData.line;
+							oldColumn = methodData.column;
+							oldType = IdentifierType.method_;
+						}
+					}
+				}
+			}
+		}
+
+		// Check class fields and methods
+		if (oldType == IdentifierType.invalid_)
+		{
+			// Each scope frame
+			foreach (frame; gScope.frames)
+			{
+				// Each class
+				foreach (className, classData; frame.classes)
+				{
+					// Each field
+					foreach (fieldName, fieldData; classData.fields)
+					{
+						if (fieldName == name)
+						{
+							oldLine = fieldData.line;
+							oldColumn = fieldData.column;
+							oldType = IdentifierType.field_;
+						}
+					}
+					// Each method
+					foreach (methodName, methodInfo; classData.methods)
+					{
+						if (methodName == name)
+						{
+							oldLine = methodInfo.line;
+							oldColumn = methodInfo.column;
+							oldType = IdentifierType.method_;
+						}
+					}
+				}
+			}
+		}
+
+		// Check enum fields
+		if (oldType == IdentifierType.invalid_)
+		{
+			// Each scope frame
+			foreach (frame; gScope.frames)
+			{
+				// Each enum
+				foreach (enumName, enumData; frame.enums)
+				{
+					// Each field
+					foreach (fieldName, fieldData; enumData.fields)
+					{
+						if (fieldName == name)
+						{
+							oldLine = fieldData.line;
+							oldColumn = fieldData.column;
+							oldType = IdentifierType.field_;
+						}
+					}
+				}
+			}
+		}
+
+		// Just return if there is nothing declared with that name
+		if (oldType == IdentifierType.invalid_)
+			return;
+
+		// Save the line and column of the original declaration
+		if (name !in nameClashes)
+		{
+			nameClashes[name] = [];
+			nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
+		}
+
+		// It is a redeclaration if the line and column are already used
+		bool isRedeclaration = false;
+		foreach (pos; nameClashes[name])
+		{
+			if (pos.line == line && pos.column == column && pos.type == type)
+				isRedeclaration = true;
+		}
+
+		// Save it if it is not a redeclaration
+		if (!isRedeclaration)
+		{
+			nameClashes[name] ~= Position(line, column, type);
 		}
 	}
 }

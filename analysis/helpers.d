@@ -212,6 +212,7 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 		}
 	}
 
+	// FIXME: Update this so the errors are ordered by line number
 	// Throw an assert error if there were any warnings that were not expected
 	string[] unexpectedWarnings;
 	foreach (lineNo, warning; warnings)

@@ -203,8 +203,6 @@ class Scope
 	private Queue!IdentifierType parents;
 	private Queue!string thisPointers;
 	private Queue!Decoration decorations;
-	// FIXME: All the name clash checks should be extracted and moved into the name clash checker.
-	Position[][string] nameClashes;
 
 	void pushFrame()
 	{
@@ -244,7 +242,6 @@ class Scope
 		parents.clear();
 		thisPointers.clear();
 		decorations.clear();
-		nameClashes.clear();
 	}
 
 	void parentsPush(IdentifierType parent)
@@ -612,9 +609,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].functions[funcData.name] = funcData;
 		info("    declare function: %s:%s", funcData.name, funcData.returnType);
-
-		// Check to see if the name is already used
-		checkNameClashes(funcData.name, funcData.line, funcData.column, IdentifierType.function_);
 	}
 
 	void addTemplateParameter(TemplateData tempData)
@@ -646,10 +640,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].templates[tempData.name] = tempData;
 		info("    declare template: %s:%s", tempData.name);
-
-		// Check to see if the name is already used
-		auto idenType = IdentifierType.template_;
-		checkNameClashes(tempData.name, tempData.line, tempData.column, idenType);
 	}
 
 	void addVariable(VariableData varData)
@@ -696,15 +686,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].variables[varData.name] = varData;
 		info("    declare variable: %s:%s", varData.name, varData.type);
-
-		// Check to see if the name is already used
-		IdentifierType identifier;
-		if (varData.isParameter)
-			identifier = IdentifierType.parameter_;
-		else
-			identifier = IdentifierType.variable_;
-
-		checkNameClashes(varData.name, varData.line, varData.column, identifier);
 	}
 
 	void addClass(ClassData classData)
@@ -736,19 +717,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].classes[classData.name] = classData;
 		info("    declare class: %s", classData.name);
-
-		// Check to see if the name is already used
-		checkNameClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
-		// Check to see if the field names are already used
-		foreach (fieldName, field; classData.fields)
-		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
-		// Check to see if the method names are already used
-		foreach (methodName, method; classData.methods)
-		{
-			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
-		}
 	}
 
 	void addStruct(StructData structData)
@@ -780,19 +748,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].structs[structData.name] = structData;
 		info("    declare struct: %s", structData.name);
-
-		// Check to see if the name is already used
-		checkNameClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
-		// Check to see if the field names are already used
-		foreach (fieldName, field; structData.fields)
-		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
-		// Check to see if the method names are already used
-		foreach (methodName, method; structData.methods)
-		{
-			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
-		}
 	}
 
 	void addEnum(EnumData enumData) {
@@ -823,14 +778,6 @@ class Scope
 		info("    frame count: %d", frames.length);
 		frames[$-1].enums[enumData.name] = enumData;
 		info("    declare enum: %s", enumData.name);
-
-		// Check to see if the name is already used
-		checkNameClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
-		// Check to see if the field names are already used
-		foreach (fieldName, field; enumData.fields)
-		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
 	}
 
 	void addModule(ModuleData moduleData)
@@ -856,172 +803,6 @@ class Scope
 		// Declare the module
 		modules[moduleData.name] = moduleData;
 		info("    declare module: %s", moduleData.name);
-	}
-
-	Position[][string] getNameClashes()
-	{
-		return nameClashes;
-	}
-
-	void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
-	{
-		auto varData = getVariable(name);
-		auto funcData = getFunction(name);
-		auto structData = getStruct(name);
-		auto classData = getClass(name);
-		auto enumData = getEnum(name);
-		size_t oldLine, oldColumn;
-		IdentifierType oldType;
-
-		// A variable has that name
-		if (varData !is VariableData.init)
-		{
-			oldLine = varData.line;
-			oldColumn = varData.column;
-			oldType = IdentifierType.variable_;
-		// A function has that name
-		}
-		else if (funcData !is FunctionData.init)
-		{
-			oldLine = funcData.line;
-			oldColumn = funcData.column;
-			oldType = IdentifierType.function_;
-		// A struct has that name
-		}
-		else if (structData !is StructData.init)
-		{
-			oldLine = structData.line;
-			oldColumn = structData.column;
-			oldType = IdentifierType.struct_;
-		// A class has that name
-		}
-		else if (classData !is ClassData.init)
-		{
-			oldLine = classData.line;
-			oldColumn = classData.column;
-			oldType = IdentifierType.class_;
-		// An enum has that name
-		}
-		else if (enumData !is EnumData.init)
-		{
-			oldLine = enumData.line;
-			oldColumn = enumData.column;
-			oldType = IdentifierType.enum_;
-		}
-
-		// Check struct fields and methods
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; frames)
-			{
-				// Each struct
-				foreach (structName, structData; frame.structs)
-				{
-					// Each field
-					foreach (fieldName, fieldData; structData.fields)
-					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-					// Each method
-					foreach (methodName, methodData; structData.methods)
-					{
-						if (methodName == name)
-						{
-							oldLine = methodData.line;
-							oldColumn = methodData.column;
-							oldType = IdentifierType.method_;
-						}
-					}
-				}
-			}
-		}
-
-		// Check class fields and methods
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; frames)
-			{
-				// Each class
-				foreach (className, classData; frame.classes)
-				{
-					// Each field
-					foreach (fieldName, fieldData; classData.fields)
-					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-					// Each method
-					foreach (methodName, methodInfo; classData.methods)
-					{
-						if (methodName == name)
-						{
-							oldLine = methodInfo.line;
-							oldColumn = methodInfo.column;
-							oldType = IdentifierType.method_;
-						}
-					}
-				}
-			}
-		}
-
-		// Check enum fields
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; frames)
-			{
-				// Each enum
-				foreach (enumName, enumData; frame.enums)
-				{
-					// Each field
-					foreach (fieldName, fieldData; enumData.fields)
-					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-				}
-			}
-		}
-
-		// Just return if there is nothing declared with that name
-		if (oldType == IdentifierType.invalid_)
-			return;
-
-		// Save the line and column of the original declaration
-		if (name !in nameClashes)
-		{
-			nameClashes[name] = [];
-			nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
-		}
-
-		// It is a redeclaration if the line and column are already used
-		bool isRedeclaration = false;
-		foreach (pos; nameClashes[name])
-		{
-			if (pos.line == line && pos.column == column && pos.type == type)
-				isRedeclaration = true;
-		}
-
-		// Save it if it is not a redeclaration
-		if (!isRedeclaration)
-		{
-			nameClashes[name] ~= Position(line, column, type);
-		}
 	}
 }
 
