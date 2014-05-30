@@ -70,18 +70,7 @@ class SizeTCheck : ScopeAnalyzer
 		{
 			getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
 		}
-version (none)
-{
-		string[] toNames = getVariableNames(varDec);
 
-		stderr.writefln("??? VariableDeclaration - toNames: %s, toType: %s, fromType: %s, line: %d, column: %d",
-			toNames,
-			toType,
-			fromType,
-			line,
-			column
-		);
-}
 		actualCheck(toType, fromType, line, column);
 	}
 
@@ -112,18 +101,9 @@ version (none)
 		{
 			// Get the expression return types
 			size_t line, column;
-
 			TypeData toType = argTypes[i];
 			TypeData fromType = getExpressionReturnType(assExp, line, column);
-version (none)
-{
-			stderr.writefln("??? FunctionCallExpression - toType: %s, fromType: %s, line: %d, column: %d",
-				toType,
-				fromType,
-				line,
-				column
-			);
-}
+
 			string message = "For function argument %d, ".format(i);
 			actualCheck(toType, fromType, line, column, message);
 		}
@@ -170,21 +150,7 @@ version (none)
 		size_t line, column;
 		TypeData toType = getExpressionReturnType(assExp.ternaryExpression, line, column);
 		TypeData fromType = getExpressionReturnType(assExp.assignExpression, line, column);
-version (none)
-{
-		TokenData toName = getExpressionReturnTokenData(assExp.ternaryExpression);
-		TokenData fromName = getExpressionReturnTokenData(assExp.assignExpression);
 
-		stderr.writefln("??? AssignExpression - toName: %s, fromName: %s, toType: %s, fromType: %s, op: %s, line: %d, column: %d",
-			toName,
-			fromName,
-			toType,
-			fromType,
-			assExp.operator.str,
-			line,
-			column
-		);
-}
 		actualCheck(toType, fromType, line, column);
 	}
 
@@ -197,36 +163,16 @@ version (none)
 			message = "";
 
 		// size_t = long fails on 32bit
-		if (toType.toString() == "size_t")
+		if (toType.isSizeT() && fromType.isAnInt64())
 		{
-			switch (fromType.toString())
-			{
-				case "long":
-				case "ulong":
-				case "int64_t":
-				case "uint64_t":
-					message ~= std.string.format("%s will overflow %s on 32bit.", fromType, toType);
-					addErrorMessage(line, column, message);
-					break;
-				default:
-					break;
-			}
+			message ~= std.string.format("%s will overflow %s on 32bit.", fromType, toType);
+			addErrorMessage(line, column, message);
 		}
 		// int = size_t fails on 64bit
-		else if (fromType.toString() == "size_t")
+		else if (fromType.isSizeT() && toType.isAnInt32())
 		{
-			switch (toType.toString())
-			{
-				case "int":
-				case "uint":
-				case "int32_t":
-				case "uint32_t":
-					message ~= std.string.format("%s will overflow %s on 64bit.", fromType, toType);
-					addErrorMessage(line, column, message);
-					break;
-				default:
-					break;
-			}
+			message ~= std.string.format("%s will overflow %s on 64bit.", fromType, toType);
+			addErrorMessage(line, column, message);
 		}
 	}
 }

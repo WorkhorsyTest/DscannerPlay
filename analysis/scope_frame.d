@@ -47,6 +47,39 @@ struct TypeData
 	}
 }
 
+pure bool isSizeT(const TypeData typeData) { return typeData.name == "size_t"; }
+
+pure bool isInt(const TypeData typeData) { return typeData.name == "int"; }
+pure bool isUint(const TypeData typeData) { return typeData.name == "uint"; }
+pure bool isLong(const TypeData typeData) { return typeData.name == "long"; }
+pure bool isUlong(const TypeData typeData) { return typeData.name == "ulong"; }
+
+pure bool isInt8T(const TypeData typeData) { return typeData.name == "int8_t"; }
+pure bool isInt16T(const TypeData typeData) { return typeData.name == "int16_t"; }
+pure bool isInt32T(const TypeData typeData) { return typeData.name == "int32_t"; }
+pure bool isInt64T(const TypeData typeData) { return typeData.name == "int64_t"; }
+
+pure bool isUint8T(const TypeData typeData) { return typeData.name == "uint8_t"; }
+pure bool isUint16T(const TypeData typeData) { return typeData.name == "uint16_t"; }
+pure bool isUint32T(const TypeData typeData) { return typeData.name == "uint32_t"; }
+pure bool isUint64T(const TypeData typeData) { return typeData.name == "uint64_t"; }
+
+pure bool isAnInt32(const TypeData typeData)
+{
+	return isInt(typeData)
+		|| isUint(typeData)
+		|| isInt32T(typeData)
+		|| isUint32T(typeData);
+}
+
+pure bool isAnInt64(const TypeData typeData)
+{
+	return isLong(typeData)
+		|| isUlong(typeData)
+		|| isInt64T(typeData)
+		|| isUint64T(typeData);
+}
+
 struct FunctionData
 {
 	string name;
