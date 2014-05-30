@@ -267,7 +267,7 @@ class Scope
 		return frames[$-1].variables;
 	}
 
-	FunctionData getFunctionDataByName(string name)
+	FunctionData getFunction(string name)
 	{
 		// Match functions in scope frames
 		foreach (frame; std.range.retro(frames))
@@ -310,7 +310,7 @@ class Scope
 		return FunctionData.init;
 	}
 
-	VariableData getVariableDataByName(string name) {
+	VariableData getVariable(string name) {
 		// Match variables in scope frames
 		foreach (frame; std.range.retro(frames))
 		{
@@ -353,7 +353,7 @@ class Scope
 		return VariableData.init;
 	}
 
-	TemplateData getTemplateDataByName(string name) {
+	TemplateData getTemplate(string name) {
 		// Match template in scope frames
 		foreach (frame; std.range.retro(frames))
 		{
@@ -366,7 +366,7 @@ class Scope
 		return TemplateData.init;
 	}
 
-	StructData getStructDataByName(string name)
+	StructData getStruct(string name)
 	{
 		// Match structs in scope frames
 		foreach (frame; std.range.retro(frames))
@@ -410,7 +410,7 @@ class Scope
 		return StructData.init;
 	}
 
-	ClassData getClassDataByName(string name)
+	ClassData getClass(string name)
 	{
 		// Match classes in scope frames
 		foreach (frame; std.range.retro(frames))
@@ -454,7 +454,7 @@ class Scope
 		return ClassData.init;
 	}
 
-	EnumData getEnumDataByName(string name)
+	EnumData getEnum(string name)
 	{
 		// Match enums in scope frames
 		foreach (frame; std.range.retro(frames))
@@ -498,7 +498,7 @@ class Scope
 		return EnumData.init;
 	}
 
-	ModuleData getModuleDataByName(string name)
+	ModuleData getModule(string name)
 	{
 		if (name in modules)
 		{
@@ -522,7 +522,19 @@ class Scope
 		stderr.writefln("!!! setVariableIsUsedByName() failed on variable '%s'.".format(name));
 	}
 
-	bool isAlreadyImported(string importName)
+	void addImport(string importName)
+	{
+		info("addImport");
+
+		// Make sure everything is sane
+		assert (importName, "import name was null");
+		assert (importName.length, "import name was blank");
+
+		frames[$-1].imports ~= importName;
+		info("    add import: %s", importName);
+	}
+
+	bool isImported(string importName)
 	{
 		foreach (frame; frames)
 		{
@@ -536,18 +548,6 @@ class Scope
 		}
 
 		return false;
-	}
-
-	void addImport(string importName)
-	{
-		info("addImport");
-
-		// Make sure everything is sane
-		assert (importName, "import name was null");
-		assert (importName.length, "import name was blank");
-
-		frames[$-1].imports ~= importName;
-		info("    add import: %s", importName);
 	}
 
 	void addFunction(FunctionData funcData)
@@ -832,11 +832,11 @@ class Scope
 
 	void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
 	{
-		auto varData = getVariableDataByName(name);
-		auto funcData = getFunctionDataByName(name);
-		auto structData = getStructDataByName(name);
-		auto classData = getClassDataByName(name);
-		auto enumData = getEnumDataByName(name);
+		auto varData = getVariable(name);
+		auto funcData = getFunction(name);
+		auto structData = getStruct(name);
+		auto classData = getClass(name);
+		auto enumData = getEnum(name);
 		size_t oldLine, oldColumn;
 		IdentifierType oldType;
 

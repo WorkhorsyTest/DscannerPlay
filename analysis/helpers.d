@@ -117,7 +117,7 @@ bool hasFunction(const ModuleFunctionSet funcSet, string funcName)
 
 string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
 {
-	bool isImported = gScope.isAlreadyImported(funcSet.importName);
+	bool isImported = gScope.isImported(funcSet.importName);
 
 	foreach (func; funcSet.functions)
 	{
@@ -252,7 +252,7 @@ void declareImport(const SingleImport singImpo)
 	string importName = chunks.join(".");
 
 	// Just return if already imported
-	if (gScope.isAlreadyImported(importName))
+	if (gScope.isImported(importName))
 		return;
 
 	// Add the import
@@ -1667,8 +1667,8 @@ TokenData getTokenData(const Token token)
 		string member = token.text;
 
 		// Figure out what "this" is
-		auto classData = gScope.getClassDataByName(gScope.thisPointersPeak());
-		auto structData = gScope.getStructDataByName(gScope.thisPointersPeak());
+		auto classData = gScope.getClass(gScope.thisPointersPeak());
+		auto structData = gScope.getStruct(gScope.thisPointersPeak());
 
 		// Class
 		if (classData !is ClassData.init)
@@ -1739,14 +1739,14 @@ TokenData getTokenData(const Token token)
 			identifier = token.text;
 		}
 
-		auto varData = gScope.getVariableDataByName(identifier);
+		auto varData = gScope.getVariable(identifier);
 
 		// Token is a struct/class instance
 		if (varData !is VariableData.init)
 		{
 			string typeName = varData.type.name;
-			auto classData = gScope.getClassDataByName(typeName);
-			auto structData = gScope.getStructDataByName(typeName);
+			auto classData = gScope.getClass(typeName);
+			auto structData = gScope.getStruct(typeName);
 
 			// Class instance member
 			if (member && classData !is ClassData.init)
@@ -1906,7 +1906,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a template parameter
-		auto tempData = gScope.getTemplateDataByName(identifier);
+		auto tempData = gScope.getTemplate(identifier);
 		if (tempData !is TemplateData.init)
 		{
 			data.tokenType = TokenType.template_;
@@ -1916,7 +1916,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a function name
-		auto funcData = gScope.getFunctionDataByName(identifier);
+		auto funcData = gScope.getFunction(identifier);
 		if (funcData !is FunctionData.init)
 		{
 			data.tokenType = TokenType.function_;
@@ -1926,7 +1926,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a class name
-		auto classData = gScope.getClassDataByName(identifier);
+		auto classData = gScope.getClass(identifier);
 		if (classData !is ClassData.init)
 		{
 			data.tokenType = TokenType.class_;
@@ -1936,7 +1936,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is a struct name
-		auto structData = gScope.getStructDataByName(identifier);
+		auto structData = gScope.getStruct(identifier);
 		if (structData !is StructData.init)
 		{
 			data.tokenType = TokenType.struct_;
@@ -1946,7 +1946,7 @@ TokenData getTokenData(const Token token)
 		}
 
 		// Token is an enum
-		auto enumData = gScope.getEnumDataByName(identifier);
+		auto enumData = gScope.getEnum(identifier);
 		if (enumData !is EnumData.init)
 		{
 			data.name = token.text;
@@ -1972,8 +1972,8 @@ TokenData getTokenData(const Token token)
 	{
 		// Token may be a field/method without the this pointer
 		// Figure out what "this" should be
-		auto classData = gScope.getClassDataByName(gScope.thisPointersPeak());
-		auto structData = gScope.getStructDataByName(gScope.thisPointersPeak());
+		auto classData = gScope.getClass(gScope.thisPointersPeak());
+		auto structData = gScope.getStruct(gScope.thisPointersPeak());
 		string identifier = token.text;
 
 		// Class
