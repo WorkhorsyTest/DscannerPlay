@@ -166,10 +166,10 @@ struct Position
 class Scope
 {
 	ScopeFrame[] frames;
-	Queue!IdentifierType parents;
 	ModuleData[string] modules;
-	Queue!string thisPointers;
-	Queue!Decoration decorations;
+	private Queue!IdentifierType parents;
+	private Queue!string thisPointers;
+	private Queue!Decoration decorations;
 	// FIXME: All the name clash checks should be extracted and moved into the name clash checker.
 	Position[][string] nameClashes;
 
@@ -207,11 +207,56 @@ class Scope
 	void clear()
 	{
 		frames.clear();
-		parents.clear();
 		modules.clear();
+		parents.clear();
 		thisPointers.clear();
 		decorations.clear();
 		nameClashes.clear();
+	}
+
+	void parentsPush(IdentifierType parent)
+	{
+		parents.push(parent);
+	}
+
+	void parentsPop()
+	{
+		parents.pop();
+	}
+
+	IdentifierType parentsPeak()
+	{
+		return parents.peak();
+	}
+
+	void thisPointersPush(string thisPointer)
+	{
+		thisPointers.push(thisPointer);
+	}
+
+	void thisPointersPop()
+	{
+		thisPointers.pop();
+	}
+
+	string thisPointersPeak()
+	{
+		return thisPointers.peak();
+	}
+
+	void decorationsPush(Decoration decoration)
+	{
+		decorations.push(decoration);
+	}
+
+	void decorationsPop()
+	{
+		decorations.pop();
+	}
+
+	Decoration decorationsPeak()
+	{
+		return decorations.peak();
 	}
 
 	VariableData[string] getCurrentFrameVariables()

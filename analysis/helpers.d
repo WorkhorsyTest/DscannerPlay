@@ -605,7 +605,7 @@ ModuleData getModuleData(const Module mod)
 	{
 		// Add decorations such as properties, auto, ref, et cetera
 		Decoration decoration = getDeclarationDecorations(decl);
-		gScope.decorations.push(decoration);
+		gScope.decorationsPush(decoration);
 
 		if (decl.functionDeclaration)
 		{
@@ -636,7 +636,7 @@ ModuleData getModuleData(const Module mod)
 		}
 
 		// Remove decorations
-		gScope.decorations.pop();
+		gScope.decorationsPop();
 	}
 
 	return data;
@@ -723,7 +723,7 @@ TypeData getFunctionReturnTypeData(const FunctionDeclaration funcDec)
 	}
 
 	// Auto return type
-	auto decoration = gScope.decorations.peak;
+	auto decoration = gScope.decorationsPeak();
 	if (decoration !is Decoration.init && decoration.isAuto)
 	{
 		return TypeData("auto");
@@ -1662,13 +1662,13 @@ TokenData getTokenData(const Token token)
 
 	// Token is identifier with "this pointer" prefix
 	// this.blah
-	if (token.type == tok!"this" && token.text && token.text.length && gScope.thisPointers.peak)
+	if (token.type == tok!"this" && token.text && token.text.length && gScope.thisPointersPeak())
 	{
 		string member = token.text;
 
 		// Figure out what "this" is
-		auto classData = gScope.getClassDataByName(gScope.thisPointers.peak);
-		auto structData = gScope.getStructDataByName(gScope.thisPointers.peak);
+		auto classData = gScope.getClassDataByName(gScope.thisPointersPeak());
+		auto structData = gScope.getStructDataByName(gScope.thisPointersPeak());
 
 		// Class
 		if (classData !is ClassData.init)
@@ -1714,11 +1714,11 @@ TokenData getTokenData(const Token token)
 
 	// Token is just the "this pointer"
 	// this
-	if (token.type == tok!"this" && gScope.thisPointers.peak)
+	if (token.type == tok!"this" && gScope.thisPointersPeak())
 	{
 		data.tokenType = TokenType.this_;
 		data.name = "this";
-		data.typeData = TypeData(gScope.thisPointers.peak);
+		data.typeData = TypeData(gScope.thisPointersPeak());
 		return data;
 	}
 
@@ -1968,12 +1968,12 @@ TokenData getTokenData(const Token token)
 
 	// Token is an identifier that should have used a this pointer
 	// blah instead of this.blah
-	if (token.type == tok!"identifier" && gScope.thisPointers.peak)
+	if (token.type == tok!"identifier" && gScope.thisPointersPeak())
 	{
 		// Token may be a field/method without the this pointer
 		// Figure out what "this" should be
-		auto classData = gScope.getClassDataByName(gScope.thisPointers.peak);
-		auto structData = gScope.getStructDataByName(gScope.thisPointers.peak);
+		auto classData = gScope.getClassDataByName(gScope.thisPointersPeak());
+		auto structData = gScope.getStructDataByName(gScope.thisPointersPeak());
 		string identifier = token.text;
 
 		// Class

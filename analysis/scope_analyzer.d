@@ -75,16 +75,16 @@ class ScopeAnalyzer : BaseAnalyzer
 
 	override void visitStart(const ClassDeclaration node)
 	{
-		gScope.parents.push(IdentifierType.class_);
-		gScope.thisPointers.push(node.name.text);
+		gScope.parentsPush(IdentifierType.class_);
+		gScope.thisPointersPush(node.name.text);
 
 		declareClass(node);
 	}
 
 	override void visitEnd(const ClassDeclaration node)
 	{
-		gScope.thisPointers.pop();
-		gScope.parents.pop();
+		gScope.thisPointersPop();
+		gScope.parentsPop();
 	}
 
 	override void visitStart(const CmpExpression node)
@@ -96,23 +96,23 @@ class ScopeAnalyzer : BaseAnalyzer
 	{
 		// Add decorations such as properties, auto, ref, et cetera
 		Decoration decoration = getDeclarationDecorations(node);
-		gScope.decorations.push(decoration);
+		gScope.decorationsPush(decoration);
 	}
 
 	override void visitEnd(const Declaration node)
 	{
-		gScope.decorations.pop();
+		gScope.decorationsPop();
 	}
 
 	override void visitStart(const EnumDeclaration node)
 	{
-		gScope.parents.push(IdentifierType.enum_);
+		gScope.parentsPush(IdentifierType.enum_);
 		declareEnum(node);
 	}
 
 	override void visitEnd(const EnumDeclaration node)
 	{
-		gScope.parents.pop();
+		gScope.parentsPop();
 	}
 
 	override void visitStart(const EqualExpression node)
@@ -123,19 +123,19 @@ class ScopeAnalyzer : BaseAnalyzer
 	override void visitStart(const FunctionDeclaration node)
 	{
 		// Only declare if NOT a struct/class method
-		if (gScope.parents.peak != IdentifierType.struct_ && gScope.parents.peak != IdentifierType.class_)
+		if (gScope.parentsPeak() != IdentifierType.struct_ && gScope.parentsPeak() != IdentifierType.class_)
 		{
 			declareFunction(node);
 		}
 
-		gScope.parents.push(IdentifierType.function_);
+		gScope.parentsPush(IdentifierType.function_);
 		gScope.pushFrame();
 	}
 
 	override void visitEnd(const FunctionDeclaration node)
 	{
 		gScope.popFrame();
-		gScope.parents.pop();
+		gScope.parentsPop();
 	}
 
 	override void visitStart(const IdentityExpression node)
@@ -157,7 +157,7 @@ class ScopeAnalyzer : BaseAnalyzer
 		info("start frame by %s", typeid(node));
 		gScope.pushFrame();
 
-		gScope.parents.push(IdentifierType.module_);
+		gScope.parentsPush(IdentifierType.module_);
 		declareModule(node);
 
 		// Declare the global functions and variables
@@ -169,7 +169,7 @@ class ScopeAnalyzer : BaseAnalyzer
 
 			// Add decorations such as properties, auto, ref, et cetera
 			Decoration decoration = getDeclarationDecorations(decl);
-			gScope.decorations.push(decoration);
+			gScope.decorationsPush(decoration);
 
 			// Add the import
 			if (decl.importDeclaration && decl.importDeclaration.singleImports)
@@ -191,13 +191,13 @@ class ScopeAnalyzer : BaseAnalyzer
 			}
 
 			// Remove decorations
-			gScope.decorations.pop();
+			gScope.decorationsPop();
 		}
 	}
 
 	override void visitEnd(const Module node)
 	{
-		gScope.parents.pop();
+		gScope.parentsPop();
 
 		info("exit frame by %s", typeid(node));
 		gScope.popFrame();
@@ -248,16 +248,16 @@ class ScopeAnalyzer : BaseAnalyzer
 
 	override void visitStart(const StructDeclaration node)
 	{
-		gScope.parents.push(IdentifierType.struct_);
-		gScope.thisPointers.push(node.name.text);
+		gScope.parentsPush(IdentifierType.struct_);
+		gScope.thisPointersPush(node.name.text);
 
 		declareStruct(node);
 	}
 
 	override void visitEnd(const StructDeclaration node)
 	{
-		gScope.thisPointers.pop();
-		gScope.parents.pop();
+		gScope.thisPointersPop();
+		gScope.parentsPop();
 	}
 
 	override void visitStart(const TemplateParameters node)
@@ -268,7 +268,7 @@ class ScopeAnalyzer : BaseAnalyzer
 	override void visitStart(const VariableDeclaration node)
 	{
 		// Only declare if NOT a struct/class field
-		if (gScope.parents.peak != IdentifierType.struct_ && gScope.parents.peak != IdentifierType.class_)
+		if (gScope.parentsPeak() != IdentifierType.struct_ && gScope.parentsPeak() != IdentifierType.class_)
 		{
 			declareVariable(node);
 		}

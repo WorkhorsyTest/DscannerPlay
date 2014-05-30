@@ -320,4 +320,3 @@ options:
 }
 
 void doNothing(string, size_t, size_t, string, bool) {}
-
