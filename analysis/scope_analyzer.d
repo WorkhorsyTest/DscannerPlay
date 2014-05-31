@@ -123,12 +123,18 @@ class ScopeAnalyzer : BaseAnalyzer
 	override void visitStart(const FunctionDeclaration node)
 	{
 		// Only declare if NOT a struct/class method
+		IdentifierType identifierType;
 		if (gScope.parentsPeak() != IdentifierType.struct_ && gScope.parentsPeak() != IdentifierType.class_)
 		{
 			declareFunction(node);
+			identifierType = IdentifierType.function_;
+		}
+		else
+		{
+			identifierType = IdentifierType.method_;
 		}
 
-		gScope.parentsPush(IdentifierType.function_);
+		gScope.parentsPush(identifierType);
 		gScope.pushFrame();
 	}
 

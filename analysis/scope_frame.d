@@ -184,18 +184,6 @@ struct Decoration
 	bool isAuto;
 }
 
-struct Position
-{
-	size_t line;
-	size_t column;
-	IdentifierType type;
-
-	string typeName()
-	{
-		return cast(string) this.type;
-	}
-}
-
 class Scope
 {
 	ScopeFrame[] frames;
@@ -536,6 +524,115 @@ class Scope
 		}
 
 		return ModuleData.init;
+	}
+
+	void getIdentifier(string name, ref VariableData varData, ref FunctionData funcData, ref StructData structData, ref ClassData classData, ref EnumData enumData, ref TemplateData templateData)
+	{
+		foreach (frame; std.range.retro(frames))
+		{
+			if (name in frame.variables)
+			{
+				varData = frame.variables[name];
+				return;
+			}
+			else if (name in frame.functions)
+			{
+				funcData = frame.functions[name];
+				return;
+			}
+			else if (name in frame.structs)
+			{
+				structData = frame.structs[name];
+				return;
+			}
+			else if (name in frame.classes)
+			{
+				classData = frame.classes[name];
+				return;
+			}
+			else if (name in frame.enums)
+			{
+				enumData = frame.enums[name];
+				return;
+			}
+			else if (name in frame.templates)
+			{
+				templateData = frame.templates[name];
+				return;
+			}
+		}
+
+		// Match exact module variable name in other module
+		foreach (mod; modules)
+		{
+			if (name.startsWith(mod.name) && name.length > mod.name.length)
+			{
+				auto offset = mod.name.length + 1;
+				string offsetName = name[offset .. $];
+				if (offsetName in mod.variables)
+				{
+					varData = mod.variables[offsetName];
+					return;
+				}
+				else if (offsetName in mod.functions)
+				{
+					funcData = mod.functions[offsetName];
+					return;
+				}
+				else if (offsetName in mod.structs)
+				{
+					structData = mod.structs[offsetName];
+					return;
+				}
+				else if (offsetName in mod.classes)
+				{
+					classData = mod.classes[offsetName];
+					return;
+				}
+				else if (offsetName in mod.enums)
+				{
+					enumData = mod.enums[offsetName];
+					return;
+				}
+			}
+		}
+
+		// Match partial module variable name using imports
+		foreach (frame; std.range.retro(frames))
+		{
+			foreach (importName; frame.imports)
+			{
+				if (importName in modules)
+				{
+					auto mod = modules[importName];
+					if (name in mod.variables)
+					{
+						varData = mod.variables[name];
+						return;
+					}
+					else if (name in mod.functions)
+					{
+						funcData = mod.functions[name];
+						return;
+					}
+					else if (name in mod.structs)
+					{
+						structData = mod.structs[name];
+						return;
+					}
+					else if (name in mod.classes)
+					{
+						classData = mod.classes[name];
+						return;
+					}
+					else if (name in mod.enums)
+					{
+						enumData = mod.enums[name];
+						return;
+					}
+				}
+			}
+		}
 	}
 
 	void setVariableIsUsedByName(string name)

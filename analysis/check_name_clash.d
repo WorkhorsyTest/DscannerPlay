@@ -18,6 +18,18 @@ import analysis.helpers;
 import analysis.scope_frame;
 import analysis.scope_analyzer;
 
+struct Position
+{
+	size_t line;
+	size_t column;
+	IdentifierType type;
+
+	string typeName()
+	{
+		return cast(string) this.type;
+	}
+}
+
 /**
  * Checks for name clashes in classes, structs, variables, parameters, enums, and members.
  */
@@ -34,7 +46,12 @@ class NameClashCheck : ScopeAnalyzer
 
 	override void visit(const VariableDeclaration node)
 	{
-		node.accept(this);
+		// Variable or field?
+		IdentifierType identifierType = IdentifierType.variable_;
+		if (gScope.parentsPeak() == IdentifierType.class_ || gScope.parentsPeak() == IdentifierType.struct_)
+		{
+			identifierType = IdentifierType.field_;
+		}
 
 		foreach (varData; getVariableDatas(node))
 		{
@@ -42,76 +59,77 @@ class NameClashCheck : ScopeAnalyzer
 				continue;
 
 			// Check to see if the name is already used
-			IdentifierType identifier;
-			if (varData.isParameter)
-				identifier = IdentifierType.parameter_;
-			else
-				identifier = IdentifierType.variable_;
-
-			checkNameClashes(varData.name, varData.line, varData.column, identifier);
+			checkNameClashes(varData.name, varData.line, varData.column, identifierType);
 		}
+
+		node.accept(this);
+	}
+
+	override void visit(const Parameter node)
+	{
+		// Just return if can't get the name
+		if (node.name is Token.init || node.name.text is null || node.name.text == "")
+		{
+			node.accept(this);
+			return;
+		}
+
+		VariableData paramData;
+		paramData.name = node.name.text;
+		paramData.type = getTypeData(node.type);
+		paramData.isParameter = true;
+		paramData.line = node.name.line;
+		paramData.column = node.name.column;
+
+		// Check to see if the name is already used
+		checkNameClashes(paramData.name, paramData.line, paramData.column, IdentifierType.parameter_);
+
+		node.accept(this);
 	}
 
 	override void visit(const ClassDeclaration node)
 	{
-		node.accept(this);
-
 		auto classData = getClassData(node);
 		if (classData is ClassData.init)
 			return;
 
 		// Check to see if the name is already used
 		checkNameClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
-		// Check to see if the field names are already used
-		foreach (fieldName, field; classData.fields)
-		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
-		// Check to see if the method names are already used
-		foreach (methodName, method; classData.methods)
-		{
-			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
-		}
+
+		node.accept(this);
 	}
 
 	override void visit(const StructDeclaration node)
 	{
-		node.accept(this);
-
 		auto structData = getStructData(node);
 		if (structData is StructData.init)
 			return;
 
 		// Check to see if the name is already used
 		checkNameClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
-		// Check to see if the field names are already used
-		foreach (fieldName, field; structData.fields)
-		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
-		// Check to see if the method names are already used
-		foreach (methodName, method; structData.methods)
-		{
-			checkNameClashes(methodName, method.line, method.column, IdentifierType.method_);
-		}
+
+		node.accept(this);
 	}
 
 	override void visit(const FunctionDeclaration node)
 	{
-		node.accept(this);
-
 		auto funcData = getFunctionData(node);
 		if (funcData is FunctionData.init)
 			return;
 
+		// Function or method?
+		// FIXME: The problem is that it is already marked that the parent is the function or 
+		// method we are in. So the parent is actually this, rather than a struct/class.
+		IdentifierType identifierType = gScope.parentsPeak();
+
 		// Check to see if the name is already used
-		checkNameClashes(funcData.name, funcData.line, funcData.column, IdentifierType.function_);
+		checkNameClashes(funcData.name, funcData.line, funcData.column, identifierType);
+
+		node.accept(this);
 	}
 
 	override void visit(const TemplateParameters node)
 	{
-		node.accept(this);
-
 		foreach (tempData; getTemplateDatas(node))
 		{
 			if (tempData is TemplateData.init)
@@ -121,23 +139,26 @@ class NameClashCheck : ScopeAnalyzer
 			auto idenType = IdentifierType.template_;
 			checkNameClashes(tempData.name, tempData.line, tempData.column, idenType);
 		}
+
+		node.accept(this);
 	}
 
 	override void visit(const EnumDeclaration node)
 	{
-		node.accept(this);
-
 		auto enumData = getEnumData(node);
 		if (enumData is EnumData.init)
 			return;
 
 		// Check to see if the name is already used
 		checkNameClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
+
 		// Check to see if the field names are already used
 		foreach (fieldName, field; enumData.fields)
 		{
 			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
 		}
+
+		node.accept(this);
 	}
 
 	// FIXME: Make it so it instead of storing the errors and printing them here
@@ -172,11 +193,14 @@ class NameClashCheck : ScopeAnalyzer
 
 	void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
 	{
-		auto varData = gScope.getVariable(name);
-		auto funcData = gScope.getFunction(name);
-		auto structData = gScope.getStruct(name);
-		auto classData = gScope.getClass(name);
-		auto enumData = gScope.getEnum(name);
+		VariableData varData;
+		FunctionData funcData;
+		StructData structData;
+		ClassData classData;
+		EnumData enumData;
+		TemplateData templateData;
+		gScope.getIdentifier(name, varData, funcData, structData, classData, enumData, templateData);
+
 		size_t oldLine, oldColumn;
 		IdentifierType oldType;
 
@@ -186,29 +210,29 @@ class NameClashCheck : ScopeAnalyzer
 			oldLine = varData.line;
 			oldColumn = varData.column;
 			oldType = IdentifierType.variable_;
-		// A function has that name
 		}
+		// A function has that name
 		else if (funcData !is FunctionData.init)
 		{
 			oldLine = funcData.line;
 			oldColumn = funcData.column;
 			oldType = IdentifierType.function_;
-		// A struct has that name
 		}
+		// A struct has that name
 		else if (structData !is StructData.init)
 		{
 			oldLine = structData.line;
 			oldColumn = structData.column;
 			oldType = IdentifierType.struct_;
-		// A class has that name
 		}
+		// A class has that name
 		else if (classData !is ClassData.init)
 		{
 			oldLine = classData.line;
 			oldColumn = classData.column;
 			oldType = IdentifierType.class_;
-		// An enum has that name
 		}
+		// An enum has that name
 		else if (enumData !is EnumData.init)
 		{
 			oldLine = enumData.line;
@@ -310,15 +334,15 @@ class NameClashCheck : ScopeAnalyzer
 			return;
 
 		// Save the line and column of the original declaration
-		if (name !in nameClashes)
+		if (name !in this.nameClashes)
 		{
-			nameClashes[name] = [];
-			nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
+			this.nameClashes[name] = [];
+			this.nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
 		}
 
 		// It is a redeclaration if the line and column are already used
 		bool isRedeclaration = false;
-		foreach (pos; nameClashes[name])
+		foreach (pos; this.nameClashes[name])
 		{
 			if (pos.line == line && pos.column == column && pos.type == type)
 				isRedeclaration = true;
@@ -327,7 +351,7 @@ class NameClashCheck : ScopeAnalyzer
 		// Save it if it is not a redeclaration
 		if (!isRedeclaration)
 		{
-			nameClashes[name] ~= Position(line, column, type);
+			this.nameClashes[name] ~= Position(line, column, type);
 		}
 	}
 }
@@ -363,43 +387,42 @@ unittest
 			void pie() { // [warn]: The function 'pie' clashes with the function at (23:8).
 			}
 		}
-
 		// Function vs nested struct
 		void monkey() {
-			struct monkey { // [warn]: The struct 'monkey' clashes with the function at (29:8).
+			struct monkey { // [warn]: The struct 'monkey' clashes with the function at (28:8).
 			}
 		}
 
 		// Struct vs member variable vs nested variable
 		struct dog {
-			int dog; // [warn]: The field 'dog' clashes with the struct at (35:10).
+			int dog; // [warn]: The field 'dog' clashes with the struct at (34:10).
 			void bark() {
-				int dog; // [warn]: The variable 'dog' clashes with the struct at (35:10).
+				int dog; // [warn]: The variable 'dog' clashes with the struct at (34:10).
 			}
 		}
 
 		// Struct vs member method vs nested variable
 		struct cat {
-			void cat() { // [warn]: The method 'cat' clashes with the struct at (43:10).
-				int cat; // [warn]: The variable 'cat' clashes with the struct at (43:10).
+			void cat() { // [warn]: The method 'cat' clashes with the struct at (42:10).
+				int cat; // [warn]: The variable 'cat' clashes with the struct at (42:10).
 			}
 		}
 
 		// Struct member variable vs variable vs nested variable
 		int weight;
 		struct bird {
-			int weight; // [warn]: The field 'weight' clashes with the variable at (50:7).
+			int weight; // [warn]: The field 'weight' clashes with the variable at (49:7).
 			void fly() {
-				int weight; // [warn]: The variable 'weight' clashes with the variable at (50:7).
+				int weight; // [warn]: The variable 'weight' clashes with the variable at (49:7).
 			}
 		}
 
 		// Class member variable vs variable
 		string flavor;
 		class pig {
-			string flavor; // [warn]: The field 'flavor' clashes with the variable at (59:10).
+			string flavor; // [warn]: The field 'flavor' clashes with the variable at (58:10).
 			void oink() {
-				string pig = "honey baked ham"; // [warn]: The variable 'pig' clashes with the class at (60:9).
+				string pig = "honey baked ham"; // [warn]: The variable 'pig' clashes with the class at (59:9).
 				this.flavor = "canadian bacon";
 			}
 		}
@@ -407,8 +430,8 @@ unittest
 		// Enum vs variable
 		int coffee;
 		void drinks() {
-			enum coffee {// [warn]: The enum 'coffee' clashes with the variable at (69:7).
-				coffee // [warn]: The field 'coffee' clashes with the variable at (69:7).
+			enum coffee {// [warn]: The enum 'coffee' clashes with the variable at (68:7).
+				coffee // [warn]: The field 'coffee' clashes with the variable at (68:7).
 			}
 		}
 	}c, analysis.run.AnalyzerCheck.name_clash_check);
