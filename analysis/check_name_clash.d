@@ -37,8 +37,6 @@ class NameClashCheck : ScopeAnalyzer
 {
 	alias visit = ScopeAnalyzer.visit;
 
-	Position[][string] nameClashes;
-
 	this(string fileName)
 	{
 		super(fileName, false);
@@ -59,7 +57,7 @@ class NameClashCheck : ScopeAnalyzer
 				continue;
 
 			// Check to see if the name is already used
-			checkNameClashes(varData.name, varData.line, varData.column, identifierType);
+			checkClashes(varData.name, varData.line, varData.column, identifierType);
 		}
 
 		node.accept(this);
@@ -82,7 +80,7 @@ class NameClashCheck : ScopeAnalyzer
 		paramData.column = node.name.column;
 
 		// Check to see if the name is already used
-		checkNameClashes(paramData.name, paramData.line, paramData.column, IdentifierType.parameter_);
+		checkClashes(paramData.name, paramData.line, paramData.column, IdentifierType.parameter_);
 
 		node.accept(this);
 	}
@@ -91,10 +89,13 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		auto classData = getClassData(node);
 		if (classData is ClassData.init)
+		{
+			node.accept(this);
 			return;
+		}
 
 		// Check to see if the name is already used
-		checkNameClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
+		checkClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
 
 		node.accept(this);
 	}
@@ -103,10 +104,13 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		auto structData = getStructData(node);
 		if (structData is StructData.init)
+		{
+			node.accept(this);
 			return;
+		}
 
 		// Check to see if the name is already used
-		checkNameClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
+		checkClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
 
 		node.accept(this);
 	}
@@ -115,7 +119,10 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		auto funcData = getFunctionData(node);
 		if (funcData is FunctionData.init)
+		{
+			node.accept(this);
 			return;
+		}
 
 		// Function or method?
 		// FIXME: The problem is that it is already marked that the parent is the function or 
@@ -123,7 +130,7 @@ class NameClashCheck : ScopeAnalyzer
 		IdentifierType identifierType = gScope.parentsPeak();
 
 		// Check to see if the name is already used
-		checkNameClashes(funcData.name, funcData.line, funcData.column, identifierType);
+		checkClashes(funcData.name, funcData.line, funcData.column, identifierType);
 
 		node.accept(this);
 	}
@@ -137,7 +144,7 @@ class NameClashCheck : ScopeAnalyzer
 
 			// Check to see if the name is already used
 			auto idenType = IdentifierType.template_;
-			checkNameClashes(tempData.name, tempData.line, tempData.column, idenType);
+			checkClashes(tempData.name, tempData.line, tempData.column, idenType);
 		}
 
 		node.accept(this);
@@ -147,211 +154,168 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		auto enumData = getEnumData(node);
 		if (enumData is EnumData.init)
+		{
+			node.accept(this);
 			return;
+		}
 
 		// Check to see if the name is already used
-		checkNameClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
+		checkClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
 
 		// Check to see if the field names are already used
 		foreach (fieldName, field; enumData.fields)
 		{
-			checkNameClashes(fieldName, field.line, field.column, IdentifierType.field_);
+			checkClashes(fieldName, field.line, field.column, IdentifierType.field_);
 		}
 
 		node.accept(this);
 	}
 
-	// FIXME: Make it so it instead of storing the errors and printing them here
-	// It just prints them when they happen.
-	override void visit(const Module node)
+	void checkClashes(string name, size_t line, size_t column, IdentifierType type)
 	{
-		node.accept(this);
+//		writefln("!!! checkClashes() name:%s, line:%s, column:%s, type:%s", name, line, column, type);
 
-		foreach (name, positions; this.nameClashes)
+		size_t oldLine;
+		size_t oldColumn;
+		IdentifierType oldType = IdentifierType.invalid_;
+
+		foreach (frame; std.range.retro(gScope.frames))
 		{
-			// Skip if there are less than two
-			if (positions.length < 2)
-				continue;
+			checkInstanceClashes(frame.variables, IdentifierType.variable_, oldLine, oldColumn, oldType, name, line, column, type);
+			checkInstanceClashes(frame.functions, IdentifierType.function_, oldLine, oldColumn, oldType, name, line, column, type);
+			checkInstanceClashes(frame.structs, IdentifierType.struct_, oldLine, oldColumn, oldType, name, line, column, type);
+			checkInstanceClashes(frame.classes, IdentifierType.class_, oldLine, oldColumn, oldType, name, line, column, type);
+			checkInstanceClashes(frame.enums, IdentifierType.enum_, oldLine, oldColumn, oldType, name, line, column, type);
 
-			// Get the original position
-			auto orig = positions[0];
-
-			// Add an error for each clashing name
-			foreach (pos; positions[1 .. $])
+			checkFieldClashes(frame.enums, oldLine, oldColumn, oldType, name, line, column, type);
+			// FIXME: Make these work too
+			version (none)
 			{
-				string message = "The %s '%s' clashes with the %s at (%s:%s).".format(
-					pos.typeName(),
-					name,
-					orig.typeName(),
-					orig.line,
-					orig.column
-				);
-				addErrorMessage(pos.line, pos.column, message);
+			checkFieldClashes(frame.structs, oldLine, oldColumn, oldType, name, line, column, type);
+			checkFieldClashes(frame.classes, oldLine, oldColumn, oldType, name, line, column, type);
+			checkMethodClashes(frame.structs, oldLine, oldColumn, oldType, name, line, column, type);
+			checkMethodClashes(frame.classes, oldLine, oldColumn, oldType, name, line, column, type);
 			}
 		}
-	}
 
-	void checkNameClashes(string name, size_t line, size_t column, IdentifierType type)
-	{
-		VariableData varData;
-		FunctionData funcData;
-		StructData structData;
-		ClassData classData;
-		EnumData enumData;
-		TemplateData templateData;
-		gScope.getIdentifier(name, varData, funcData, structData, classData, enumData, templateData);
-
-		size_t oldLine, oldColumn;
-		IdentifierType oldType;
-
-		// A variable has that name
-		if (varData !is VariableData.init)
+		// Match exact module variable name in other module
+		foreach (mod; gScope.modules)
 		{
-			oldLine = varData.line;
-			oldColumn = varData.column;
-			oldType = IdentifierType.variable_;
-		}
-		// A function has that name
-		else if (funcData !is FunctionData.init)
-		{
-			oldLine = funcData.line;
-			oldColumn = funcData.column;
-			oldType = IdentifierType.function_;
-		}
-		// A struct has that name
-		else if (structData !is StructData.init)
-		{
-			oldLine = structData.line;
-			oldColumn = structData.column;
-			oldType = IdentifierType.struct_;
-		}
-		// A class has that name
-		else if (classData !is ClassData.init)
-		{
-			oldLine = classData.line;
-			oldColumn = classData.column;
-			oldType = IdentifierType.class_;
-		}
-		// An enum has that name
-		else if (enumData !is EnumData.init)
-		{
-			oldLine = enumData.line;
-			oldColumn = enumData.column;
-			oldType = IdentifierType.enum_;
-		}
-
-		// Check struct fields and methods
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; gScope.frames)
+			if (name.startsWith(mod.name) && name.length > mod.name.length)
 			{
-				// Each struct
-				foreach (structName, structData; frame.structs)
+				auto offset = mod.name.length + 1;
+				string offsetName = name[offset .. $];
+
+				checkInstanceClashes(mod.variables, IdentifierType.variable_, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkInstanceClashes(mod.functions, IdentifierType.function_, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkInstanceClashes(mod.structs, IdentifierType.struct_, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkInstanceClashes(mod.classes, IdentifierType.class_, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkInstanceClashes(mod.enums, IdentifierType.enum_, oldLine, oldColumn, oldType, offsetName, line, column, type);
+
+				checkFieldClashes(mod.enums, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				// FIXME: Make these work too
+				version (none)
 				{
-					// Each field
-					foreach (fieldName, fieldData; structData.fields)
+				checkFieldClashes(mod.structs, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkFieldClashes(mod.classes, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkMethodClashes(mod.structs, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				checkMethodClashes(mod.classes, oldLine, oldColumn, oldType, offsetName, line, column, type);
+				}
+			}
+		}
+
+		// Match partial module variable name using imports
+		foreach (frame; std.range.retro(gScope.frames))
+		{
+			foreach (importName; frame.imports)
+			{
+				if (importName in gScope.modules)
+				{
+					auto mod = gScope.modules[importName];
+
+					checkInstanceClashes(mod.variables, IdentifierType.variable_, oldLine, oldColumn, oldType, name, line, column, type);
+					checkInstanceClashes(mod.functions, IdentifierType.function_, oldLine, oldColumn, oldType, name, line, column, type);
+					checkInstanceClashes(mod.structs, IdentifierType.struct_, oldLine, oldColumn, oldType, name, line, column, type);
+					checkInstanceClashes(mod.classes, IdentifierType.class_, oldLine, oldColumn, oldType, name, line, column, type);
+					checkInstanceClashes(mod.enums, IdentifierType.enum_, oldLine, oldColumn, oldType, name, line, column, type);
+
+					checkFieldClashes(mod.enums, oldLine, oldColumn, oldType, name, line, column, type);
+					// FIXME: Make these work too
+					version (none)
 					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-					// Each method
-					foreach (methodName, methodData; structData.methods)
-					{
-						if (methodName == name)
-						{
-							oldLine = methodData.line;
-							oldColumn = methodData.column;
-							oldType = IdentifierType.method_;
-						}
+					checkFieldClashes(mod.structs, oldLine, oldColumn, oldType, name, line, column, type);
+					checkFieldClashes(mod.classes, oldLine, oldColumn, oldType, name, line, column, type);
+					checkMethodClashes(mod.structs, oldLine, oldColumn, oldType, name, line, column, type);
+					checkMethodClashes(mod.classes, oldLine, oldColumn, oldType, name, line, column, type);
 					}
 				}
 			}
 		}
 
-		// Check class fields and methods
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; gScope.frames)
-			{
-				// Each class
-				foreach (className, classData; frame.classes)
-				{
-					// Each field
-					foreach (fieldName, fieldData; classData.fields)
-					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-					// Each method
-					foreach (methodName, methodInfo; classData.methods)
-					{
-						if (methodName == name)
-						{
-							oldLine = methodInfo.line;
-							oldColumn = methodInfo.column;
-							oldType = IdentifierType.method_;
-						}
-					}
-				}
-			}
-		}
-
-		// Check enum fields
-		if (oldType == IdentifierType.invalid_)
-		{
-			// Each scope frame
-			foreach (frame; gScope.frames)
-			{
-				// Each enum
-				foreach (enumName, enumData; frame.enums)
-				{
-					// Each field
-					foreach (fieldName, fieldData; enumData.fields)
-					{
-						if (fieldName == name)
-						{
-							oldLine = fieldData.line;
-							oldColumn = fieldData.column;
-							oldType = IdentifierType.field_;
-						}
-					}
-				}
-			}
-		}
-
-		// Just return if there is nothing declared with that name
 		if (oldType == IdentifierType.invalid_)
 			return;
 
-		// Save the line and column of the original declaration
-		if (name !in this.nameClashes)
-		{
-			this.nameClashes[name] = [];
-			this.nameClashes[name] ~= Position(oldLine, oldColumn, oldType);
-		}
+		// Print the warning
+		string message = "The %s '%s' clashes with the %s at (%s:%s).".format(
+			cast(string) type,
+			name,
+			cast(string) oldType,
+			oldLine,
+			oldColumn
+		);
+		addErrorMessage(line, column, message);
+	}
 
-		// It is a redeclaration if the line and column are already used
-		bool isRedeclaration = false;
-		foreach (pos; this.nameClashes[name])
+	private void checkInstanceClashes(T)(T datas, IdentifierType matchType,
+		ref size_t oldLine, ref size_t oldColumn, ref IdentifierType oldType,
+		string name, size_t line, size_t column, IdentifierType type)
+	{
+		if (name in datas)
 		{
-			if (pos.line == line && pos.column == column && pos.type == type)
-				isRedeclaration = true;
+			auto data = datas[name];
+			if (line > data.line || (line == data.line && column > data.column))
+			{
+				oldLine = data.line;
+				oldColumn = data.column;
+				oldType = matchType;
+			}
 		}
+	}
 
-		// Save it if it is not a redeclaration
-		if (!isRedeclaration)
+	private void checkMethodClashes(T)(T datas,
+		ref size_t oldLine, ref size_t oldColumn, ref IdentifierType oldType,
+		string name, size_t line, size_t column, IdentifierType type)
+	{
+		// Field name
+		foreach (thingName, thingData; datas)
 		{
-			this.nameClashes[name] ~= Position(line, column, type);
+			foreach (methodName, data; thingData.methods)
+			{
+				if (methodName == name && line > data.line || (line == data.line && column > data.column))
+				{
+					oldLine = data.line;
+					oldColumn = data.column;
+					oldType = IdentifierType.field_;
+				}
+			}
+		}
+	}
+
+	private void checkFieldClashes(T)(T datas,
+		ref size_t oldLine, ref size_t oldColumn, ref IdentifierType oldType,
+		string name, size_t line, size_t column, IdentifierType type)
+	{
+		foreach (thingName, thingData; datas)
+		{
+			foreach (fieldName, data; thingData.fields)
+			{
+				if (fieldName == name && line > data.line || (line == data.line && column > data.column))
+				{
+					oldLine = data.line;
+					oldColumn = data.column;
+					oldType = IdentifierType.field_;
+				}
+			}
 		}
 	}
 }
@@ -430,10 +394,16 @@ unittest
 		// Enum vs variable
 		int coffee;
 		void drinks() {
-			enum coffee {// [warn]: The enum 'coffee' clashes with the variable at (68:7).
+			enum coffee { // [warn]: The enum 'coffee' clashes with the variable at (68:7).
 				coffee // [warn]: The field 'coffee' clashes with the variable at (68:7).
 			}
 		}
+
+		// Variable vs enum
+		enum teas {
+			chai
+		}
+		int chai; // [warn]: The variable 'chai' clashes with the field at (77:4).
 	}c, analysis.run.AnalyzerCheck.name_clash_check);
 
 	stderr.writeln("Unittest for NameClashCheck passed.");
