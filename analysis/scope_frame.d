@@ -318,7 +318,8 @@ class Scope
 				if (importName in modules)
 				{
 					auto mod = modules[importName];
-					if (name in mod.functions) {
+					if (name in mod.functions)
+					{
 						return mod.functions[name];
 					}
 				}
@@ -328,7 +329,8 @@ class Scope
 		return FunctionData.init;
 	}
 
-	VariableData getVariable(string name) {
+	VariableData getVariable(string name)
+	{
 		// Match variables in scope frames
 		foreach (frame; std.range.retro(frames))
 		{
@@ -371,7 +373,8 @@ class Scope
 		return VariableData.init;
 	}
 
-	TemplateData getTemplate(string name) {
+	TemplateData getTemplate(string name)
+	{
 		// Match template in scope frames
 		foreach (frame; std.range.retro(frames))
 		{
@@ -586,7 +589,8 @@ class Scope
 			if (funcData.name in frame.functions)
 			{
 				auto funcOther = frame.functions[funcData.name];
-				if (funcOther == funcData) {
+				if (funcOther == funcData)
+				{
 					info("Tried to redeclare function '%s'.", funcData.name);
 					return;
 				}
@@ -738,7 +742,8 @@ class Scope
 		info("    declare struct: %s", structData.name);
 	}
 
-	void addEnum(EnumData enumData) {
+	void addEnum(EnumData enumData)
+	{
 		info("addEnum");
 
 		// Make sure everything is sane
