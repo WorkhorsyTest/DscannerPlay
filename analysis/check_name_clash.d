@@ -18,17 +18,6 @@ import analysis.helpers;
 import analysis.scope_frame;
 import analysis.scope_analyzer;
 
-struct Position
-{
-	size_t line;
-	size_t column;
-	IdentifierType type;
-
-	string typeName()
-	{
-		return cast(string) this.type;
-	}
-}
 
 /**
  * Checks for name clashes in classes, structs, variables, parameters, enums, and members.
@@ -47,17 +36,14 @@ class NameClashCheck : ScopeAnalyzer
 		// Variable or field?
 		IdentifierType identifierType = IdentifierType.variable_;
 		if (gScope.parentsPeak() == IdentifierType.class_ || gScope.parentsPeak() == IdentifierType.struct_)
-		{
 			identifierType = IdentifierType.field_;
-		}
 
+		// Get the data
 		foreach (varData; getVariableDatas(node))
 		{
-			if (varData is VariableData.init)
-				continue;
-
 			// Check to see if the name is already used
-			checkClashes(varData.name, varData.line, varData.column, identifierType);
+			if (varData !is VariableData.init)
+				checkClashes(varData.name, varData.line, varData.column, identifierType);
 		}
 
 		node.accept(this);
@@ -72,6 +58,7 @@ class NameClashCheck : ScopeAnalyzer
 			return;
 		}
 
+		// Get the data
 		VariableData paramData;
 		paramData.name = node.name.text;
 		paramData.type = getTypeData(node.type);
@@ -87,42 +74,32 @@ class NameClashCheck : ScopeAnalyzer
 
 	override void visit(const ClassDeclaration node)
 	{
+		// Get the data
 		auto classData = getClassData(node);
-		if (classData is ClassData.init)
-		{
-			node.accept(this);
-			return;
-		}
 
 		// Check to see if the name is already used
-		checkClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
+		if (classData !is ClassData.init)
+			checkClashes(classData.name, classData.line, classData.column, IdentifierType.class_);
 
 		node.accept(this);
 	}
 
 	override void visit(const StructDeclaration node)
 	{
+		// Get the data
 		auto structData = getStructData(node);
-		if (structData is StructData.init)
-		{
-			node.accept(this);
-			return;
-		}
 
 		// Check to see if the name is already used
-		checkClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
+		if (structData !is StructData.init)
+			checkClashes(structData.name, structData.line, structData.column, IdentifierType.struct_);
 
 		node.accept(this);
 	}
 
 	override void visit(const FunctionDeclaration node)
 	{
+		// Get the data
 		auto funcData = getFunctionData(node);
-		if (funcData is FunctionData.init)
-		{
-			node.accept(this);
-			return;
-		}
 
 		// Function or method?
 		// FIXME: The problem is that it is already marked that the parent is the function or 
@@ -130,21 +107,20 @@ class NameClashCheck : ScopeAnalyzer
 		IdentifierType identifierType = gScope.parentsPeak();
 
 		// Check to see if the name is already used
-		checkClashes(funcData.name, funcData.line, funcData.column, identifierType);
+		if (funcData !is FunctionData.init)
+			checkClashes(funcData.name, funcData.line, funcData.column, identifierType);
 
 		node.accept(this);
 	}
 
 	override void visit(const TemplateParameters node)
 	{
+		// Get the data
 		foreach (tempData; getTemplateDatas(node))
 		{
-			if (tempData is TemplateData.init)
-				continue;
-
 			// Check to see if the name is already used
-			auto idenType = IdentifierType.template_;
-			checkClashes(tempData.name, tempData.line, tempData.column, idenType);
+			if (tempData !is TemplateData.init)
+				checkClashes(tempData.name, tempData.line, tempData.column, IdentifierType.template_);
 		}
 
 		node.accept(this);
@@ -152,21 +128,25 @@ class NameClashCheck : ScopeAnalyzer
 
 	override void visit(const EnumDeclaration node)
 	{
+		// Get the data
 		auto enumData = getEnumData(node);
-		if (enumData is EnumData.init)
-		{
-			node.accept(this);
-			return;
-		}
 
 		// Check to see if the name is already used
-		checkClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
+		if (enumData !is EnumData.init)
+			checkClashes(enumData.name, enumData.line, enumData.column, IdentifierType.enum_);
 
-		// Check to see if the field names are already used
-		foreach (fieldName, field; enumData.fields)
-		{
-			checkClashes(fieldName, field.line, field.column, IdentifierType.field_);
-		}
+		node.accept(this);
+	}
+
+	override void visit(const EnumMember node)
+	{
+		// Get the data
+		string name;
+		auto fieldData = getEnumFieldData(node, name);
+
+		// Check to see if the name is already used
+		if (fieldData !is FieldData.init)
+			checkClashes(name, fieldData.line, fieldData.column, IdentifierType.field_);
 
 		node.accept(this);
 	}

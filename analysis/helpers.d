@@ -566,14 +566,22 @@ EnumData getEnumData(const EnumDeclaration enumDec)
 
 	foreach (member; enumDec.enumBody.enumMembers)
 	{
-		if (member)
-		{
-			string name = member.name.text;
-			FieldData fieldData;
-			fieldData.line = member.name.line;
-			fieldData.column = member.name.column;
-			data.fields[name] = fieldData;
-		}
+		string name;
+		auto fieldData = getEnumFieldData(member, name);
+		data.fields[name] = fieldData;
+	}
+
+	return data;
+}
+
+FieldData getEnumFieldData(const EnumMember enumMember, ref string name)
+{
+	FieldData data;
+	if (enumMember)
+	{
+		name = enumMember.name.text;
+		data.line = enumMember.name.line;
+		data.column = enumMember.name.column;
 	}
 
 	return data;
