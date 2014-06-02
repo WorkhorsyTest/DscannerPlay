@@ -286,7 +286,6 @@ class NameClashCheck : ScopeAnalyzer
 		ref size_t oldLine, ref size_t oldColumn, ref IdentifierType oldType,
 		string name, size_t line, size_t column, IdentifierType type)
 	{
-		// Field name
 		foreach (thingName, thingData; datas)
 		{
 			foreach (methodName, data; thingData.methods)
@@ -295,7 +294,7 @@ class NameClashCheck : ScopeAnalyzer
 				{
 					oldLine = data.line;
 					oldColumn = data.column;
-					oldType = IdentifierType.field_;
+					oldType = IdentifierType.method_;
 				}
 			}
 		}
