@@ -331,6 +331,16 @@ void declareParameter(const Parameter param)
 	varData.line = param.name.line;
 	varData.column = param.name.column;
 
+	// FIXME: This block is here to try and figure out why getTypeData
+	// returns init when it can't get the Parameter.type. Look how the
+	// Parameter stores the Type in the XML using inspect() and fix it.
+	if (varData.type is TypeData.init)
+	{
+		stderr.writefln("!!! declareParameter failed: %s", typeid(param));
+		import std.d.inspect;
+		inspect(param.type, "param.type", 0);
+	}
+
 	gScope.addVariable(varData);
 }
 
