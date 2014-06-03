@@ -63,15 +63,13 @@ template generateInspect(types ...)
 void inspect(T)(T thing, string name, size_t indent)
 {
 	if (indent == 0)
-	{
 		writeln("!!! inspect fallback:");
-	}
 
-	// Array of AST nodes
-	static if (is(T == const ASTNode[]))
+	// Array
+	static if(std.traits.isArray!T)
 	{
-		foreach (t; thing)
-			inspect(t, name~"[]", indent);
+		foreach (n; thing)
+			inspect(n, name ~ "[]", indent);
 	}
 	// Token
 	else static if (is(T == const Token))
@@ -86,7 +84,7 @@ void inspect(T)(T thing, string name, size_t indent)
 	// IdType
 	else static if (is(T == const IdType))
 	{
-		if (thing != IdType.init)
+		if (thing !is IdType.init)
 		{
 			writefln("%s%s: %s", pad(indent), name, "IdType");
 			writefln("%str: \"%s\"", pad(indent), thing.str);
