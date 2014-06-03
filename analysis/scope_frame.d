@@ -197,28 +197,10 @@ class Scope
 		// Add a new scope frame
 		ScopeFrame frame;
 		frames ~= frame;
-
-		info("scopeFrameStart #%s", frames.length-1);
 	}
 
 	void popFrame()
 	{
-		info("scopeFrameExit");
-
-		// Print all the variables & functions in the scope frames
-		info("    Dumping frame #%s", frames.length-1);
-		auto frame = frames[$-1];
-		foreach (name, varData; frame.variables)
-			info("            var:%s:%s, isUsed:%d", name, varData, varData.isUsed);
-		foreach (name, funcData; frame.functions)
-			info("            func:%s:%s", name, funcData);
-		foreach (name, structData; frame.structs)
-			info("            struct:%s:%s", name, structData);
-		foreach (name, classData; frame.classes)
-			info("            class:%s:%s", name, classData);
-		foreach (name, enumData; frame.enums)
-			info("            enum:%s:%s", name, enumData);
-
 		// Remove the current scope frame
 		frames = frames[0 .. $-1];
 	}
@@ -522,9 +504,7 @@ class Scope
 	ModuleData getModule(string name)
 	{
 		if (name in modules)
-		{
 			return modules[name];
-		}
 
 		return ModuleData.init;
 	}
@@ -540,19 +520,19 @@ class Scope
 			}
 		}
 
-		stderr.writefln("!!! setVariableIsUsedByName() failed on variable '%s'.".format(name));
+		stderr.writefln("??? setVariableIsUsedByName() failed unknown variable '%s'.".format(name));
 	}
 
 	void addImport(string importName)
 	{
-		info("addImport");
-
 		// Make sure everything is sane
-		assert (importName, "import name was null");
-		assert (importName.length, "import name was blank");
+		if (isNullOrBlank(importName))
+		{
+			stderr.writeln("!!! addImport() failed because importName was null or blank.");
+			return;
+		}
 
 		frames[$-1].imports ~= importName;
-		info("    add import: %s", importName);
 	}
 
 	bool isImported(string importName)
@@ -573,214 +553,208 @@ class Scope
 
 	void addFunction(FunctionData funcData)
 	{
-		info("addFunction");
-
 		// Make sure everything is sane
-		assert (funcData !is FunctionData.init, "function was null");
-		assert (funcData.name, "function name was null");
-		assert (funcData.name.length, "function name was blank");
-		assert (funcData.returnType !is TypeData.init, "function return type was null");
-		assert (funcData.line, "function line was 0");
-		assert (funcData.column, "function column was 0");
+		string failMessage = null;
+		if (funcData is FunctionData.init)
+			failMessage = "function was init";
+		else if (isNullOrBlank(funcData.name))
+			failMessage = "function name was null or blank";
+		else if (funcData.returnType is TypeData.init)
+			failMessage = "function return type was init";
+		else if (funcData.line == 0)
+			failMessage = "function line was 0";
+		else if (funcData.column == 0)
+			failMessage = "function column was 0";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addFunction() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same function
-		foreach (frame; frames)
+		auto funcOther = gScope.getFunction(funcData.name);
+		if (funcOther !is FunctionData.init && funcOther == funcData)
 		{
-			if (funcData.name in frame.functions)
-			{
-				auto funcOther = frame.functions[funcData.name];
-				if (funcOther == funcData)
-				{
-					info("Tried to redeclare function '%s'.", funcData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addVariable() failed because function is already declared '%s'.", funcData.name);
+			return;
 		}
 
 		// Declare the function
-		info("    frame count: %d", frames.length);
 		frames[$-1].functions[funcData.name] = funcData;
-		info("    declare function: %s:%s", funcData.name, funcData.returnType);
 	}
 
 	void addTemplateParameter(TemplateData tempData)
 	{
-		info("addTemplateParameter");
-
 		// Make sure everything is sane
-		assert (tempData !is TemplateData.init, "template was null");
-		assert (tempData.name, "template name was null");
-		assert (tempData.name.length, "template name was blank");
-		assert (tempData.line, "template line was 0");
-		assert (tempData.column, "template column was 0");
+		string failMessage = null;
+		if (tempData is TemplateData.init)
+			failMessage = "template was init";
+		else if (isNullOrBlank(tempData.name))
+			failMessage = "template name was init";
+		else if (tempData.line == 0)
+			failMessage = "template line was 0";
+		else if (tempData.column == 0)
+			failMessage = "template column was 0";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addTemplateParameter() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same template
-		foreach (frame; frames)
+		auto tempOther = gScope.getTemplate(tempData.name);
+		if (tempOther !is TemplateData.init && tempOther == tempData)
 		{
-			if (tempData.name in frame.templates)
-			{
-				auto tempOther = frame.templates[tempData.name];
-				if (tempOther == tempData)
-				{
-					info("Tried to redeclare template param '%s'.", tempData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addTemplateParameter() failed because template is already declared '%s'.", tempData.name);
+			return;
 		}
 
 		// Declare the template
-		info("    frame count: %d", frames.length);
 		frames[$-1].templates[tempData.name] = tempData;
-		info("    declare template: %s:%s", tempData.name);
 	}
 
 	void addVariable(VariableData varData)
 	{
-		info("addVariable");
-
 		// Make sure everything is sane
-		assert (varData !is VariableData.init, "variable was null");
-		assert (varData.name, "variable name was null");
-		assert (varData.name.length, "variable name was blank");
-		assert (varData.type !is TypeData.init, "variable type was null");
-		//assert (varData.line, "variable line was 0");
-		//assert (varData.column, "variable column was 0");
+		string failMessage = null;
+		if (varData is VariableData.init)
+			failMessage = "variable was init";
+		else if (isNullOrBlank(varData.name))
+			failMessage = "variable name was null or blank";
+		else if (varData.type is TypeData.init)
+			failMessage = "variable type was init";
+		else if (varData.line == 0)
+			failMessage = "variable line was 0";
+		else if (varData.column == 0)
+			failMessage = "variable column was 0";
 
-		// Warn if the variable is on line or column zero
-		if (varData.line == 0 || varData.column == 0)
+		if (failMessage)
 		{
-			stderr.writefln(
-				"!!! addVariable() warning variable is on line or column zero: name:%s, type:%s, isUsed:%s, isParameter:%s, line:%s, column:%s", 
-				varData.name,
-				varData.type,
-				varData.isUsed,
-				varData.isParameter,
-				varData.line,
-				varData.column
-			);
+			stderr.writefln("!!! addVariable() failed because %s", failMessage);
+			return;
 		}
 
 		// Skip if declaring same variable
-		foreach (frame; frames)
+		auto varOther = gScope.getVariable(varData.name);
+		if (varOther !is VariableData.init && varOther == varData)
 		{
-			if (varData.name in frame.variables)
-			{
-				auto varOther = frame.variables[varData.name];
-				if (varOther == varData)
-				{
-					info("Tried to redeclare variable '%s'.", varData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addVariable() failed because variable is already declared '%s'.", varData.name);
+			return;
 		}
 
 		// Declare the variable
-		info("    frame count: %d", frames.length);
 		frames[$-1].variables[varData.name] = varData;
-		info("    declare variable: %s:%s", varData.name, varData.type);
 	}
 
 	void addClass(ClassData classData)
 	{
-		info("addClass");
-
 		// Make sure everything is sane
-		assert (classData !is ClassData.init, "class was null");
-		assert (classData.name, "class name was null");
-		assert (classData.name.length, "class name was blank");
-		assert (classData.line, "class line was 0");
-		assert (classData.column, "class column was 0");
+		string failMessage = null;
+		if (classData is ClassData.init)
+			failMessage = "class was init";
+		else if (isNullOrBlank(classData.name))
+			failMessage = "class name was null or blank";
+		else if (classData.line == 0)
+			failMessage = "class line was 0";
+		else if (classData.column == 0)
+			failMessage = "class column was 0";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addClass() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same class
-		foreach (frame; frames)
+		auto classOther = gScope.getClass(classData.name);
+		if (classOther !is ClassData.init && classOther == classData)
 		{
-			if (classData.name in frame.classes)
-			{
-				auto classOther = frame.classes[classData.name];
-				if (classOther == classData)
-				{
-					info("Tried to redeclare class '%s'.", classData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addClass() failed because class is already declared '%s'.", classData.name);
+			return;
 		}
 
 		// Declare the class
-		info("    frame count: %d", frames.length);
 		frames[$-1].classes[classData.name] = classData;
-		info("    declare class: %s", classData.name);
 	}
 
 	void addStruct(StructData structData)
 	{
-		info("addStruct");
-
 		// Make sure everything is sane
-		assert (structData !is StructData.init, "Struct was null");
-		assert (structData.name, "struct name was null");
-		assert (structData.name.length, "struct name was blank");
-		assert (structData.line, "struct line was 0");
-		assert (structData.column, "struct column was 0");
+		string failMessage = null;
+		if (structData is StructData.init)
+			failMessage = "Struct was init";
+		else if (isNullOrBlank(structData.name))
+			failMessage = "struct name was null or blank";
+		else if (structData.line == 0)
+			failMessage = "struct line was 0";
+		else if (structData.column == 0)
+			failMessage = "struct column was 0";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addStruct() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same struct
-		foreach (frame; frames)
+		auto structOther = gScope.getStruct(structData.name);
+		if (structOther !is structData.init && structOther == structData)
 		{
-			if (structData.name in frame.structs)
-			{
-				auto structOther = frame.structs[structData.name];
-				if (structOther == structData)
-				{
-					info("Tried to redeclare struct '%s'.", structData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addStruct() failed because struct is already declared '%s'.", structData.name);
+			return;
 		}
 
 		// Declare the struct
-		info("    frame count: %d", frames.length);
 		frames[$-1].structs[structData.name] = structData;
-		info("    declare struct: %s", structData.name);
 	}
 
 	void addEnum(EnumData enumData)
 	{
-		info("addEnum");
-
 		// Make sure everything is sane
-		assert (enumData !is EnumData.init, "enum was null");
-		assert (enumData.name, "enum name was null");
-		assert (enumData.name.length, "enum name was blank");
-		assert (enumData.line, "enum line was 0");
-		assert (enumData.column, "enum column was 0");
+		string failMessage = null;
+		if (enumData is EnumData.init)
+			failMessage = "enum was init";
+		else if (isNullOrBlank(enumData.name))
+			failMessage = "enum name was null or blank";
+		else if (enumData.line == 0)
+			failMessage = "enum line was 0";
+		else if (enumData.column == 0)
+			failMessage = "enum column was 0";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addEnum() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same enum
-		foreach (frame; frames)
+		auto enumOther = gScope.getEnum(enumData.name);
+		if (enumOther !is enumData.init && enumOther == enumData)
 		{
-			if (enumData.name in frame.enums)
-			{
-				auto enumOther = frame.enums[enumData.name];
-				if (enumOther == enumData)
-				{
-					info("Tried to redeclare enum '%s'.", enumData.name);
-					return;
-				}
-			}
+			stderr.writefln("??? addEnum() failed because enum is already declared '%s'.", enumData.name);
+			return;
 		}
 
 		// Declare the enum
-		info("    frame count: %d", frames.length);
 		frames[$-1].enums[enumData.name] = enumData;
-		info("    declare enum: %s", enumData.name);
 	}
 
 	void addModule(ModuleData moduleData)
 	{
-		info("addModule");
-
 		// Make sure everything is sane
-		assert (moduleData !is ModuleData.init, "Module was null");
-		assert (moduleData.name, "module name was null");
-		assert (moduleData.name.length, "module name was blank");
+		string failMessage = null;
+		if (moduleData is ModuleData.init)
+			failMessage = "Module was init";
+		else if (isNullOrBlank(moduleData.name))
+			failMessage = "module name was null or blank";
+
+		if (failMessage)
+		{
+			stderr.writefln("!!! addModule() failed because %s", failMessage);
+			return;
+		}
 
 		// Skip if declaring same module
 		if (moduleData.name in modules)
@@ -788,14 +762,13 @@ class Scope
 			auto moduleOther = modules[moduleData.name];
 			if (moduleOther == moduleData)
 			{
-				info("Tried to redeclare module '%s'.", moduleData.name);
+				stderr.writefln("??? addModule() failed because module is already declared '%s'.", moduleData.name);
 				return;
 			}
 		}
 
 		// Declare the module
 		modules[moduleData.name] = moduleData;
-		info("    declare module: %s", moduleData.name);
 	}
 }
 

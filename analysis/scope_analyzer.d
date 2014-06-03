@@ -26,13 +26,9 @@ class ScopeAnalyzer : BaseAnalyzer
 {
 	alias visit = BaseAnalyzer.visit;
 
-	private bool _logInfo = false;
-	private bool prevLog = false;
-
-	this(string fileName, bool logInfo)
+	this(string fileName)
 	{
 		super(fileName);
-		_logInfo = logInfo;
 		gScope = new Scope();
 	}
 
@@ -63,13 +59,11 @@ class ScopeAnalyzer : BaseAnalyzer
 
 	override void visitStart(const BlockStatement node)
 	{
-		info("start frame by %s", typeid(node));
 		gScope.pushFrame();
 	}
 
 	override void visitEnd(const BlockStatement node)
 	{
-		info("exit frame by %s", typeid(node));
 		gScope.popFrame();
 	}
 
@@ -156,11 +150,6 @@ class ScopeAnalyzer : BaseAnalyzer
 
 	override void visitStart(const Module node)
 	{
-		// Turn logging on if desired
-		prevLog = gLogInfo;
-		gLogInfo = _logInfo;
-
-		info("start frame by %s", typeid(node));
 		gScope.pushFrame();
 
 		gScope.parentsPush(IdentifierType.module_);
@@ -204,12 +193,7 @@ class ScopeAnalyzer : BaseAnalyzer
 	override void visitEnd(const Module node)
 	{
 		gScope.parentsPop();
-
-		info("exit frame by %s", typeid(node));
 		gScope.popFrame();
-
-		// Return to previous logging mode
-		gLogInfo = prevLog;
 	}
 
 	override void visitStart(const MulExpression node)

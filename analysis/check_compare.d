@@ -26,7 +26,7 @@ class CompareCheck : ScopeAnalyzer
 
 	this(string fileName)
 	{
-		super(fileName, false);
+		super(fileName);
 	}
 
 	// a is a

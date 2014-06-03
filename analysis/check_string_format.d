@@ -115,7 +115,7 @@ class CheckStringFormat : ScopeAnalyzer
 
 	this(string fileName)
 	{
-		super(fileName, false);
+		super(fileName);
 	}
 
 	override void visit(const FunctionCallExpression funcCallExp)
@@ -124,6 +124,10 @@ class CheckStringFormat : ScopeAnalyzer
 
 		// Get the function name and args
 		string funcName = getFunctionCallName(funcCallExp);
+
+		// Just return if it failed to get the function name
+		if (!funcName)
+			return;
 
 		// Just return if not one of the functions to test
 		string fullFuncName = getFullFunctionName(funcName);

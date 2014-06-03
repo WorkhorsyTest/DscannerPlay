@@ -29,7 +29,7 @@ class SizeTCheck : ScopeAnalyzer
 
 	this(string fileName)
 	{
-		super(fileName, false);
+		super(fileName);
 	}
 
 	override void visit(const VariableDeclaration varDec)
@@ -90,6 +90,11 @@ class SizeTCheck : ScopeAnalyzer
 
 		// Get the name and args of the function to call
 		string name = getFunctionCallName(funcExp);
+
+		// Just return if it failed to get the function name
+		if (!name)
+			return;
+
 		auto funcData = gScope.getFunction(name);
 		TypeData[] argTypes = funcData.argTypes;
 

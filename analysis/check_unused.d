@@ -27,7 +27,7 @@ class UnusedCheck : ScopeAnalyzer
 
 	this(string fileName)
 	{
-		super(fileName, false);
+		super(fileName);
 	}
 
 	override void visit(const BlockStatement blockSta)
@@ -51,6 +51,8 @@ class UnusedCheck : ScopeAnalyzer
 		// FIXME: Rename all args to params
 		string funcName = funcDec.name.text;
 		string[] funArgNames = getFunctionArgNames(funcDec);
+		if (!funArgNames)
+			return;
 
 		foreach (argName; funArgNames)
 		{

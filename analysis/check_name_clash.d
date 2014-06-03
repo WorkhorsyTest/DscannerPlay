@@ -28,7 +28,7 @@ class NameClashCheck : ScopeAnalyzer
 
 	this(string fileName)
 	{
-		super(fileName, false);
+		super(fileName);
 	}
 
 	override void visit(const VariableDeclaration node)

@@ -157,7 +157,7 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 		size_t rawLine = std.conv.to!size_t(rawWarnings[i].between("test(", ":"));
 		if (rawLine == 0)
 		{
-			stderr.writefln("!!! Skipping warning because it is on line zero:\n%s", rawWarnings[i]);
+			stderr.writefln("??? Skipping warning because it is on line zero:\n%s", rawWarnings[i]);
 			continue;
 		}
 
@@ -236,8 +236,6 @@ void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, s
 
 void declareImport(const SingleImport singImpo)
 {
-	info("declareImport");
-
 	// Just return if anything is null
 	if (!singImpo && !singImpo.identifierChain)
 	{
@@ -297,16 +295,12 @@ void loadModule(string fileName)
 
 void declareFunction(const FunctionDeclaration funcDec)
 {
-	info("declareFunction");
-
 	FunctionData data = getFunctionData(funcDec);
 	gScope.addFunction(data);
 }
 
 void declareVariable(const VariableDeclaration varDec)
 {
-	info("declareVariable");
-
 	foreach (varData; getVariableDatas(varDec))
 	{
 		gScope.addVariable(varData);
@@ -315,12 +309,10 @@ void declareVariable(const VariableDeclaration varDec)
 
 void declareParameter(const Parameter param)
 {
-	info("declareParameter");
-
 	// Just print a warning and return if the name is invalid
-	if (param.name is Token.init || param.name.text is null || param.name.text == "")
+	if (param.name is Token.init || isNullOrBlank(param.name.text))
 	{
-		stderr.writeln("!!! declareParameter() failed because param.name was init or had no name.");
+		stderr.writeln("!!! declareParameter() failed because param.name was init or blank.");
 		return;
 	}
 
@@ -336,7 +328,7 @@ void declareParameter(const Parameter param)
 	// Parameter stores the Type in the XML using inspect() and fix it.
 	if (varData.type is TypeData.init)
 	{
-		stderr.writefln("!!! declareParameter failed: %s", typeid(param));
+		stderr.writefln("??? declareParameter() failed: %s", typeid(param));
 		import std.d.inspect;
 		inspect(param.type, "param.type", 0);
 	}
@@ -346,8 +338,6 @@ void declareParameter(const Parameter param)
 
 void declareTemplates(const TemplateParameters tempParams)
 {
-	info("declareTemplates");
-
 	TemplateData[] tempDatas = getTemplateDatas(tempParams);
 	foreach (tempData; tempDatas)
 	{
@@ -357,32 +347,24 @@ void declareTemplates(const TemplateParameters tempParams)
 
 void declareStruct(const StructDeclaration structDec)
 {
-	info("declareStruct");
-
 	StructData structData = getStructData(structDec);
 	gScope.addStruct(structData);
 }
 
 void declareClass(const ClassDeclaration classDec)
 {
-	info("declareClass");
-
 	ClassData classData = getClassData(classDec);
 	gScope.addClass(classData);
 }
 
 void declareEnum(const EnumDeclaration enumDec)
 {
-	info("declareEnum");
-
 	EnumData enumData = getEnumData(enumDec);
 	gScope.addEnum(enumData);
 }
 
 void declareModule(const Module mod)
 {
-	info("declareModule");
-
 	ModuleData moduleData = getModuleData(mod);
 	gScope.addModule(moduleData);
 }
@@ -431,11 +413,17 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 	if (varDec.autoDeclaration)
 	{
 		string[] names = getVariableNames(varDec);
+		if (!names)
+		{
+			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			return null;
+		}
+
 		TokenData tokenData = getExpressionReturnTokenData(varDec.autoDeclaration);
 
 		if (tokenData is TokenData.init)
 		{
-			stderr.writeln("!!! getVariableDatas() failed to get valid token from auto variable declaration.");
+			stderr.writeln("??? getVariableDatas() failed to get valid token from auto variable declaration.");
 			return null;
 		}
 
@@ -455,6 +443,12 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 	else
 	{
 		string[] names = getVariableNames(varDec);
+		if (!names)
+		{
+			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			return null;
+		}
+
 		TypeData type = getTypeData(varDec.type);
 		foreach (name; names)
 		{
@@ -727,7 +721,8 @@ string getFunctionCallName(const FunctionCallExpression funcExp)
 
 	if (!chunks.length)
 	{
-		throw new Exception("Could not get name of function to call.");
+		stderr.writefln("??? getFunctionCallName() failed to get name of function to call.");
+		return null;
 	}
 
 	return chunks.reverse.join(".");
@@ -763,7 +758,8 @@ TypeData[] getFunctionArgTypeDatas(const FunctionDeclaration funcDec)
 		return argTypes;
 	}
 
-	throw new Exception("Could not find function arg type names.");
+	stderr.writefln("??? getFunctionArgTypeDatas() failed to find function arg type names.");
+	return null;
 }
 
 string[] getFunctionArgNames(const FunctionDeclaration funcDec)
@@ -778,7 +774,8 @@ string[] getFunctionArgNames(const FunctionDeclaration funcDec)
 		return argNames;
 	}
 
-	throw new Exception("Could not find function arg names.");
+	stderr.writefln("??? getFunctionArgNames() filed to get function arg names.");
+	return null;
 }
 
 string[] getVariableNames(const VariableDeclaration varDec)
@@ -805,7 +802,8 @@ string[] getVariableNames(const VariableDeclaration varDec)
 	if (retval.length)
 		return retval;
 
-	throw new Exception("Could not find variable names.");
+	stderr.writefln("??? getVariableNames() failed to find variable names.");
+	return null;
 }
 
 void getVariableLineColumn(const VariableDeclaration varDec, string name, ref size_t line, ref size_t column)
@@ -836,7 +834,7 @@ void getVariableLineColumn(const VariableDeclaration varDec, string name, ref si
 		}
 	}
 
-	throw new Exception("Could not find variable line and column.");
+	stderr.writefln("??? getVariableLineColumn() failed to find variable line and column.");
 }
 
 void markUsedVariables(const ASTNode node)
@@ -941,7 +939,7 @@ void markUsedVariables(const ASTNode node)
 	}
 	else if (node)
 	{
-		throw new Exception("!!! markUsedVariables() override needed for: '%s'".format(typeid(node)));
+		stderr.writefln("!!! markUsedVariables() override needed for: '%s'".format(typeid(node)));
 	}
 }
 
@@ -983,7 +981,7 @@ TypeData getTypeData(const Type type)
 		}
 	}
 
-	stderr.writeln("!!! getTypeData() failed");
+	stderr.writeln("!!! getTypeData() failed on type");
 	return TypeData.init;
 }
 
@@ -1012,7 +1010,6 @@ TokenData getExpressionReturnTokenData(const ASTNode node)
 	return data;
 }
 
-// FIXME Update this so it prints an error and returns init when nothing found
 Token getExpressionReturnToken(const ASTNode node, size_t indent)
 {
 	//if (node !is null)
@@ -1528,8 +1525,8 @@ const Token getPromotedToken(const Token left, const Token right)
 	string a = getTokenData(left).typeData.name;
 	string b = getTokenData(right).typeData.name;
 
-	// throw an error if any type names are blank
-	if (a is null || b is null || a == "" || b == "")
+	// print an error if any type names are blank
+	if (isNullOrBlank(a) || isNullOrBlank(b))
 	{
 		string message = "!!! getPromotedToken() failed on tokens: '%s' or '%s'.".format(
 			getTokenData(left), getTokenData(right));
@@ -1537,7 +1534,7 @@ const Token getPromotedToken(const Token left, const Token right)
 		return Token.init;
 	}
 
-	// throw an error if any type names are unknown
+	// print an error if any type names are unknown
 	if (a !in promotions || a !in sizes
 		|| b !in promotions || b !in sizes)
 	{

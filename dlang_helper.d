@@ -9,17 +9,15 @@ import std.stdio;
 import std.string;
 import std.stdint;
 
-bool gLogInfo = false;
-
-void info(Char, A...)(in Char[] fmt, A args)
-{
-	if (gLogInfo)
-		writefln(fmt, args);
-}
-
 string pad(size_t len)
 {
 	return std.array.replicate("    ", len);
+}
+
+bool isNullOrBlank(S)(S value)
+	if (isSomeString!S)
+{
+	return (value is null || value.length == 0);
 }
 
 S between(S)(S value, S before, S after)
