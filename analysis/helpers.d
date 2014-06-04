@@ -15,6 +15,7 @@ import std.d.ast;
 import std.d.lexer;
 import analysis.run;
 import analysis.scope_frame;
+import analysis.tokens;
 import analysis.expressions;
 import dlang_helper;
 

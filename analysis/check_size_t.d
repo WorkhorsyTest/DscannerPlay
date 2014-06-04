@@ -15,6 +15,7 @@ import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
 import analysis.helpers;
+import analysis.tokens;
 import analysis.expressions;
 import analysis.scope_frame;
 import analysis.scope_analyzer;
