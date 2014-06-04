@@ -313,6 +313,7 @@ void declareParameter(const Parameter param)
 	if (param.name is Token.init || isNullOrBlank(param.name.text))
 	{
 		stderr.writeln("!!! declareParameter() failed because param.name was init or blank.");
+		std.d.inspect.inspect(stderr, param, "Parameter");
 		return;
 	}
 
@@ -322,16 +323,6 @@ void declareParameter(const Parameter param)
 	varData.isParameter = true;
 	varData.line = param.name.line;
 	varData.column = param.name.column;
-
-	// FIXME: This block is here to try and figure out why getTypeData
-	// returns init when it can't get the Parameter.type. Look how the
-	// Parameter stores the Type in the XML using inspect() and fix it.
-	if (varData.type is TypeData.init)
-	{
-		stderr.writefln("??? declareParameter() failed: %s", typeid(param));
-		import std.d.inspect;
-		inspect(param.type, "param.type", 0);
-	}
 
 	gScope.addVariable(varData);
 }
@@ -416,6 +407,7 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 		if (!names)
 		{
 			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
 			return null;
 		}
 
@@ -424,6 +416,7 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 		if (tokenData is TokenData.init)
 		{
 			stderr.writeln("??? getVariableDatas() failed to get valid token from auto variable declaration.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
 			return null;
 		}
 
@@ -446,6 +439,7 @@ VariableData[] getVariableDatas(const VariableDeclaration varDec)
 		if (!names)
 		{
 			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
 			return null;
 		}
 
@@ -722,6 +716,7 @@ string getFunctionCallName(const FunctionCallExpression funcExp)
 	if (!chunks.length)
 	{
 		stderr.writefln("??? getFunctionCallName() failed to get name of function to call.");
+		std.d.inspect.inspect(stderr, funcExp, "FunctionCallExpression");
 		return null;
 	}
 
@@ -759,6 +754,7 @@ TypeData[] getFunctionArgTypeDatas(const FunctionDeclaration funcDec)
 	}
 
 	stderr.writefln("??? getFunctionArgTypeDatas() failed to find function arg type names.");
+	std.d.inspect.inspect(stderr, funcDec, "FunctionDeclaration");
 	return null;
 }
 
@@ -775,6 +771,7 @@ string[] getFunctionArgNames(const FunctionDeclaration funcDec)
 	}
 
 	stderr.writefln("??? getFunctionArgNames() filed to get function arg names.");
+	std.d.inspect.inspect(stderr, funcDec, "FunctionDeclaration");
 	return null;
 }
 
@@ -803,6 +800,7 @@ string[] getVariableNames(const VariableDeclaration varDec)
 		return retval;
 
 	stderr.writefln("??? getVariableNames() failed to find variable names.");
+	std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
 	return null;
 }
 
@@ -835,6 +833,7 @@ void getVariableLineColumn(const VariableDeclaration varDec, string name, ref si
 	}
 
 	stderr.writefln("??? getVariableLineColumn() failed to find variable line and column.");
+	std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
 }
 
 void markUsedVariables(const ASTNode node)
@@ -960,7 +959,7 @@ TypeData getTypeData(const Type type)
 		}
 
 		// Get type from builtinType
-		if (type.type2.builtinType)
+		if (type.type2.builtinType !is IdType.init)
 		{
 			typeData.name = type.type2.builtinType.str;
 			return typeData;
@@ -982,6 +981,7 @@ TypeData getTypeData(const Type type)
 	}
 
 	stderr.writeln("!!! getTypeData() failed on type");
+	std.d.inspect.inspect(stderr, type, "Type");
 	return TypeData.init;
 }
 

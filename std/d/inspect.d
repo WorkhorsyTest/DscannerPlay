@@ -26,7 +26,7 @@ template generateInspect(types ...)
 		foreach (n; types)
 		{
 			result ~= " if (auto node = cast(const " ~ __traits(identifier, n) ~ ") astNode) {";
-			result ~= "    writefln(\"%s%s : %s\", pad(indent++), name, typeid(astNode));";
+			result ~= "    output.writefln(\"%s%s : %s\", pad(indent++), name, typeid(astNode));";
 			foreach (member; __traits(allMembers, n))
 			{
 				// FIXME: The way we are hard coding the names of methods to black list
@@ -48,7 +48,7 @@ template generateInspect(types ...)
 					&& member.stringof != "\"Monitor\""
 					&& member.stringof != "\"factory\"")
 				{
-					result ~= "    inspect(node." ~ member ~ ", " ~ member.stringof ~ ", indent);";
+					result ~= "    output.inspect(node." ~ member ~ ", " ~ member.stringof ~ ", indent);";
 				}
 			}
 			result ~= "}";
@@ -60,25 +60,32 @@ template generateInspect(types ...)
 	immutable generateInspect = generator();
 }
 
-void inspect(T)(T thing, string name, size_t indent)
+void inspect(T)(File output, T thing, string name, size_t indent = 0)
 {
 	if (indent == 0)
-		writeln("!!! inspect fallback:");
+		output.writeln("!!! inspect fallback:");
 
 	// Array
 	static if(std.traits.isArray!T)
 	{
 		foreach (n; thing)
-			inspect(n, name ~ "[]", indent);
+			output.inspect(n, name ~ "[]", indent);
+	}
+	// Basic type
+	else static if(std.traits.isBasicType!T || std.traits.isSomeString!T)
+	{
+		output.writefln("%s%s : %s", pad(indent++), name, thing);
 	}
 	// Token
 	else static if (is(T == const Token))
 	{
-		TokenData data = getTokenData(thing);
-		if (data !is TokenData.init)
+		if (thing !is Token.init)
 		{
-			writefln("%s%s : %s", pad(indent++), name, "Token");
-			writefln("%svalue: typeData:%s, tokenType:%s, line:%s, column:%s", pad(indent), data.typeData, data.tokenType, data.line, data.column);
+			output.writefln("%s%s : %s", pad(indent++), name, "Token");
+			output.writefln("%s%s : %s", pad(indent), "type", thing.type.str);
+			output.writefln("%s%s : %s", pad(indent), "text", thing.text);
+			output.writefln("%s%s : %s", pad(indent), "line", thing.line);
+			output.writefln("%s%s : %s", pad(indent), "column", thing.column);
 		}
 	}
 	// IdType
@@ -86,8 +93,8 @@ void inspect(T)(T thing, string name, size_t indent)
 	{
 		if (thing !is IdType.init)
 		{
-			writefln("%s%s: %s", pad(indent), name, "IdType");
-			writefln("%str: \"%s\"", pad(indent), thing.str);
+			output.writefln("%s%s : %s", pad(indent++), name, "IdType");
+			output.writefln("%s%s : %s", pad(indent), "str", thing.str);
 		}
 	}
 	// Everything else that is not null
@@ -97,12 +104,12 @@ void inspect(T)(T thing, string name, size_t indent)
 	}
 }
 
-void inspect(const ASTNode astNode, string name, size_t indent)
+void inspect(File output, const ASTNode astNode, string name, size_t indent = 0)
 {
 	if (indent == 0)
 	{
 		if (astNode)
-			writefln("!!! inspect: %s", typeid(astNode));
+			output.writefln("!!! inspect: %s", typeid(astNode));
 		else
 			return;
 	}
