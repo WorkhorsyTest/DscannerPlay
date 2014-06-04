@@ -23,36 +23,36 @@ struct ModuleFunctionSet
 {
 	string importName;
 	string[] functions;
-}
 
-// Returns true if a ModuleFunctionSet has a function.
-bool hasFunction(const ModuleFunctionSet funcSet, string funcName)
-{
-	return getFunctionFullName(funcSet, funcName) !is null;
-}
-
-string getFunctionFullName(const ModuleFunctionSet funcSet, string funcName)
-{
-	bool isImported = gScope.isImported(funcSet.importName);
-
-	foreach (func; funcSet.functions)
+	// Returns true if a ModuleFunctionSet has a function
+	bool hasFunction(string funcName) const
 	{
-		string fullFuncName = "%s.%s".format(funcSet.importName, func);
-
-		// If the module is imported the short function name may be used
-		if (isImported && funcName == func)
-		{
-			return fullFuncName;
-		}
-
-		// If the module is not imported, the full function name must be used
-		if (funcName == fullFuncName)
-		{
-			return fullFuncName;
-		}
+		return getFunctionFullName(funcName) !is null;
 	}
 
-	return null;
+	string getFunctionFullName(string funcName) const
+	{
+		bool isImported = gScope.isImported(this.importName);
+
+		foreach (func; this.functions)
+		{
+			string fullFuncName = "%s.%s".format(this.importName, func);
+
+			// If the module is imported the short function name may be used
+			if (isImported && funcName == func)
+			{
+				return fullFuncName;
+			}
+
+			// If the module is not imported, the full function name must be used
+			if (funcName == fullFuncName)
+			{
+				return fullFuncName;
+			}
+		}
+
+		return null;
+	}
 }
 
 void assertAnalyzerWarnings(string code, analysis.run.AnalyzerCheck analyzers, string file=__FILE__, size_t line=__LINE__)

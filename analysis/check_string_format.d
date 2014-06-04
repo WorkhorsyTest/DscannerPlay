@@ -74,7 +74,7 @@ string getFullFunctionName(string funcName)
 
 	foreach (funcSet; funcSets)
 	{
-		string fullName = getFunctionFullName(funcSet, funcName);
+		string fullName = funcSet.getFunctionFullName(funcName);
 		if (fullName)
 		{
 			return fullName;
