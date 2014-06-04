@@ -50,13 +50,13 @@ class UnusedCheck : ScopeAnalyzer
 
 		// FIXME: Rename all args to params
 		string funcName = funcDec.name.text;
-		string[] funArgNames = getFunctionArgNames(funcDec);
+		string[] funArgNames = this.scopeManager.getFunctionArgNames(funcDec);
 		if (!funArgNames)
 			return;
 
 		foreach (argName; funArgNames)
 		{
-			auto data = gScope.getVariable(argName);
+			auto data = this.scopeManager.scope_.getVariable(argName);
 			if (data != VariableData.init && !data.isUsed)
 			{
 				string message = "Parameter '%s' of function '%s' is not used.".format(argName, funcName);
@@ -68,7 +68,7 @@ class UnusedCheck : ScopeAnalyzer
 	void checkVariablesUnused()
 	{
 		// Before the variables in the current scope frame are destroyed, look to see if they were used.
-		foreach (name, data; gScope.getCurrentFrameVariables())
+		foreach (name, data; this.scopeManager.scope_.getCurrentFrameVariables())
 		{
 			if (data != VariableData.init && !data.isUsed)
 			{

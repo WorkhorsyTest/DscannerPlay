@@ -19,6 +19,7 @@ import analysis.base;
 import analysis.helpers;
 import analysis.tokens;
 import analysis.expressions;
+import analysis.scope_frame;
 import analysis.scope_analyzer;
 
 
@@ -64,7 +65,7 @@ ModuleFunctionSet("std.format", [
 	"formattedWrite"
 ]);
 
-string getFullFunctionName(string funcName)
+string getFullFunctionName(Scope scope_, string funcName)
 {
 	auto funcSets = [
 		WRITE_F_FUNCTIONS,
@@ -75,7 +76,7 @@ string getFullFunctionName(string funcName)
 
 	foreach (funcSet; funcSets)
 	{
-		string fullName = funcSet.getFunctionFullName(funcName);
+		string fullName = funcSet.getFunctionFullName(scope_, funcName);
 		if (fullName)
 		{
 			return fullName;
@@ -125,19 +126,19 @@ class CheckStringFormat : ScopeAnalyzer
 		funcCallExp.accept(this);
 
 		// Get the function name and args
-		string funcName = getFunctionCallName(funcCallExp);
+		string funcName = this.scopeManager.getFunctionCallName(funcCallExp);
 
 		// Just return if it failed to get the function name
 		if (!funcName)
 			return;
 
 		// Just return if not one of the functions to test
-		string fullFuncName = getFullFunctionName(funcName);
+		string fullFuncName = getFullFunctionName(this.scopeManager.scope_, funcName);
 		if (fullFuncName is null)
 			return;
 
 		// Get all the arguments passed to the function
-		TokenData[] tokenArgs = getFunctionCallArguments(funcCallExp);
+		TokenData[] tokenArgs = this.scopeManager.getFunctionCallArguments(funcCallExp);
 
 		// Get the format string and arguments
 		size_t argOffset = 0;
@@ -163,7 +164,7 @@ class CheckStringFormat : ScopeAnalyzer
 			matchesLength++; // FIXME: There has to be a better way to get the length
 
 		// Check for wrong function EG: write instead of writef
-		if (WRITE_FUNCTIONS.hasFunction(funcName))
+		if (WRITE_FUNCTIONS.hasFunction(this.scopeManager.scope_, funcName))
 		{
 			if (matchesLength && args.length)
 			{

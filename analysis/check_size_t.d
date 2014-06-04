@@ -66,11 +66,11 @@ class SizeTCheck : ScopeAnalyzer
 		// Get the types
 		auto varDeclarator = varDec.declarators[0];
 		size_t line, column;
-		TypeData toType = getTypeData(varDec.type);
-		TypeData fromType = getExpressionReturnType(varDeclarator, line, column);
+		TypeData toType = this.scopeManager.getTypeData(varDec.type);
+		TypeData fromType = getExpressionReturnType(this.scopeManager.scope_, varDeclarator, line, column);
 		if (line == 0 || column == 0)
 		{
-			getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
+			this.scopeManager.getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
 		}
 
 		actualCheck(toType, fromType, line, column);
@@ -91,13 +91,13 @@ class SizeTCheck : ScopeAnalyzer
 		}
 
 		// Get the name and args of the function to call
-		string name = getFunctionCallName(funcExp);
+		string name = this.scopeManager.getFunctionCallName(funcExp);
 
 		// Just return if it failed to get the function name
 		if (!name)
 			return;
 
-		auto funcData = gScope.getFunction(name);
+		auto funcData = this.scopeManager.scope_.getFunction(name);
 		TypeData[] argTypes = funcData.argTypes;
 
 		// Just return if the args length does not match
@@ -109,7 +109,7 @@ class SizeTCheck : ScopeAnalyzer
 			// Get the expression return types
 			size_t line, column;
 			TypeData toType = argTypes[i];
-			TypeData fromType = getExpressionReturnType(assExp, line, column);
+			TypeData fromType = getExpressionReturnType(this.scopeManager.scope_, assExp, line, column);
 
 			string message = "For function argument %d, ".format(i);
 			actualCheck(toType, fromType, line, column, message);
@@ -155,8 +155,8 @@ class SizeTCheck : ScopeAnalyzer
 
 		// Get the expression return types
 		size_t line, column;
-		TypeData toType = getExpressionReturnType(assExp.ternaryExpression, line, column);
-		TypeData fromType = getExpressionReturnType(assExp.assignExpression, line, column);
+		TypeData toType = getExpressionReturnType(this.scopeManager.scope_, assExp.ternaryExpression, line, column);
+		TypeData fromType = getExpressionReturnType(this.scopeManager.scope_, assExp.assignExpression, line, column);
 
 		actualCheck(toType, fromType, line, column);
 	}

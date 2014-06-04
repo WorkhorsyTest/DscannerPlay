@@ -25,102 +25,103 @@ about everything.
 class ScopeAnalyzer : BaseAnalyzer
 {
 	alias visit = BaseAnalyzer.visit;
+	ScopeManager scopeManager;
 
 	this(string fileName)
 	{
 		super(fileName);
-		gScope = new Scope();
+		scopeManager = new ScopeManager();
 	}
 
 	override void visitStart(const AddExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const AndAndExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const AndExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const AssertExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const AssignExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const BlockStatement node)
 	{
-		gScope.pushFrame();
+		scopeManager.pushFrame();
 	}
 
 	override void visitEnd(const BlockStatement node)
 	{
-		gScope.popFrame();
+		scopeManager.popFrame();
 	}
 
 	override void visitStart(const ClassDeclaration node)
 	{
-		gScope.parentsPush(IdentifierType.class_);
-		gScope.thisPointersPush(node.name.text);
+		scopeManager.parentsPush(IdentifierType.class_);
+		scopeManager.thisPointersPush(node.name.text);
 
-		declareClass(node);
+		scopeManager.declareClass(node);
 	}
 
 	override void visitEnd(const ClassDeclaration node)
 	{
-		gScope.thisPointersPop();
-		gScope.parentsPop();
+		scopeManager.thisPointersPop();
+		scopeManager.parentsPop();
 	}
 
 	override void visitStart(const CmpExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const Declaration node)
 	{
 		// Add decorations such as properties, auto, ref, et cetera
-		Decoration decoration = getDeclarationDecorations(node);
-		gScope.decorationsPush(decoration);
+		Decoration decoration = scopeManager.getDeclarationDecorations(node);
+		scopeManager.decorationsPush(decoration);
 	}
 
 	override void visitEnd(const Declaration node)
 	{
-		gScope.decorationsPop();
+		scopeManager.decorationsPop();
 	}
 
 	override void visitStart(const EnumDeclaration node)
 	{
-		gScope.parentsPush(IdentifierType.enum_);
-		declareEnum(node);
+		scopeManager.parentsPush(IdentifierType.enum_);
+		scopeManager.declareEnum(node);
 	}
 
 	override void visitEnd(const EnumDeclaration node)
 	{
-		gScope.parentsPop();
+		scopeManager.parentsPop();
 	}
 
 	override void visitStart(const EqualExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const FunctionDeclaration node)
 	{
 		// Only declare if NOT a struct/class method
 		IdentifierType identifierType;
-		if (gScope.parentsPeak() != IdentifierType.struct_ && gScope.parentsPeak() != IdentifierType.class_)
+		if (scopeManager.parentsPeak() != IdentifierType.struct_ && scopeManager.parentsPeak() != IdentifierType.class_)
 		{
-			declareFunction(node);
+			scopeManager.declareFunction(node);
 			identifierType = IdentifierType.function_;
 		}
 		else
@@ -128,32 +129,32 @@ class ScopeAnalyzer : BaseAnalyzer
 			identifierType = IdentifierType.method_;
 		}
 
-		gScope.parentsPush(identifierType);
-		gScope.pushFrame();
+		scopeManager.parentsPush(identifierType);
+		scopeManager.pushFrame();
 	}
 
 	override void visitEnd(const FunctionDeclaration node)
 	{
-		gScope.popFrame();
-		gScope.parentsPop();
+		scopeManager.popFrame();
+		scopeManager.parentsPop();
 	}
 
 	override void visitStart(const IdentityExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const InExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const Module node)
 	{
-		gScope.pushFrame();
+		scopeManager.pushFrame();
 
-		gScope.parentsPush(IdentifierType.module_);
-		declareModule(node);
+		scopeManager.parentsPush(IdentifierType.module_);
+		scopeManager.declareModule(node);
 
 		// Declare the global functions and variables
 		// This is a special case, because global functions do NOT have to 
@@ -163,110 +164,110 @@ class ScopeAnalyzer : BaseAnalyzer
 			if (!decl) continue;
 
 			// Add decorations such as properties, auto, ref, et cetera
-			Decoration decoration = getDeclarationDecorations(decl);
-			gScope.decorationsPush(decoration);
+			Decoration decoration = scopeManager.getDeclarationDecorations(decl);
+			scopeManager.decorationsPush(decoration);
 
 			// Add the import
 			if (decl.importDeclaration && decl.importDeclaration.singleImports)
 			{
 				foreach (singleImport; decl.importDeclaration.singleImports)
 				{
-					declareImport(singleImport);
+					scopeManager.declareImport(singleImport);
 				}
 			}
 			// Declare the function
 			else if (decl.functionDeclaration)
 			{
-				declareFunction(decl.functionDeclaration);
+				scopeManager.declareFunction(decl.functionDeclaration);
 			}
 			// Declare the variable
 			else if (decl.variableDeclaration)
 			{
-				declareVariable(decl.variableDeclaration);
+				scopeManager.declareVariable(decl.variableDeclaration);
 			}
 
 			// Remove decorations
-			gScope.decorationsPop();
+			scopeManager.decorationsPop();
 		}
 	}
 
 	override void visitEnd(const Module node)
 	{
-		gScope.parentsPop();
-		gScope.popFrame();
+		scopeManager.parentsPop();
+		scopeManager.popFrame();
 	}
 
 	override void visitStart(const MulExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const OrOrExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const OrExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const Parameter node)
 	{
-		declareParameter(node);
+		scopeManager.declareParameter(node);
 	}
 
 	override void visitStart(const PowExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const RelExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const ShiftExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 
 	override void visitStart(const SingleImport node)
 	{
-		declareImport(node);
+		scopeManager.declareImport(node);
 	}
 
 	override void visitStart(const StructDeclaration node)
 	{
-		gScope.parentsPush(IdentifierType.struct_);
-		gScope.thisPointersPush(node.name.text);
+		scopeManager.parentsPush(IdentifierType.struct_);
+		scopeManager.thisPointersPush(node.name.text);
 
-		declareStruct(node);
+		scopeManager.declareStruct(node);
 	}
 
 	override void visitEnd(const StructDeclaration node)
 	{
-		gScope.thisPointersPop();
-		gScope.parentsPop();
+		scopeManager.thisPointersPop();
+		scopeManager.parentsPop();
 	}
 
 	override void visitStart(const TemplateParameters node)
 	{
-		declareTemplates(node);
+		scopeManager.declareTemplates(node);
 	}
 
 	override void visitStart(const VariableDeclaration node)
 	{
 		// Only declare if NOT a struct/class field
-		if (gScope.parentsPeak() != IdentifierType.struct_ && gScope.parentsPeak() != IdentifierType.class_)
+		if (scopeManager.parentsPeak() != IdentifierType.struct_ && scopeManager.parentsPeak() != IdentifierType.class_)
 		{
-			declareVariable(node);
+			scopeManager.declareVariable(node);
 		}
 	}
 
 	override void visitStart(const XorExpression node)
 	{
-		markUsedVariables(node);
+		scopeManager.markUsedVariables(node);
 	}
 }
 

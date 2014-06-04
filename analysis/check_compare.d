@@ -35,8 +35,8 @@ class CompareCheck : ScopeAnalyzer
 	// a !is a
 	override void visit(const IdentityExpression idenExp)
 	{
-		TokenData left = getExpressionReturnTokenData(idenExp.left);
-		TokenData right = getExpressionReturnTokenData(idenExp.right);
+		TokenData left = getExpressionReturnTokenData(this.scopeManager.scope_, idenExp.left);
+		TokenData right = getExpressionReturnTokenData(this.scopeManager.scope_, idenExp.right);
 
 		const string operator = idenExp.negated ? "!is" : "is";
 
@@ -58,8 +58,8 @@ class CompareCheck : ScopeAnalyzer
 			|| eqlExp.operator == tok!"=="
 		);
 
-		TokenData left = getExpressionReturnTokenData(eqlExp.left);
-		TokenData right = getExpressionReturnTokenData(eqlExp.right);
+		TokenData left = getExpressionReturnTokenData(this.scopeManager.scope_, eqlExp.left);
+		TokenData right = getExpressionReturnTokenData(this.scopeManager.scope_, eqlExp.right);
 
 		if (isSameTokenVariable(left, right) && isOperator)
 		{
@@ -83,8 +83,8 @@ class CompareCheck : ScopeAnalyzer
 			|| relExp.operator == tok!"<="
 		);
 
-		TokenData left = getExpressionReturnTokenData(relExp.left);
-		TokenData right = getExpressionReturnTokenData(relExp.right);
+		TokenData left = getExpressionReturnTokenData(this.scopeManager.scope_, relExp.left);
+		TokenData right = getExpressionReturnTokenData(this.scopeManager.scope_, relExp.right);
 
 		if (isSameTokenVariable(left, right) && isOperator)
 		{
@@ -134,14 +134,14 @@ class CompareCheck : ScopeAnalyzer
 
 		if (auto orOrExp = cast(const OrOrExpression) exp)
 		{
-			left = getExpressionReturnTokenData(orOrExp.left);
-			right = getExpressionReturnTokenData(orOrExp.right);
+			left = getExpressionReturnTokenData(this.scopeManager.scope_, orOrExp.left);
+			right = getExpressionReturnTokenData(this.scopeManager.scope_, orOrExp.right);
 			operator = cast(Token) tok!"||";
 		}
 		else if (auto andAndExp = cast(const AndAndExpression) exp)
 		{
-			left = getExpressionReturnTokenData(andAndExp.left);
-			right = getExpressionReturnTokenData(andAndExp.right);
+			left = getExpressionReturnTokenData(this.scopeManager.scope_, andAndExp.left);
+			right = getExpressionReturnTokenData(this.scopeManager.scope_, andAndExp.right);
 			operator = cast(Token) tok!"&&";
 		}
 
@@ -171,20 +171,20 @@ class CompareCheck : ScopeAnalyzer
 
 		if (auto andExp = cast(const AndExpression) exp)
 		{
-			left = getExpressionReturnTokenData(andExp.left);
-			right = getExpressionReturnTokenData(andExp.right);
+			left = getExpressionReturnTokenData(this.scopeManager.scope_, andExp.left);
+			right = getExpressionReturnTokenData(this.scopeManager.scope_, andExp.right);
 			operator = cast(Token) tok!"&";
 		}
 		else if (auto orExp = cast(const OrExpression) exp)
 		{
-			left = getExpressionReturnTokenData(orExp.left);
-			right = getExpressionReturnTokenData(orExp.right);
+			left = getExpressionReturnTokenData(this.scopeManager.scope_, orExp.left);
+			right = getExpressionReturnTokenData(this.scopeManager.scope_, orExp.right);
 			operator = cast(Token) tok!"|";
 		}
 		else if (auto xorExp = cast(const XorExpression) exp)
 		{
-			left = getExpressionReturnTokenData(xorExp.left);
-			right = getExpressionReturnTokenData(xorExp.right);
+			left = getExpressionReturnTokenData(this.scopeManager.scope_, xorExp.left);
+			right = getExpressionReturnTokenData(this.scopeManager.scope_, xorExp.right);
 			operator = cast(Token) tok!"^";
 		}
 

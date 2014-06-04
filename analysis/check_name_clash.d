@@ -35,11 +35,11 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		// Variable or field?
 		IdentifierType identifierType = IdentifierType.variable_;
-		if (gScope.parentsPeak() == IdentifierType.class_ || gScope.parentsPeak() == IdentifierType.struct_)
+		if (this.scopeManager.parentsPeak() == IdentifierType.class_ || this.scopeManager.parentsPeak() == IdentifierType.struct_)
 			identifierType = IdentifierType.field_;
 
 		// Get the data
-		foreach (varData; getVariableDatas(node))
+		foreach (varData; this.scopeManager.getVariableDatas(node))
 		{
 			// Check to see if the name is already used
 			if (varData !is VariableData.init)
@@ -61,7 +61,7 @@ class NameClashCheck : ScopeAnalyzer
 		// Get the data
 		VariableData paramData;
 		paramData.name = node.name.text;
-		paramData.type = getTypeData(node.type);
+		paramData.type = this.scopeManager.getTypeData(node.type);
 		paramData.isParameter = true;
 		paramData.line = node.name.line;
 		paramData.column = node.name.column;
@@ -75,7 +75,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const ClassDeclaration node)
 	{
 		// Get the data
-		auto classData = getClassData(node);
+		auto classData = this.scopeManager.getClassData(node);
 
 		// Check to see if the name is already used
 		if (classData !is ClassData.init)
@@ -87,7 +87,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const StructDeclaration node)
 	{
 		// Get the data
-		auto structData = getStructData(node);
+		auto structData = this.scopeManager.getStructData(node);
 
 		// Check to see if the name is already used
 		if (structData !is StructData.init)
@@ -99,12 +99,12 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const FunctionDeclaration node)
 	{
 		// Get the data
-		auto funcData = getFunctionData(node);
+		auto funcData = this.scopeManager.getFunctionData(node);
 
 		// Function or method?
 		// FIXME: The problem is that it is already marked that the parent is the function or 
 		// method we are in. So the parent is actually this, rather than a struct/class.
-		IdentifierType identifierType = gScope.parentsPeak();
+		IdentifierType identifierType = this.scopeManager.parentsPeak();
 
 		// Check to see if the name is already used
 		if (funcData !is FunctionData.init)
@@ -116,7 +116,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const TemplateParameters node)
 	{
 		// Get the data
-		foreach (tempData; getTemplateDatas(node))
+		foreach (tempData; this.scopeManager.getTemplateDatas(node))
 		{
 			// Check to see if the name is already used
 			if (tempData !is TemplateData.init)
@@ -129,7 +129,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const EnumDeclaration node)
 	{
 		// Get the data
-		auto enumData = getEnumData(node);
+		auto enumData = this.scopeManager.getEnumData(node);
 
 		// Check to see if the name is already used
 		if (enumData !is EnumData.init)
@@ -142,7 +142,7 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		// Get the data
 		string name;
-		auto fieldData = getEnumFieldData(node, name);
+		auto fieldData = this.scopeManager.getEnumFieldData(node, name);
 
 		// Check to see if the name is already used
 		if (fieldData !is FieldData.init)
@@ -159,7 +159,7 @@ class NameClashCheck : ScopeAnalyzer
 		size_t oldColumn;
 		IdentifierType oldType = IdentifierType.invalid_;
 
-		foreach (frame; std.range.retro(gScope.frames))
+		foreach (frame; std.range.retro(this.scopeManager.scope_.frames))
 		{
 			checkInstanceClashes(frame.variables, IdentifierType.variable_, oldLine, oldColumn, oldType, name, line, column, type);
 			checkInstanceClashes(frame.functions, IdentifierType.function_, oldLine, oldColumn, oldType, name, line, column, type);
@@ -179,7 +179,7 @@ class NameClashCheck : ScopeAnalyzer
 		}
 
 		// Match exact module variable name in other module
-		foreach (mod; gScope.modules)
+		foreach (mod; this.scopeManager.scope_.modules)
 		{
 			if (name.startsWith(mod.name) && name.length > mod.name.length)
 			{
@@ -205,13 +205,13 @@ class NameClashCheck : ScopeAnalyzer
 		}
 
 		// Match partial module variable name using imports
-		foreach (frame; std.range.retro(gScope.frames))
+		foreach (frame; std.range.retro(this.scopeManager.scope_.frames))
 		{
 			foreach (importName; frame.imports)
 			{
-				if (importName in gScope.modules)
+				if (importName in this.scopeManager.scope_.modules)
 				{
-					auto mod = gScope.modules[importName];
+					auto mod = this.scopeManager.scope_.modules[importName];
 
 					checkInstanceClashes(mod.variables, IdentifierType.variable_, oldLine, oldColumn, oldType, name, line, column, type);
 					checkInstanceClashes(mod.functions, IdentifierType.function_, oldLine, oldColumn, oldType, name, line, column, type);

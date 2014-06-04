@@ -3,6 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+// FIXME: Rename to scope
 module analysis.scope_frame;
 /*
 This module has functions for managing what is in scope. This includes:
@@ -21,8 +22,6 @@ import std.string;
 import std.stdint;
 import dlang_helper;
 
-
-Scope gScope = null;
 
 struct TypeData
 {
@@ -188,22 +187,9 @@ class Scope
 {
 	ScopeFrame[] frames;
 	ModuleData[string] modules;
-	private Queue!IdentifierType parents;
-	private Queue!string thisPointers;
-	private Queue!Decoration decorations;
-
-	void pushFrame()
-	{
-		// Add a new scope frame
-		ScopeFrame frame;
-		frames ~= frame;
-	}
-
-	void popFrame()
-	{
-		// Remove the current scope frame
-		frames = frames[0 .. $-1];
-	}
+	/*private*/ Queue!IdentifierType parents;
+	/*private*/ Queue!string thisPointers;
+	/*private*/ Queue!Decoration decorations;
 
 	void clear()
 	{
@@ -212,51 +198,6 @@ class Scope
 		parents.clear();
 		thisPointers.clear();
 		decorations.clear();
-	}
-
-	void parentsPush(IdentifierType parent)
-	{
-		parents.push(parent);
-	}
-
-	void parentsPop()
-	{
-		parents.pop();
-	}
-
-	IdentifierType parentsPeak()
-	{
-		return parents.peak();
-	}
-
-	void thisPointersPush(string thisPointer)
-	{
-		thisPointers.push(thisPointer);
-	}
-
-	void thisPointersPop()
-	{
-		thisPointers.pop();
-	}
-
-	string thisPointersPeak()
-	{
-		return thisPointers.peak();
-	}
-
-	void decorationsPush(Decoration decoration)
-	{
-		decorations.push(decoration);
-	}
-
-	void decorationsPop()
-	{
-		decorations.pop();
-	}
-
-	Decoration decorationsPeak()
-	{
-		return decorations.peak();
 	}
 
 	VariableData[string] getCurrentFrameVariables()
@@ -573,7 +514,7 @@ class Scope
 		}
 
 		// Skip if declaring same function
-		auto funcOther = gScope.getFunction(funcData.name);
+		auto funcOther = this.getFunction(funcData.name);
 		if (funcOther !is FunctionData.init && funcOther == funcData)
 		{
 			stderr.writefln("??? addVariable() failed because function is already declared '%s'.", funcData.name);
@@ -604,7 +545,7 @@ class Scope
 		}
 
 		// Skip if declaring same template
-		auto tempOther = gScope.getTemplate(tempData.name);
+		auto tempOther = this.getTemplate(tempData.name);
 		if (tempOther !is TemplateData.init && tempOther == tempData)
 		{
 			stderr.writefln("??? addTemplateParameter() failed because template is already declared '%s'.", tempData.name);
@@ -637,7 +578,7 @@ class Scope
 		}
 
 		// Skip if declaring same variable
-		auto varOther = gScope.getVariable(varData.name);
+		auto varOther = this.getVariable(varData.name);
 		if (varOther !is VariableData.init && varOther == varData)
 		{
 			stderr.writefln("??? addVariable() failed because variable is already declared '%s'.", varData.name);
@@ -668,7 +609,7 @@ class Scope
 		}
 
 		// Skip if declaring same class
-		auto classOther = gScope.getClass(classData.name);
+		auto classOther = this.getClass(classData.name);
 		if (classOther !is ClassData.init && classOther == classData)
 		{
 			stderr.writefln("??? addClass() failed because class is already declared '%s'.", classData.name);
@@ -699,7 +640,7 @@ class Scope
 		}
 
 		// Skip if declaring same struct
-		auto structOther = gScope.getStruct(structData.name);
+		auto structOther = this.getStruct(structData.name);
 		if (structOther !is structData.init && structOther == structData)
 		{
 			stderr.writefln("??? addStruct() failed because struct is already declared '%s'.", structData.name);
@@ -730,7 +671,7 @@ class Scope
 		}
 
 		// Skip if declaring same enum
-		auto enumOther = gScope.getEnum(enumData.name);
+		auto enumOther = this.getEnum(enumData.name);
 		if (enumOther !is enumData.init && enumOther == enumData)
 		{
 			stderr.writefln("??? addEnum() failed because enum is already declared '%s'.", enumData.name);

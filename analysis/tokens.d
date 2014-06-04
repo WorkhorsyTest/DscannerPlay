@@ -119,7 +119,7 @@ bool isSameTokenVariable(const TokenData a, const TokenData b)
 }
 
 // FIXME: Much of this can be replaced with some isBlah functions
-const Token getPromotedToken(const Token left, const Token right)
+const Token getPromotedToken(Scope scope_, const Token left, const Token right)
 {
 	const int[string] sizes = [
 		"bool" : bool.sizeof,
@@ -212,14 +212,14 @@ const Token getPromotedToken(const Token left, const Token right)
 
 	];
 
-	string a = getTokenData(left, gScope).typeData.name;
-	string b = getTokenData(right, gScope).typeData.name;
+	string a = getTokenData(scope_, left).typeData.name;
+	string b = getTokenData(scope_, right).typeData.name;
 
 	// print an error if any type names are blank
 	if (isNullOrBlank(a) || isNullOrBlank(b))
 	{
 		string message = "!!! getPromotedToken() failed on tokens: '%s' or '%s'.".format(
-			getTokenData(left, gScope), getTokenData(right, gScope));
+			getTokenData(scope_, left), getTokenData(scope_, right));
 		stderr.writeln(message);
 		return Token.init;
 	}
@@ -280,7 +280,7 @@ Token combineTokens(const Token a, const Token b)
 }
 
 // FIXME: Make this work with UFC for variables and literals
-TokenData getTokenData(const Token token, Scope scope_)
+TokenData getTokenData(Scope scope_, const Token token)
 {
 	TokenData data;
 
@@ -403,13 +403,13 @@ TokenData getTokenData(const Token token, Scope scope_)
 
 	// Token is identifier with "this pointer" prefix
 	// this.blah
-	if (token.type == tok!"this" && token.text && token.text.length && scope_.thisPointersPeak())
+	if (token.type == tok!"this" && token.text && token.text.length && scope_.thisPointers.peak())
 	{
 		string member = token.text;
 
 		// Figure out what "this" is
-		auto classData = scope_.getClass(scope_.thisPointersPeak());
-		auto structData = scope_.getStruct(scope_.thisPointersPeak());
+		auto classData = scope_.getClass(scope_.thisPointers.peak());
+		auto structData = scope_.getStruct(scope_.thisPointers.peak());
 
 		// Class
 		if (classData !is ClassData.init)
@@ -455,11 +455,11 @@ TokenData getTokenData(const Token token, Scope scope_)
 
 	// Token is just the "this pointer"
 	// this
-	if (token.type == tok!"this" && scope_.thisPointersPeak())
+	if (token.type == tok!"this" && scope_.thisPointers.peak())
 	{
 		data.tokenType = TokenType.this_;
 		data.name = "this";
-		data.typeData = TypeData(scope_.thisPointersPeak());
+		data.typeData = TypeData(scope_.thisPointers.peak());
 		return data;
 	}
 
@@ -709,12 +709,12 @@ TokenData getTokenData(const Token token, Scope scope_)
 
 	// Token is an identifier that should have used a this pointer
 	// blah instead of this.blah
-	if (token.type == tok!"identifier" && scope_.thisPointersPeak())
+	if (token.type == tok!"identifier" && scope_.thisPointers.peak())
 	{
 		// Token may be a field/method without the this pointer
 		// Figure out what "this" should be
-		auto classData = scope_.getClass(scope_.thisPointersPeak());
-		auto structData = scope_.getStruct(scope_.thisPointersPeak());
+		auto classData = scope_.getClass(scope_.thisPointers.peak());
+		auto structData = scope_.getStruct(scope_.thisPointers.peak());
 		string identifier = token.text;
 
 		// Class
