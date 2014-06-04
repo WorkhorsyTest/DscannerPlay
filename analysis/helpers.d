@@ -179,36 +179,6 @@ void declareImport(const SingleImport singImpo)
 	loadModule(fileName);
 }
 
-void loadModule(string fileName)
-{
-	// Just return if the file does not exist
-	import std.file;
-	if (!std.file.exists(fileName) || !std.file.isFile(fileName))
-		return;
-
-	// Read the code
-	File f = File(fileName);
-	auto code = uninitializedArray!(ubyte[])(to!size_t(f.size));
-	f.rawRead(code);
-
-	// Lex the code
-	auto lexer = byToken(code);
-	auto app = appender!(typeof(lexer.front)[])();
-	while (!lexer.empty)
-	{
-		app.put(lexer.front);
-		lexer.popFront();
-	}
-
-	// Parse the code
-	auto p = new std.d.parser.ParseAllocator();
-	Module mod = std.d.parser.parseModule(app.data, fileName, p, null);
-
-	// Get data from the module
-	ModuleData moduleData = getModuleData(mod);
-	gScope.addModule(moduleData);
-}
-
 void declareFunction(const FunctionDeclaration funcDec)
 {
 	FunctionData data = getFunctionData(funcDec);
@@ -312,69 +282,6 @@ Decoration getDeclarationDecorations(const Declaration decl)
 	return decoration;
 }
 
-VariableData[] getVariableDatas(const VariableDeclaration varDec)
-{
-	VariableData[] datas;
-
-	// Using auto
-	if (varDec.autoDeclaration)
-	{
-		string[] names = getVariableNames(varDec);
-		if (!names)
-		{
-			stderr.writeln("??? getVariableDatas() failed to get variable name.");
-			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
-			return null;
-		}
-
-		TokenData tokenData = getExpressionReturnTokenData(varDec.autoDeclaration);
-
-		if (tokenData is TokenData.init)
-		{
-			stderr.writeln("??? getVariableDatas() failed to get valid token from auto variable declaration.");
-			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
-			return null;
-		}
-
-		foreach (name; names)
-		{
-			VariableData data;
-			data.name = name;
-			data.type = tokenData.typeData;
-			data.isParameter = false;
-			data.line = tokenData.line;
-			data.column = tokenData.column;
-			if (data.type !is TypeData.init)
-				datas ~= data;
-		}
-	}
-	// Normal variable
-	else
-	{
-		string[] names = getVariableNames(varDec);
-		if (!names)
-		{
-			stderr.writeln("??? getVariableDatas() failed to get variable name.");
-			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
-			return null;
-		}
-
-		TypeData type = getTypeData(varDec.type);
-		foreach (name; names)
-		{
-			VariableData data;
-			data.name = name;
-			data.type = type;
-			data.isParameter = false;
-			getVariableLineColumn(varDec, name, data.line, data.column);
-			if (data.type !is TypeData.init)
-				datas ~= data;
-		}
-	}
-
-	return datas;
-}
-
 TemplateData[] getTemplateDatas(const TemplateParameters templateParameters)
 {
 	TemplateData[] datas;
@@ -397,18 +304,6 @@ TemplateData[] getTemplateDatas(const TemplateParameters templateParameters)
 		}
 	}
 	return datas;
-}
-
-FunctionData getFunctionData(const FunctionDeclaration funcDec)
-{
-	FunctionData data;
-	data.name = funcDec.name.text;
-	data.templates = getTemplateDatas(funcDec.templateParameters);
-	data.returnType = getFunctionReturnTypeData(funcDec);
-	data.argTypes = getFunctionArgTypeDatas(funcDec);
-	data.line = funcDec.name.line;
-	data.column = funcDec.name.column;
-	return data;
 }
 
 StructData getStructData(const StructDeclaration structDec)
@@ -565,6 +460,18 @@ ModuleData getModuleData(const Module mod)
 	return data;
 }
 
+FunctionData getFunctionData(const FunctionDeclaration funcDec)
+{
+	FunctionData data;
+	data.name = funcDec.name.text;
+	data.templates = getTemplateDatas(funcDec.templateParameters);
+	data.returnType = getFunctionReturnTypeData(funcDec);
+	data.argTypes = getFunctionArgTypeDatas(funcDec);
+	data.line = funcDec.name.line;
+	data.column = funcDec.name.column;
+	return data;
+}
+
 TokenData[] getFunctionCallArguments(const FunctionCallExpression funcCallExp)
 {
 	TokenData[] args;
@@ -689,6 +596,69 @@ string[] getFunctionArgNames(const FunctionDeclaration funcDec)
 	stderr.writefln("??? getFunctionArgNames() filed to get function arg names.");
 	std.d.inspect.inspect(stderr, funcDec, "FunctionDeclaration");
 	return null;
+}
+
+VariableData[] getVariableDatas(const VariableDeclaration varDec)
+{
+	VariableData[] datas;
+
+	// Using auto
+	if (varDec.autoDeclaration)
+	{
+		string[] names = getVariableNames(varDec);
+		if (!names)
+		{
+			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
+			return null;
+		}
+
+		TokenData tokenData = getExpressionReturnTokenData(varDec.autoDeclaration);
+
+		if (tokenData is TokenData.init)
+		{
+			stderr.writeln("??? getVariableDatas() failed to get valid token from auto variable declaration.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
+			return null;
+		}
+
+		foreach (name; names)
+		{
+			VariableData data;
+			data.name = name;
+			data.type = tokenData.typeData;
+			data.isParameter = false;
+			data.line = tokenData.line;
+			data.column = tokenData.column;
+			if (data.type !is TypeData.init)
+				datas ~= data;
+		}
+	}
+	// Normal variable
+	else
+	{
+		string[] names = getVariableNames(varDec);
+		if (!names)
+		{
+			stderr.writeln("??? getVariableDatas() failed to get variable name.");
+			std.d.inspect.inspect(stderr, varDec, "VariableDeclaration");
+			return null;
+		}
+
+		TypeData type = getTypeData(varDec.type);
+		foreach (name; names)
+		{
+			VariableData data;
+			data.name = name;
+			data.type = type;
+			data.isParameter = false;
+			getVariableLineColumn(varDec, name, data.line, data.column);
+			if (data.type !is TypeData.init)
+				datas ~= data;
+		}
+	}
+
+	return datas;
 }
 
 string[] getVariableNames(const VariableDeclaration varDec)
@@ -901,14 +871,34 @@ TypeData getTypeData(const Type type)
 	return TypeData.init;
 }
 
-bool isSameTokenVariable(const TokenData a, const TokenData b)
+void loadModule(string fileName)
 {
-	return
-		a !is TokenData.init && b !is TokenData.init
-		&& (a.tokenType == TokenType.variable && b.tokenType == TokenType.variable
-		|| a.tokenType == TokenType.field && b.tokenType == TokenType.field)
-		&& a.name && b.name
-		&& a.name == b.name;
+	// Just return if the file does not exist
+	import std.file;
+	if (!std.file.exists(fileName) || !std.file.isFile(fileName))
+		return;
+
+	// Read the code
+	File f = File(fileName);
+	auto code = uninitializedArray!(ubyte[])(to!size_t(f.size));
+	f.rawRead(code);
+
+	// Lex the code
+	auto lexer = byToken(code);
+	auto app = appender!(typeof(lexer.front)[])();
+	while (!lexer.empty)
+	{
+		app.put(lexer.front);
+		lexer.popFront();
+	}
+
+	// Parse the code
+	auto p = new std.d.parser.ParseAllocator();
+	Module mod = std.d.parser.parseModule(app.data, fileName, p, null);
+
+	// Get data from the module
+	ModuleData moduleData = getModuleData(mod);
+	gScope.addModule(moduleData);
 }
 
 

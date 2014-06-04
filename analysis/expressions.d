@@ -536,6 +536,21 @@ Token getExpressionReturnToken(const ASTNode node, size_t indent)
 	return Token.init;
 }
 
+string tokenStr(const Token token)
+{
+	return "Token(type:%s, text:%s, line:%s, column:%s)".format(token.type.str, token.text, token.line, token.column);
+}
+
+bool isSameTokenVariable(const TokenData a, const TokenData b)
+{
+	return
+		a !is TokenData.init && b !is TokenData.init
+		&& (a.tokenType == TokenType.variable && b.tokenType == TokenType.variable
+		|| a.tokenType == TokenType.field && b.tokenType == TokenType.field)
+		&& a.name && b.name
+		&& a.name == b.name;
+}
+
 // FIXME: Much of this can be replaced with some isBlah functions
 const Token getPromotedToken(const Token left, const Token right)
 {
@@ -662,11 +677,7 @@ const Token getPromotedToken(const Token left, const Token right)
 		return Token(tok!"identifier", promotions[b], right.line, right.column, right.index);
 }
 
-string tokenStr(const Token token)
-{
-	return "Token(type:%s, text:%s, line:%s, column:%s)".format(token.type.str, token.text, token.line, token.column);
-}
-
+// FIXME: Move these token functions to their own token module that is used by this module.
 Token combineTokens(const Token a, const Token b)
 {
 	Token token;
