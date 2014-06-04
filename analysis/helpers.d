@@ -365,14 +365,7 @@ EnumData getEnumData(const EnumDeclaration enumDec)
 	data.line = enumDec.name.line;
 	data.column = enumDec.name.column;
 	data.type = TypeData("int");
-	try
-	{
-		data.type = getTypeData(enumDec.type);
-	}
-	catch (Exception ex)
-	{
-		//
-	}
+	data.type = getTypeData(enumDec.type);
 
 	foreach (member; enumDec.enumBody.enumMembers)
 	{
