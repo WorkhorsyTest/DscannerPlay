@@ -54,6 +54,7 @@ def _actual_build(dc):
 	dc.build_object('std/d/inspect.o', ['std/d/inspect.d'], h_dir='std/d/')
 	dc.build_object('analysis/base.o', ['analysis/base.d'], h_dir='analysis/')
 	dc.build_object('analysis/run.o', ['analysis/run.d'], h_dir='analysis/')
+	dc.build_object('analysis/expressions.o', ['analysis/expressions.d', '-Ianalysis/', '-Istd/d/', '-I.'], h_dir='analysis/')
 	dc.build_object('analysis/helpers.o', ['analysis/helpers.d', '-Ianalysis/', '-Istd/d/', '-I.'], h_dir='analysis/')
 	dc.build_object('analysis/scope_frame.o', ['analysis/scope_frame.d'], h_dir='analysis/')
 	dc.build_object('analysis/scope_analyzer.o', ['analysis/scope_analyzer.d'], h_dir='analysis/')
