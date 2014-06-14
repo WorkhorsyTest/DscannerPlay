@@ -18,7 +18,116 @@ import analysis.scope_frame;
 import dlang_helper;
 
 
-const string[] BASIC_TYPES = [
+enum int[string] TYPE_SIZES = [
+	"bool" : bool.sizeof,
+	"char" : char.sizeof,
+	"wchar" : wchar.sizeof,
+	"dchar" : dchar.sizeof,
+	"byte" : byte.sizeof,
+	"short" : short.sizeof,
+	"int" : int.sizeof,
+	"long" : long.sizeof,
+	"ubyte" : ubyte.sizeof,
+	"ushort" : ushort.sizeof,
+	"uint" : uint.sizeof,
+	"ulong" : ulong.sizeof,
+	"size_t" : size_t.sizeof,
+	"float" : float.sizeof,
+	"double" : double.sizeof,
+
+	"int8_t" : int8_t.sizeof,
+	"int16_t" : int16_t.sizeof,
+	"int32_t" : int32_t.sizeof,
+	"int64_t" : int64_t.sizeof,
+	"uint8_t" : uint8_t.sizeof,
+	"uint16_t" : uint16_t.sizeof,
+	"uint32_t" : uint32_t.sizeof,
+	"uint64_t" : uint64_t.sizeof,
+
+	"int_least8_t" : int_least8_t.sizeof,
+	"int_least16_t" : int_least16_t.sizeof,
+	"int_least32_t" : int_least32_t.sizeof,
+	"int_least64_t" : int_least64_t.sizeof,
+	"uint_least8_t" : uint_least8_t.sizeof,
+	"uint_least16_t" : uint_least16_t.sizeof,
+	"uint_least32_t" : uint_least32_t.sizeof,
+	"uint_least64_t" : uint_least64_t.sizeof,
+
+	"int_fast8_t" : int_fast8_t.sizeof,
+	"int_fast16_t" : int_fast16_t.sizeof,
+	"int_fast32_t" : int_fast32_t.sizeof,
+	"int_fast64_t" : int_fast64_t.sizeof,
+	"uint_fast8_t" : uint_fast8_t.sizeof,
+	"uint_fast16_t" : uint_fast16_t.sizeof,
+	"uint_fast32_t" : uint_fast32_t.sizeof,
+	"uint_fast64_t" : uint_fast64_t.sizeof,
+];
+
+enum string[string] TYPE_PROMOTIONS = [
+	"bool" : "int",
+	"char" : "int",
+	"wchar" : "int",
+	"dchar" : "uint",
+	"byte" : "int",
+	"short" : "int",
+	"int" : "int",
+	"long" : "long",
+	"ubyte" : "int",
+	"ushort" : "int",
+	"uint" : "uint",
+	"ulong" : "ulong",
+	"size_t" : "size_t",
+	"float" : "float",
+	"double" : "double",
+
+	"int8_t" : "int",
+	"int16_t" : "int",
+	"int32_t" : "int",
+	"int64_t" : "long",
+	"uint8_t" : "int",
+	"uint16_t" : "int",
+	"uint32_t" : "uint",
+	"uint64_t" : "ulong",
+
+	"int_least8_t" : "int",
+	"int_least16_t" : "int",
+	"int_least32_t" : "int",
+	"int_least64_t" : "long",
+	"uint_least8_t" : "int",
+	"uint_least16_t" : "int",
+	"uint_least32_t" : "uint",
+	"uint_least64_t" : "ulong",
+
+	"int_fast8_t" : "int",
+	"int_fast16_t" : "int",
+	"int_fast32_t" : "int",
+	"int_fast64_t" : "long",
+	"uint_fast8_t" : "int",
+	"uint_fast16_t" : "int",
+	"uint_fast32_t" : "uint",
+	"uint_fast64_t" : "ulong",
+];
+
+// FIXME: Make all literals accounted for instead of being converted to
+// variable types.
+enum string[ubyte] LITERAL_TYPE_TO_TYPE_MAP = [
+	tok!"doubleLiteral" : "double",
+	tok!"idoubleLiteral" : "idouble",
+	tok!"floatLiteral" : "float",
+	tok!"ifloatLiteral" : "ifloat",
+	tok!"intLiteral" : "int",
+	tok!"uintLiteral" : "uint",
+	tok!"longLiteral" : "long",
+	tok!"ulongLiteral" : "ulong",
+	tok!"realLiteral" : "real",
+	tok!"irealLiteral" : "ireal",
+	tok!"characterLiteral" : "char",
+	tok!"stringLiteral" : "string",
+	tok!"dstringLiteral" : "dstring",
+	tok!"wstringLiteral" : "wstring"
+];
+
+immutable string[] BASIC_TYPES = [
 	"byte", "short", "int", "long",
 	"ubyte", "ushort", "uint", "ulong",
 	"size_t",
@@ -37,7 +146,7 @@ const string[] BASIC_TYPES = [
 	"string", "wstring", "dstring"
 ];
 
-const string[] INTEGER_TYPES = [
+immutable string[] INTEGER_TYPES = [
 	"byte", "short", "int", "long",
 	"ubyte", "ushort", "uint", "ulong",
 	"size_t",
@@ -51,20 +160,20 @@ const string[] INTEGER_TYPES = [
 	"uint_fast8_t", "uint_fast16_t", "uint_fast32_t", "uint_fast64_t"
 ];
 
-const string[] FLOAT_TYPES = [
+immutable string[] FLOAT_TYPES = [
 	"float", "double", "real",
 	"ifloat", "idouble", "ireal"
 ];
 
-const string[] BOOL_TYPES = [
+immutable string[] BOOL_TYPES = [
 	"bool"
 ];
 
-const string[] STRING_TYPES = [
+immutable string[] STRING_TYPES = [
 	"string", "wstring", "dstring"
 ];
 
-const string[] CHAR_TYPES = [
+immutable string[] CHAR_TYPES = [
 	"char", "wchar", "dchar"
 ];
 
@@ -121,97 +230,6 @@ bool isSameTokenVariable(const TokenData a, const TokenData b)
 // FIXME: Much of this can be replaced with some isBlah functions
 const Token getPromotedToken(Scope scope_, const Token left, const Token right)
 {
-	const int[string] sizes = [
-		"bool" : bool.sizeof,
-		"char" : char.sizeof,
-		"wchar" : wchar.sizeof,
-		"dchar" : dchar.sizeof,
-		"byte" : byte.sizeof,
-		"short" : short.sizeof,
-		"int" : int.sizeof,
-		"long" : long.sizeof,
-		"ubyte" : ubyte.sizeof,
-		"ushort" : ushort.sizeof,
-		"uint" : uint.sizeof,
-		"ulong" : ulong.sizeof,
-		"size_t" : size_t.sizeof,
-		"float" : float.sizeof,
-		"double" : double.sizeof,
-
-		"int8_t" : int8_t.sizeof,
-		"int16_t" : int16_t.sizeof,
-		"int32_t" : int32_t.sizeof,
-		"int64_t" : int64_t.sizeof,
-		"uint8_t" : uint8_t.sizeof,
-		"uint16_t" : uint16_t.sizeof,
-		"uint32_t" : uint32_t.sizeof,
-		"uint64_t" : uint64_t.sizeof,
-
-		"int_least8_t" : int_least8_t.sizeof,
-		"int_least16_t" : int_least16_t.sizeof,
-		"int_least32_t" : int_least32_t.sizeof,
-		"int_least64_t" : int_least64_t.sizeof,
-		"uint_least8_t" : uint_least8_t.sizeof,
-		"uint_least16_t" : uint_least16_t.sizeof,
-		"uint_least32_t" : uint_least32_t.sizeof,
-		"uint_least64_t" : uint_least64_t.sizeof,
-
-		"int_fast8_t" : int_fast8_t.sizeof,
-		"int_fast16_t" : int_fast16_t.sizeof,
-		"int_fast32_t" : int_fast32_t.sizeof,
-		"int_fast64_t" : int_fast64_t.sizeof,
-		"uint_fast8_t" : uint_fast8_t.sizeof,
-		"uint_fast16_t" : uint_fast16_t.sizeof,
-		"uint_fast32_t" : uint_fast32_t.sizeof,
-		"uint_fast64_t" : uint_fast64_t.sizeof,
-	];
-
-	const string[string] promotions = [
-		"bool" : "int",
-		"char" : "int",
-		"wchar" : "int",
-		"dchar" : "uint",
-		"byte" : "int",
-		"short" : "int",
-		"int" : "int",
-		"long" : "long",
-		"ubyte" : "int",
-		"ushort" : "int",
-		"uint" : "uint",
-		"ulong" : "ulong",
-		"size_t" : "size_t",
-		"float" : "float",
-		"double" : "double",
-
-		"int8_t" : "int",
-		"int16_t" : "int",
-		"int32_t" : "int",
-		"int64_t" : "long",
-		"uint8_t" : "int",
-		"uint16_t" : "int",
-		"uint32_t" : "uint",
-		"uint64_t" : "ulong",
-
-		"int_least8_t" : "int",
-		"int_least16_t" : "int",
-		"int_least32_t" : "int",
-		"int_least64_t" : "long",
-		"uint_least8_t" : "int",
-		"uint_least16_t" : "int",
-		"uint_least32_t" : "uint",
-		"uint_least64_t" : "ulong",
-
-		"int_fast8_t" : "int",
-		"int_fast16_t" : "int",
-		"int_fast32_t" : "int",
-		"int_fast64_t" : "long",
-		"uint_fast8_t" : "int",
-		"uint_fast16_t" : "int",
-		"uint_fast32_t" : "uint",
-		"uint_fast64_t" : "ulong",
-
-	];
-
 	string a = getTokenData(scope_, left).typeData.name;
 	string b = getTokenData(scope_, right).typeData.name;
 
@@ -225,8 +243,8 @@ const Token getPromotedToken(Scope scope_, const Token left, const Token right)
 	}
 
 	// print an error if any type names are unknown
-	if (a !in promotions || a !in sizes
-		|| b !in promotions || b !in sizes)
+	if (a !in TYPE_PROMOTIONS || a !in TYPE_SIZES
+		|| b !in TYPE_PROMOTIONS || b !in TYPE_SIZES)
 	{
 		string message = "!!! getPromotedToken() failed with the type name: '%s' or '%s'.".format(a, b);
 		stderr.writeln(message);
@@ -235,13 +253,13 @@ const Token getPromotedToken(Scope scope_, const Token left, const Token right)
 
 	// Types are the same, so return the promotion of one
 	if (a == b)
-		return Token(tok!"identifier", promotions[a], left.line, left.column, left.index);
+		return Token(tok!"identifier", TYPE_PROMOTIONS[a], left.line, left.column, left.index);
 
 	// Types are different, so return the promotion of the larger
-	if (sizes[a] > sizes[b])
-		return Token(tok!"identifier", promotions[a], left.line, left.column, left.index);
+	if (TYPE_SIZES[a] > TYPE_SIZES[b])
+		return Token(tok!"identifier", TYPE_PROMOTIONS[a], left.line, left.column, left.index);
 	else
-		return Token(tok!"identifier", promotions[b], right.line, right.column, right.index);
+		return Token(tok!"identifier", TYPE_PROMOTIONS[b], right.line, right.column, right.index);
 }
 
 Token combineTokens(const Token a, const Token b)
@@ -305,23 +323,6 @@ TokenData getTokenData(Scope scope_, const Token token)
 		data.typeData = TypeData.init;
 		return data;
 	}
-
-	const string[ubyte] LITERAL_TYPE_TO_TYPE_MAP = [
-		tok!"doubleLiteral" : "double",
-		tok!"idoubleLiteral" : "idouble",
-		tok!"floatLiteral" : "float",
-		tok!"ifloatLiteral" : "ifloat",
-		tok!"intLiteral" : "int",
-		tok!"uintLiteral" : "uint",
-		tok!"longLiteral" : "long",
-		tok!"ulongLiteral" : "ulong",
-		tok!"realLiteral" : "real",
-		tok!"irealLiteral" : "ireal",
-		tok!"characterLiteral" : "char",
-		tok!"stringLiteral" : "string",
-		tok!"dstringLiteral" : "dstring",
-		tok!"wstringLiteral" : "wstring"
-	];
 
 	// Token is a literal
 	if (token.type in LITERAL_TYPE_TO_TYPE_MAP)
