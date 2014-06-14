@@ -15,7 +15,7 @@ struct Message
 
 enum comparitor = q{ a.line < b.line || a.line < b.line };
 
-// FIXME: This was changed to now allow duplicates. If there are duplicates,
+// FIXME: This was changed to not allow duplicates. If there are duplicates,
 // then there can be multiple messages for each line. Many of the tests
 // will break if there can be duplicates.
 alias MessageSet = RedBlackTree!(Message, comparitor);
