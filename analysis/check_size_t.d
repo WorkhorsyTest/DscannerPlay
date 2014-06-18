@@ -14,7 +14,8 @@ import std.d.ast;
 import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 import analysis.tokens;
 import analysis.expressions;
 import analysis.scope_frame;
@@ -66,11 +67,11 @@ class SizeTCheck : ScopeAnalyzer
 		// Get the types
 		auto varDeclarator = varDec.declarators[0];
 		size_t line, column;
-		TypeData toType = this.scopeManager.getTypeData(varDec.type);
+		TypeData toType = getTypeData(varDec.type);
 		TypeData fromType = getExpressionReturnType(this.scopeManager.scope_, varDeclarator, line, column);
 		if (line == 0 || column == 0)
 		{
-			this.scopeManager.getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
+			getVariableLineColumn(varDec, varDeclarator.name.text, line, column);
 		}
 
 		actualCheck(toType, fromType, line, column);
@@ -91,7 +92,7 @@ class SizeTCheck : ScopeAnalyzer
 		}
 
 		// Get the name and args of the function to call
-		string name = this.scopeManager.getFunctionCallName(funcExp);
+		string name = getFunctionCallName(this.scopeManager.scope_, funcExp);
 
 		// Just return if it failed to get the function name
 		if (!name)

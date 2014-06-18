@@ -16,7 +16,8 @@ import std.d.ast;
 import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 import analysis.tokens;
 import analysis.expressions;
 import analysis.scope_frame;
@@ -126,7 +127,7 @@ class CheckStringFormat : ScopeAnalyzer
 		funcCallExp.accept(this);
 
 		// Get the function name and args
-		string funcName = this.scopeManager.getFunctionCallName(funcCallExp);
+		string funcName = getFunctionCallName(this.scopeManager.scope_, funcCallExp);
 
 		// Just return if it failed to get the function name
 		if (!funcName)
@@ -138,7 +139,7 @@ class CheckStringFormat : ScopeAnalyzer
 			return;
 
 		// Get all the arguments passed to the function
-		TokenData[] tokenArgs = this.scopeManager.getFunctionCallArguments(funcCallExp);
+		TokenData[] tokenArgs = getFunctionCallArguments(this.scopeManager.scope_, funcCallExp);
 
 		// Get the format string and arguments
 		size_t argOffset = 0;

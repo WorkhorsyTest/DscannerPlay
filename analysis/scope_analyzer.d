@@ -13,7 +13,8 @@ import std.d.ast;
 import std.d.codegen;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 import analysis.scope_frame;
 import dlang_helper;
 
@@ -90,7 +91,7 @@ class ScopeAnalyzer : BaseAnalyzer
 	override void visitStart(const Declaration node)
 	{
 		// Add decorations such as properties, auto, ref, et cetera
-		Decoration decoration = scopeManager.getDeclarationDecorations(node);
+		Decoration decoration = getDeclarationDecorations(scopeManager.scope_, node);
 		scopeManager.decorationsPush(decoration);
 	}
 
@@ -164,7 +165,7 @@ class ScopeAnalyzer : BaseAnalyzer
 			if (!decl) continue;
 
 			// Add decorations such as properties, auto, ref, et cetera
-			Decoration decoration = scopeManager.getDeclarationDecorations(decl);
+			Decoration decoration = getDeclarationDecorations(scopeManager.scope_, decl);
 			scopeManager.decorationsPush(decoration);
 
 			// Add the import

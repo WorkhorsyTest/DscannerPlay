@@ -14,7 +14,8 @@ import std.d.ast;
 import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 import analysis.scope_frame;
 import analysis.scope_analyzer;
 
@@ -39,7 +40,7 @@ class NameClashCheck : ScopeAnalyzer
 			identifierType = IdentifierType.field_;
 
 		// Get the data
-		foreach (varData; this.scopeManager.getVariableDatas(node))
+		foreach (varData; getVariableDatas(this.scopeManager.scope_, node))
 		{
 			// Check to see if the name is already used
 			if (varData !is VariableData.init)
@@ -61,7 +62,7 @@ class NameClashCheck : ScopeAnalyzer
 		// Get the data
 		VariableData paramData;
 		paramData.name = node.name.text;
-		paramData.type = this.scopeManager.getTypeData(node.type);
+		paramData.type = getTypeData(node.type);
 		paramData.isParameter = true;
 		paramData.line = node.name.line;
 		paramData.column = node.name.column;
@@ -75,7 +76,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const ClassDeclaration node)
 	{
 		// Get the data
-		auto classData = this.scopeManager.getClassData(node);
+		auto classData = getClassData(this.scopeManager.scope_, node);
 
 		// Check to see if the name is already used
 		if (classData !is ClassData.init)
@@ -87,7 +88,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const StructDeclaration node)
 	{
 		// Get the data
-		auto structData = this.scopeManager.getStructData(node);
+		auto structData = getStructData(this.scopeManager.scope_, node);
 
 		// Check to see if the name is already used
 		if (structData !is StructData.init)
@@ -99,7 +100,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const FunctionDeclaration node)
 	{
 		// Get the data
-		auto funcData = this.scopeManager.getFunctionData(node);
+		auto funcData = getFunctionData(this.scopeManager.scope_, node);
 
 		// Function or method?
 		// FIXME: The problem is that it is already marked that the parent is the function or 
@@ -116,7 +117,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const TemplateParameters node)
 	{
 		// Get the data
-		foreach (tempData; this.scopeManager.getTemplateDatas(node))
+		foreach (tempData; getTemplateDatas(this.scopeManager.scope_, node))
 		{
 			// Check to see if the name is already used
 			if (tempData !is TemplateData.init)
@@ -129,7 +130,7 @@ class NameClashCheck : ScopeAnalyzer
 	override void visit(const EnumDeclaration node)
 	{
 		// Get the data
-		auto enumData = this.scopeManager.getEnumData(node);
+		auto enumData = getEnumData(this.scopeManager.scope_, node);
 
 		// Check to see if the name is already used
 		if (enumData !is EnumData.init)
@@ -142,7 +143,7 @@ class NameClashCheck : ScopeAnalyzer
 	{
 		// Get the data
 		string name;
-		auto fieldData = this.scopeManager.getEnumFieldData(node, name);
+		auto fieldData = getEnumFieldData(this.scopeManager.scope_, node, name);
 
 		// Check to see if the name is already used
 		if (fieldData !is FieldData.init)

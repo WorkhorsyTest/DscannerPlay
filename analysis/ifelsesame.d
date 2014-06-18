@@ -10,7 +10,8 @@ import std.stdio;
 import std.d.ast;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 
 
 /**

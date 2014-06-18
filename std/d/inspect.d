@@ -9,7 +9,7 @@ module std.d.inspect;
 import std.d.ast;
 import std.d.lexer;
 
-import analysis.helpers;
+import analysis.ast_helpers;
 import dlang_helper;
 
 import std.algorithm;

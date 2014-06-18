@@ -12,7 +12,8 @@ import std.regex;
 import std.array;
 import std.conv;
 import std.format;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 
 import analysis.base;
 

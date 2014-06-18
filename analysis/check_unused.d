@@ -14,7 +14,8 @@ import std.d.ast;
 import std.d.inspect;
 import std.d.lexer;
 import analysis.base;
-import analysis.helpers;
+import analysis.ast_helpers;
+import analysis.manager;
 import analysis.scope_frame;
 import analysis.scope_analyzer;
 
@@ -50,7 +51,7 @@ class UnusedCheck : ScopeAnalyzer
 
 		// FIXME: Rename all args to params
 		string funcName = funcDec.name.text;
-		string[] funArgNames = this.scopeManager.getFunctionArgNames(funcDec);
+		string[] funArgNames = getFunctionArgNames(this.scopeManager.scope_, funcDec);
 		if (!funArgNames)
 			return;
 
