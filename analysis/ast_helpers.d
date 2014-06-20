@@ -21,37 +21,126 @@ import analysis.expressions;
 import dlang_helper;
 
 
-// FIXME: For some reason this never sets decoration.isProperty to true
+string getAttributeName(const Attribute attribute, ref size_t line, ref size_t column)
+{
+	// Get the name from the attribute identifier
+	if (attribute
+		&& attribute.storageClass
+		&& attribute.storageClass.atAttribute
+		&& attribute.storageClass.atAttribute.identifier !is Token.init
+		&& attribute.storageClass.atAttribute.identifier.text
+		&& attribute.storageClass.atAttribute.identifier.text.length)
+	{
+		auto token = attribute.storageClass.atAttribute.identifier;
+		line = token.line;
+		column = token.column;
+		return token.text;
+	}
+
+	// Get the attribute from the storage class token
+	if (attribute
+		&& attribute.storageClass
+		&& attribute.storageClass.token !is Token.init)
+	{
+		auto token = attribute.storageClass.token;
+		line = token.line;
+		column = token.column;
+		return token.type.str;
+	}
+
+	return null;
+}
+
+string getAttributeName(const MemberFunctionAttribute memberFunctionAttribute, ref size_t line, ref size_t column)
+{
+	// Get the name from the tokenType
+	if (memberFunctionAttribute
+		&& memberFunctionAttribute.tokenType !is IdType.init
+		&& memberFunctionAttribute.tokenType.str
+		&& memberFunctionAttribute.tokenType.str.length)
+	{
+		// FIXME: How do we get the line/column number?
+		return memberFunctionAttribute.tokenType.str;
+	}
+
+	// Get the name from the attribute identifier
+	if (memberFunctionAttribute
+		&& memberFunctionAttribute.atAttribute
+		&& memberFunctionAttribute.atAttribute.identifier !is Token.init
+		&& memberFunctionAttribute.atAttribute.identifier.type == tok!"identifier"
+		&& memberFunctionAttribute.atAttribute.identifier.text
+		&& memberFunctionAttribute.atAttribute.identifier.text.length)
+	{
+		auto iden = memberFunctionAttribute.atAttribute.identifier;
+		line = iden.line;
+		column = iden.column;
+		return iden.text;
+	}
+
+	return null;
+}
+
 Decoration getDeclarationDecorations(Scope scope_, const Declaration decl)
 {
 	Decoration decoration;
-	foreach (attr; decl.attributes)
+
+	void setDecoration(T)(T attribute)
 	{
-		// Skip if no storage class
-		if (!attr.storageClass || attr.storageClass.token is Token.init)
-			continue;
+		// Get the attribute
+		size_t line, column;
+		string name = getAttributeName(attribute, line, column);
 
-		// Reference
-		if (attr.storageClass.token.type.str == "ref")
-		{
-			decoration.isRef = true;
-		}
-		// Auto
-		else if (attr.storageClass.token.type.str == "auto")
-		{
-			decoration.isAuto = true;
-		}
+		// Skip if invalid
+		if (!name || line==0 || column==0)
+			return;
 
-		// Skip if no at attribute
-		if (!attr.storageClass.atAttribute || attr.storageClass.atAttribute.identifier is Token.init)
-			continue;
-
-		// Property
-		Token iden = attr.storageClass.atAttribute.identifier;
-		if (iden.type.str == "identifier" && iden.text == "property")
+		switch (name)
 		{
-			decoration.isProperty = true;
+			case "ref":
+				decoration.isRef = true;
+				break;
+			case "auto":
+				decoration.isAuto = true;
+				break;
+			case "property":
+				decoration.isProperty = true;
+				break;
+			case "pure":
+				decoration.isPure = true;
+				break;
+			case "safe":
+				decoration.isSafe = true;
+				break;
+			case "trusted":
+				decoration.isTrusted = true;
+				break;
+			case "system":
+				decoration.isSystem = true;
+				break;
+			case "nothrow":
+				decoration.isNoThrow = true;
+				break;
+			default:
+				break;
 		}
+	}
+
+	// Normal attributes
+	foreach (attribute; decl.attributes)
+	{
+		setDecoration(attribute);
+	}
+
+	// Just return if missing function attribute nodes
+	if (!decl.functionDeclaration
+		|| !decl.functionDeclaration.memberFunctionAttributes)
+		return decoration;
+
+
+	// Function attributes
+	foreach (memberFunctionAttribute; decl.functionDeclaration.memberFunctionAttributes)
+	{
+		setDecoration(memberFunctionAttribute);
 	}
 
 	return decoration;
@@ -235,6 +324,7 @@ FunctionData getFunctionData(Scope scope_, const FunctionDeclaration funcDec)
 	data.templates = getTemplateDatas(scope_, funcDec.templateParameters);
 	data.returnType = getFunctionReturnTypeData(scope_, funcDec);
 	data.argTypes = getFunctionArgTypeDatas(scope_, funcDec);
+	data.isPure = scope_.decorations.peak.isPure;
 	data.line = funcDec.name.line;
 	data.column = funcDec.name.column;
 	return data;

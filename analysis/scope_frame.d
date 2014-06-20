@@ -85,6 +85,7 @@ struct FunctionData
 	TemplateData[] templates;
 	TypeData returnType;
 	TypeData[] argTypes;
+	bool isPure;
 	size_t line;
 	size_t column;
 }
@@ -176,11 +177,17 @@ enum IdentifierType : string
 	enum_ = "enum"
 }
 
+// FIXME: Rename to attribute
 struct Decoration
 {
-	bool isProperty;
 	bool isRef;
 	bool isAuto;
+	bool isProperty;
+	bool isPure;
+	bool isSafe;
+	bool isTrusted;
+	bool isSystem;
+	bool isNoThrow;
 }
 
 class Scope

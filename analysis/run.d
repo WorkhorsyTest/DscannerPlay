@@ -29,27 +29,29 @@ import analysis.check_size_t;
 import analysis.check_string_format;
 import analysis.check_unused;
 import analysis.duplicate_attribute;
+import analysis.missing_purity;
 
 enum AnalyzerCheck : int
 {
-	style_check = 0x1,
-	enum_array_literal_check = 0x2,
-	exception_check = 0x4,
-	delete_check = 0x8,
-	float_operator_check = 0x10,
-	number_style_check = 0x20,
-	object_const_check = 0x40,
-	backwards_range_check = 0x80,
-	if_else_same_check = 0x100,
-	constructor_check = 0x200,
-	unused_variable_check = 0x400,
-	compare_check = 0x800,
-	size_t_check = 0x1000,
-	unused_check = 0x2000,
-	name_clash_check = 0x4000,
-	check_string_format = 0x8000,
-	duplicate_attribute = 0x10000,
-	all = 0x1FFFF
+	style_check                   = 1 << 0,
+	enum_array_literal_check      = 1 << 1,
+	exception_check               = 1 << 2,
+	delete_check                  = 1 << 3,
+	float_operator_check          = 1 << 4,
+	number_style_check            = 1 << 5,
+	object_const_check            = 1 << 6,
+	backwards_range_check         = 1 << 7,
+	if_else_same_check            = 1 << 8,
+	constructor_check             = 1 << 9,
+	unused_variable_check         = 1 << 10,
+	compare_check                 = 1 << 11,
+	size_t_check                  = 1 << 12,
+	unused_check                  = 1 << 13,
+	name_clash_check              = 1 << 14,
+	check_string_format           = 1 << 15,
+	duplicate_attribute           = 1 << 16,
+	missing_purity                = 1 << 17,
+	all                           = 0b1_11111111_11111111
 }
 
 void messageFunction(string fileName, size_t line, size_t column, string message,
@@ -62,33 +64,6 @@ void messageFunction(string fileName, size_t line, size_t column, string message
 void syntaxCheck(File output, string[] fileNames)
 {
 	analyze(output, fileNames, AnalyzerCheck.all, false);
-}
-
-void loadPhobosModuleData() {
-/*
-	// Get all the phobos library files
-	string[] fileNames;
-	string phobosDir = "/usr/include/dmd/phobos/std/";
-	foreach (string fileName; dirEntries(phobosDir, SpanMode.shallow, true)) {
-		if (fileName.endsWith(".d"))
-			fileNames ~= fileName;
-	}
-	// FIXME: Hard coded to just a few modules for now ...
-	fileNames = [
-		"/usr/include/dmd/phobos/std/algorithm.d",
-		"/usr/include/dmd/phobos/std/array.d",
-		"/usr/include/dmd/phobos/std/ascii.d",
-		"/usr/include/dmd/phobos/std/base64.d",
-		"/usr/include/dmd/phobos/std/bigint.d"
-	];
-	fileNames = [];
-
-	// Load each file as a module
-	foreach (fileName; fileNames) {
-		stderr.writefln("!!!!!!!!!!!!!! loading phobos file: %s", fileName);
-		analysis.helpers.loadModule(fileName);
-	}
-*/
 }
 
 // For multiple files
@@ -111,8 +86,6 @@ void analyze(File output, string[] fileNames, AnalyzerCheck analyzers, bool stat
 string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool staticAnalyze = true)
 {
 	import std.parallelism;
-
-	loadPhobosModuleData();
 
 	auto lexer = byToken(code);
 	auto app = appender!(typeof(lexer.front)[])();
@@ -153,6 +126,7 @@ string[] analyze(string fileName, ubyte[] code, AnalyzerCheck analyzers, bool st
 	if (analyzers & AnalyzerCheck.check_string_format) checks ~= new CheckStringFormat(fileName);
 	if (analyzers & AnalyzerCheck.unused_check) checks ~= new UnusedCheck(fileName);
 	if (analyzers & AnalyzerCheck.duplicate_attribute) checks ~= new DuplicateAttributeCheck(fileName);
+	if (analyzers & AnalyzerCheck.missing_purity) checks ~= new MissingPurityCheck(fileName);
 
 	foreach (check; checks)
 	{

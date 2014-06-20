@@ -98,65 +98,6 @@ class DuplicateAttributeCheck : BaseAnalyzer
 		// Mark it as having that attribute
 		hasAttribute = true;
 	}
-
-	string getAttributeName(const Attribute attribute, ref size_t line, ref size_t column)
-	{
-		// Get the name from the attribute identifier
-		if (attribute
-			&& attribute.storageClass
-			&& attribute.storageClass.atAttribute
-			&& attribute.storageClass.atAttribute.identifier !is Token.init
-			&& attribute.storageClass.atAttribute.identifier.text
-			&& attribute.storageClass.atAttribute.identifier.text.length)
-		{
-			auto token = attribute.storageClass.atAttribute.identifier;
-			line = token.line;
-			column = token.column;
-			return token.text;
-		}
-
-		// Get the attribute from the storage class token
-		if (attribute
-			&& attribute.storageClass
-			&& attribute.storageClass.token !is Token.init)
-		{
-			auto token = attribute.storageClass.token;
-			line = token.line;
-			column = token.column;
-			return token.type.str;
-		}
-
-		return null;
-	}
-
-	string getAttributeName(const MemberFunctionAttribute memberFunctionAttribute, ref size_t line, ref size_t column)
-	{
-		// Get the name from the tokenType
-		if (memberFunctionAttribute
-			&& memberFunctionAttribute.tokenType !is IdType.init
-			&& memberFunctionAttribute.tokenType.str
-			&& memberFunctionAttribute.tokenType.str.length)
-		{
-			// FIXME: How do we get the line/column number?
-			return memberFunctionAttribute.tokenType.str;
-		}
-
-		// Get the name from the attribute identifier
-		if (memberFunctionAttribute
-			&& memberFunctionAttribute.atAttribute
-			&& memberFunctionAttribute.atAttribute.identifier !is Token.init
-			&& memberFunctionAttribute.atAttribute.identifier.type == tok!"identifier"
-			&& memberFunctionAttribute.atAttribute.identifier.text
-			&& memberFunctionAttribute.atAttribute.identifier.text.length)
-		{
-			auto iden = memberFunctionAttribute.atAttribute.identifier;
-			line = iden.line;
-			column = iden.column;
-			return iden.text;
-		}
-
-		return null;
-	}
 }
 
 unittest

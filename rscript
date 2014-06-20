@@ -78,6 +78,7 @@ def _actual_build(dc):
 	dc.build_object('analysis/style.o', ['analysis/style.d'], h_dir='analysis/')
 	dc.build_object('analysis/unused.o', ['analysis/unused.d'], h_dir='analysis/')
 	dc.build_object('analysis/duplicate_attribute.o', ['analysis/duplicate_attribute.d'], h_dir='analysis/')
+	dc.build_object('analysis/missing_purity.o', ['analysis/missing_purity.d'], h_dir='analysis/')
 	dc.build_object('stats.o', ['stats.d'], h_dir='.')
 	dc.build_object('imports.o', ['imports.d'], h_dir='.')
 	dc.build_object('highlighter.o', ['highlighter.d'], h_dir='.')
