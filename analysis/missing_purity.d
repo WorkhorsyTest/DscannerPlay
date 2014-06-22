@@ -20,13 +20,14 @@ import dlang_helper;
 /**
  * Checks for functions that can be pure.
  */
-// FIXME: Make it work with globals
 // FIXME: Make it work with methods
 class MissingPurityCheck : ScopeAnalyzer
 {
 	alias visit = ScopeAnalyzer.visit;
-	private bool[string] calls;
-	private bool[string][string] dependencies;
+	private bool[string] functionCalls;
+	private size_t[string] variableCalls;
+	private bool[string][string] functionDependencies;
+	private size_t[string][string] variableDependencies;
 
 	this(string fileName)
 	{
@@ -64,6 +65,23 @@ class MissingPurityCheck : ScopeAnalyzer
 		}
 	}
 
+	override void visit(const IdentifierOrTemplateInstance node)
+	{
+		if (node && node.identifier !is Token.init)
+		{
+			string name = node.identifier.text;
+			auto varData = scopeManager.scope_.getVariable(name);
+//			writefln("!!! identifier name:%s, frame:%s", name, varData.frame);
+			if (varData !is VariableData.init)
+			{
+				size_t onFrame = scopeManager.scope_.frames.length;
+				variableCalls[name] = onFrame;
+			}
+		}
+
+		node.accept(this);
+	}
+
 	override void visit(const FunctionCallExpression node)
 	{
 		string name = getFunctionCallName(scopeManager.scope_, node);
@@ -76,7 +94,7 @@ class MissingPurityCheck : ScopeAnalyzer
 		else
 			isPure = funcData.isPure;
 
-		calls[name] = isPure;
+		functionCalls[name] = isPure;
 		node.accept(this);
 	}
 
@@ -92,13 +110,15 @@ class MissingPurityCheck : ScopeAnalyzer
 			return;
 		}
 
-		// Get the functions called by this function
-		calls.clear();
+		// Get the functions & variables used by this function
+		functionCalls.clear();
+		variableCalls.clear();
 		node.accept(this);
 
 		// Check all the called functions to see if they are pure
-		dependencies[name] = calls;
-		bool areDependenciesPure = areDependenciesPure(name);
+		functionDependencies[name] = functionCalls;
+		variableDependencies[name] = variableCalls;
+		bool areDependenciesPure = areDependenciesPure(name, funcData.frame);
 
 		// Warn if all the dependent functions are pure and this is not pure
 		if (areDependenciesPure && !funcData.isPure)
@@ -110,17 +130,35 @@ class MissingPurityCheck : ScopeAnalyzer
 		}
 	}
 
-	private bool areDependenciesPure(string name)
+	private bool areDependenciesPure(string name, size_t funcFrame)
 	{
-		foreach (string callName, bool callPure; dependencies[name])
+		writefln("!!! function name:%s, frame:%s", name, funcFrame);
+		// Check functions
+		foreach (string callName, bool callPure; functionDependencies[name])
 		{
 			// Retrun false if this function is not pure
 			if (!callPure)
 				return false;
 
 			// Return false if this function calls any that are not pure
-			if (!areDependenciesPure(callName))
+			auto funcData = scopeManager.scope_.getFunction(callName);
+			if (funcData !is FunctionData.init
+				&& !areDependenciesPure(callName, funcData.frame))
 				return false;
+		}
+
+		// Check variables
+		foreach (string varName, size_t varFrame; variableDependencies[name])
+		{
+			writefln("    !!! variable name:%s", varName);
+			auto varData = scopeManager.scope_.getVariable(varName);
+			if (varData !is VariableData.init)
+			{
+				writefln("    !!! variable name:%s, frame:%s", varName, varData.frame);
+				// Return false if the variable is outside the function's scope frame
+				if (varData.frame != funcFrame)
+					return false;
+			}
 		}
 
 		return true;
@@ -152,6 +190,34 @@ unittest
 			int bbb(int a, int b)
 			{
 				return addNonPure(a, b);
+			}
+		}
+
+		void testGlobas()
+		{
+			immutable int gOne = 1;
+
+			pure int addOnePure(int a)
+			{
+				return a + 1;
+			}
+
+			// Can't be pure because it uses a global
+			int addOneNonPure(int a)
+			{
+				return a + gOne;
+			}
+
+			// Can be pure because addOnePure is pure
+			int aaa(int a) // [warn]: The function 'aaa' can be pure.
+			{
+				return addOnePure(a);
+			}
+
+			// Can't be pure because addOneNonPure is not pure
+			int bbb(int a)
+			{
+				return addOneNonPure(a);
 			}
 		}
 	}c, analysis.run.AnalyzerCheck.missing_purity);

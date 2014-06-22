@@ -86,6 +86,7 @@ struct FunctionData
 	TypeData returnType;
 	TypeData[] argTypes;
 	bool isPure;
+	size_t frame;
 	size_t line;
 	size_t column;
 }
@@ -96,6 +97,7 @@ struct VariableData
 	TypeData type;
 	bool isUsed;
 	bool isParameter;
+	size_t frame;
 	size_t line;
 	size_t column;
 }
@@ -112,6 +114,7 @@ struct StructData
 	string name;
 	VariableData[string] fields;
 	FunctionData[string] methods;
+	size_t frame;
 	size_t line;
 	size_t column;
 }
@@ -121,6 +124,7 @@ struct ClassData
 	string name;
 	VariableData[string] fields;
 	FunctionData[string] methods;
+	size_t frame;
 	size_t line;
 	size_t column;
 }
@@ -136,6 +140,7 @@ struct EnumData
 	string name;
 	TypeData type;
 	FieldData[string] fields;
+	size_t frame;
 	size_t line;
 	size_t column;
 }

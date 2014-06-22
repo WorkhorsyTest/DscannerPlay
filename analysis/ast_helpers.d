@@ -176,6 +176,7 @@ StructData getStructData(Scope scope_, const StructDeclaration structDec)
 	data.name = structDec.name.text;
 	data.line = structDec.name.line;
 	data.column = structDec.name.column;
+	data.frame = scope_.frames.length;
 
 	foreach (decl; structDec.structBody.declarations)
 	{
@@ -202,6 +203,7 @@ ClassData getClassData(Scope scope_, const ClassDeclaration classDec)
 	data.name = classDec.name.text;
 	data.line = classDec.name.line;
 	data.column = classDec.name.column;
+	data.frame = scope_.frames.length;
 
 	foreach (decl; classDec.structBody.declarations)
 	{
@@ -229,6 +231,7 @@ EnumData getEnumData(Scope scope_, const EnumDeclaration enumDec)
 	data.column = enumDec.name.column;
 	data.type = TypeData("int");
 	data.type = getTypeData(enumDec.type);
+	data.frame = scope_.frames.length;
 
 	foreach (member; enumDec.enumBody.enumMembers)
 	{
@@ -325,6 +328,7 @@ FunctionData getFunctionData(Scope scope_, const FunctionDeclaration funcDec)
 	data.returnType = getFunctionReturnTypeData(scope_, funcDec);
 	data.argTypes = getFunctionArgTypeDatas(scope_, funcDec);
 	data.isPure = scope_.decorations.peak.isPure;
+	data.frame = scope_.frames.length;
 	data.line = funcDec.name.line;
 	data.column = funcDec.name.column;
 	return data;
@@ -486,6 +490,7 @@ VariableData[] getVariableDatas(Scope scope_, const VariableDeclaration varDec)
 			data.name = name;
 			data.type = tokenData.typeData;
 			data.isParameter = false;
+			data.frame = scope_.frames.length;
 			data.line = tokenData.line;
 			data.column = tokenData.column;
 			if (data.type !is TypeData.init)
@@ -510,6 +515,7 @@ VariableData[] getVariableDatas(Scope scope_, const VariableDeclaration varDec)
 			data.name = name;
 			data.type = type;
 			data.isParameter = false;
+			data.frame = scope_.frames.length;
 			getVariableLineColumn(varDec, name, data.line, data.column);
 			if (data.type !is TypeData.init)
 				datas ~= data;
