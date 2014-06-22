@@ -65,13 +65,13 @@ class MissingPurityCheck : ScopeAnalyzer
 		}
 	}
 
+	// Finds all the variables used inside a function
 	override void visit(const IdentifierOrTemplateInstance node)
 	{
-		if (node && node.identifier !is Token.init)
+		if (node.identifier !is Token.init)
 		{
 			string name = node.identifier.text;
 			auto varData = scopeManager.scope_.getVariable(name);
-//			writefln("!!! identifier name:%s, frame:%s", name, varData.frame);
 			if (varData !is VariableData.init)
 			{
 				size_t onFrame = scopeManager.scope_.frames.length;
@@ -82,6 +82,7 @@ class MissingPurityCheck : ScopeAnalyzer
 		node.accept(this);
 	}
 
+	// Finds all the functions used inside a function
 	override void visit(const FunctionCallExpression node)
 	{
 		string name = getFunctionCallName(scopeManager.scope_, node);
@@ -98,6 +99,7 @@ class MissingPurityCheck : ScopeAnalyzer
 		node.accept(this);
 	}
 
+	// Finds 
 	override void visit(const FunctionDeclaration node)
 	{
 		// Get the name of this function
@@ -115,12 +117,13 @@ class MissingPurityCheck : ScopeAnalyzer
 		variableCalls.clear();
 		node.accept(this);
 
-		// Check all the called functions to see if they are pure
+		// Check all the called functions to see if they are pure,
+		// and used variables to see if they are outside the stack frame.
 		functionDependencies[name] = functionCalls;
 		variableDependencies[name] = variableCalls;
-		bool areDependenciesPure = areDependenciesPure(name, funcData.frame);
+		bool areDependenciesPure = areDependenciesPure(funcData);
 
-		// Warn if all the dependent functions are pure and this is not pure
+		// Warn if the function can be pure, but is not
 		if (areDependenciesPure && !funcData.isPure)
 		{
 			string message = "The function '%s' can be pure.".format(name);
@@ -130,33 +133,30 @@ class MissingPurityCheck : ScopeAnalyzer
 		}
 	}
 
-	private bool areDependenciesPure(string name, size_t funcFrame)
+	private bool areDependenciesPure(const FunctionData funcData)
 	{
-		writefln("!!! function name:%s, frame:%s", name, funcFrame);
 		// Check functions
-		foreach (string callName, bool callPure; functionDependencies[name])
+		foreach (string callName, bool callPure; functionDependencies[funcData.name])
 		{
 			// Retrun false if this function is not pure
 			if (!callPure)
 				return false;
 
 			// Return false if this function calls any that are not pure
-			auto funcData = scopeManager.scope_.getFunction(callName);
-			if (funcData !is FunctionData.init
-				&& !areDependenciesPure(callName, funcData.frame))
+			auto subFuncData = scopeManager.scope_.getFunction(callName);
+			if (subFuncData !is FunctionData.init
+				&& !areDependenciesPure(subFuncData))
 				return false;
 		}
 
 		// Check variables
-		foreach (string varName, size_t varFrame; variableDependencies[name])
+		foreach (string varName, size_t varFrame; variableDependencies[funcData.name])
 		{
-			writefln("    !!! variable name:%s", varName);
 			auto varData = scopeManager.scope_.getVariable(varName);
 			if (varData !is VariableData.init)
 			{
-				writefln("    !!! variable name:%s, frame:%s", varName, varData.frame);
 				// Return false if the variable is outside the function's scope frame
-				if (varData.frame != funcFrame)
+				if (varData.frame >= funcData.frame)
 					return false;
 			}
 		}
